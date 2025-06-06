@@ -21,7 +21,7 @@ public class HomeController : Controller
     }
 
     // Restrict access to users in "StrongHelp\\Admin" group
-    [Authorize(Roles = "StrongHelp\\Admin")]
+    //[Authorize(Roles = "StrongHelp\\Admin")]
     public IActionResult Index()
     {
         var userModel = new UserInfoViewModel
