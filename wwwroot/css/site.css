@@ -20,3 +20,45 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* Brand Logo Styles */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shield-icon {
+  vertical-align: middle;
+}
+
+.stronghelp-text {
+  color: #0000FF;
+  font-weight: bold;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+/* Landing Page Styles */
+.bg-primary {
+  background-color: #007bff !important;
+}
+
+.text-white {
+  color: #fff !important;
+}
+
+.btn-light {
+  background-color: #f8f9fa;
+  color: #000;
+}
+
+.btn-outline-light {
+  border-color: #f8f9fa;
+  color: #f8f9fa;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
