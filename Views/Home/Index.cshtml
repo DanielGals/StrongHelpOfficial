@@ -1,0 +1,101 @@
+﻿@model UserInfoViewModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4">Welcome to StrongHelp Official</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4>User Information</h4>
+    </div>
+    <div class="card-body">
+        @if (Model.IsAuthenticated)
+        {
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Authentication Status:</div>
+                <div class="col-md-9">
+                    <span class="badge bg-success">Authenticated</span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Username:</div>
+                <div class="col-md-9">@Model.Username</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Display Name:</div>
+                <div class="col-md-9">@(Model.DisplayName ?? "Not available")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Email:</div>
+                <div class="col-md-9">@(Model.Email ?? "Not available")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Domain:</div>
+                <div class="col-md-9">@Model.Domain</div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                You are not currently authenticated. Please log in to access this application.
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.IsAuthenticated)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Roles (Groups)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Roles.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var role in Model.Roles)
+                            {
+                                <li class="list-group-item">@role</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">No roles found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5>All Users in StrongHelp.local</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AllUsers.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var user in Model.AllUsers)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@user.DisplayName</strong> (@user.Username) - @user.Email
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">No users found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
