@@ -12,6 +12,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSession(); // Add session services
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -29,7 +30,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession(); 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

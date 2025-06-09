@@ -2,11 +2,11 @@
 
 namespace StrongHelpOfficial.Controllers.Loaner
 {
-    public class DashboardController : Controller
+    public class LoanerDashboardController : Controller
     {
         public IActionResult Index()
         {
-            return View();
+            return View("~/Views/Loaner/LoanerDashboard.cshtml");
         }
     }
 }

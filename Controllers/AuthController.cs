@@ -7,8 +7,6 @@ using System.DirectoryServices.AccountManagement;
 
 namespace StrongHelpOfficial.Controllers;
 
-// Restrict access to users in "StrongHelp\\Admin" group
-//[Authorize(Roles = "StrongHelp\\Admin")]
 public class AuthController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -27,12 +25,27 @@ public class AuthController : Controller
             IsAuthenticated = User.Identity?.IsAuthenticated ?? false
         };
 
+        // Attempt to connect to the SQL database regardless of AD authentication
+        try
+        {
+            using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                sqlConnection.Open();
+                userModel.SQLConnectionSuccess = true; // Connection successful
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to connect to SQL database.");
+            userModel.SQLConnectionSuccess = false; // Connection failed
+        }
+
+        // Proceed with AD authentication logic if the user is authenticated
         if (userModel.IsAuthenticated && !string.IsNullOrEmpty(User.Identity?.Name))
         {
             userModel.Username = User.Identity.Name;
             userModel.Domain = GetDomainFromUsername(User.Identity.Name);
 
-            // Get user identity parts
             var parts = User.Identity.Name.Split('\\');
             var domain = parts.Length > 1 ? parts[0] : Environment.UserDomainName;
             var username = parts.Length > 1 ? parts[1] : parts[0];
@@ -82,11 +95,18 @@ public class AuthController : Controller
                             using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
                             {
                                 sqlConnection.Open();
-                                // Updated query to fetch UserID, RoleID, and Email
-                                var query = "SELECT UserID, RoleID, Email FROM [User] WHERE Email = @Email";
+
+                                // Updated query to join User and Role tables
+                                var query = @"
+                                SELECT u.UserID, r.RoleName, u.Email 
+                                FROM [User] u
+                                INNER JOIN [Role] r ON u.RoleID = r.RoleID
+                                WHERE u.Email = @Email";
+
                                 using (var command = new SqlCommand(query, sqlConnection))
                                 {
                                     command.Parameters.AddWithValue("@Email", userModel.Email);
+
                                     using (var reader = command.ExecuteReader())
                                     {
                                         if (reader.Read())
@@ -96,11 +116,11 @@ public class AuthController : Controller
                                             userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
 
                                             int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
-                                            int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
+                                            string roleName = reader["RoleName"] as string ?? string.Empty;
 
-                                            // Store SQL data in session
+                                            // Store SQL data in session using role name instead of role id.
                                             HttpContext.Session.SetInt32("UserID", userId);
-                                            HttpContext.Session.SetString("RoleID", roleId.ToString());
+                                            HttpContext.Session.SetString("RoleName", roleName);
                                             HttpContext.Session.SetString("Email", userModel.Email.ToLower());
                                         }
                                         else
@@ -113,7 +133,6 @@ public class AuthController : Controller
                                 }
                             }
                         }
-
                     }
                 }
             }
@@ -123,6 +142,28 @@ public class AuthController : Controller
             }
         }
 
+        // If the user is authenticated and the email matches SQL, redirect based on RoleName.
+        // If the user is authenticated and the email matches SQL, redirect based on RoleName.
+        if (userModel.IsAuthenticated && userModel.EmailExists && userModel.EmailMatched == true &&
+            !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")))
+        {
+            string roleName = HttpContext.Session.GetString("RoleName")!;
+            if (roleName == "Employee") // Employee goes to Loaner Dashboard.
+            {
+                return RedirectToAction("Index", "LoanerDashboard", new { area = "" });
+            }
+            else if (roleName == "Benefits Assistant") // Benefits Assistant.
+            {
+                return RedirectToAction("Index", "BenefitsAssistantDashboard", new { area = "" });
+            }
+            else // All other roles go to Approver Dashboard.
+            {
+                return RedirectToAction("Index", "ApproverDashboard", new { area = "" });
+            }
+        }
+
+
+        // Otherwise, display the login view.
         return View(userModel);
     }
 
@@ -138,6 +179,7 @@ public class AuthController : Controller
 
         return Environment.UserDomainName;
     }
+
 
     public IActionResult Privacy()
     {

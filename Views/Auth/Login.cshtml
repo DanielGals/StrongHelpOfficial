@@ -2,6 +2,21 @@
 @{
     ViewData["Title"] = "Home Page";
 }
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4>SQL Connection Status</h4>
+    </div>
+    <div class="card-body">
+        @if (Model.SQLConnectionSuccess)
+        {
+            <div class="alert alert-success">Connected to SQL database successfully.</div>
+        }
+        else
+        {
+            <div class="alert alert-danger">Failed to connect to SQL database.</div>
+        }
+    </div>
+</div>
 
 <div class="text-center mb-4">
     <h1 class="display-4">Welcome to StrongHelp Domain</h1>
