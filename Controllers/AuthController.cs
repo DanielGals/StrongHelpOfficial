@@ -82,22 +82,33 @@ public class AuthController : Controller
                             using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
                             {
                                 sqlConnection.Open();
-                                var query = "SELECT Email FROM [User] WHERE Email = @Email";
+                                // Updated query to fetch UserID, RoleID, and Email
+                                var query = "SELECT UserID, RoleID, Email FROM [User] WHERE Email = @Email";
                                 using (var command = new SqlCommand(query, sqlConnection))
                                 {
                                     command.Parameters.AddWithValue("@Email", userModel.Email);
-                                    var sqlEmail = command.ExecuteScalar() as string;
-                                    if (sqlEmail != null)
+                                    using (var reader = command.ExecuteReader())
                                     {
-                                        userModel.EmailExists = true;
-                                        userModel.SQLEmail = sqlEmail;
-                                        userModel.EmailMatched = string.Equals(userModel.Email, sqlEmail, StringComparison.OrdinalIgnoreCase);
-                                    }
-                                    else
-                                    {
-                                        userModel.EmailExists = false;
-                                        userModel.SQLEmail = null;
-                                        userModel.EmailMatched = false;
+                                        if (reader.Read())
+                                        {
+                                            userModel.EmailExists = true;
+                                            userModel.SQLEmail = reader["Email"] as string;
+                                            userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
+
+                                            int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                                            int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
+
+                                            // Store SQL data in session
+                                            HttpContext.Session.SetInt32("UserID", userId);
+                                            HttpContext.Session.SetString("RoleID", roleId.ToString());
+                                            HttpContext.Session.SetString("Email", userModel.Email.ToLower());
+                                        }
+                                        else
+                                        {
+                                            userModel.EmailExists = false;
+                                            userModel.SQLEmail = null;
+                                            userModel.EmailMatched = false;
+                                        }
                                     }
                                 }
                             }
