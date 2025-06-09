@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="8.0.13" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
 	<PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.5" />
   </ItemGroup>
 

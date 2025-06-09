@@ -1,108 +1,127 @@
+@model UserInfoViewModel
 @{
-    ViewData["Title"] = "Login to StrongHelp";
+    ViewData["Title"] = "Home Page";
 }
 
-<style>
-    body {
-        font-family: Arial, sans-serif;
-    }
+<div class="text-center mb-4">
+    <h1 class="display-4">Welcome to StrongHelp Domain</h1>
+</div>
 
-    .login-container {
-        max-width: 450px;
-        margin: 80px auto;
-        padding: 20px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background-color: white;
-    }
-
-    .login-header {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .login-title {
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
-
-    .login-subtitle {
-        color: #666;
-        font-size: 14px;
-    }
-
-    .form-label {
-        font-weight: 500;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-
-    .login-button {
-        width: 100%;
-        background-color: black;
-        color: white;
-        padding: 12px;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
-    }
-
-    .support-text {
-        text-align: center;
-        margin-top: 15px;
-        font-size: 14px;
-        color: #666;
-    }
-
-    .brand-header {
-        display: flex;
-        align-items: center;
-        padding: 10px 20px;
-    }
-
-    .brand-name {
-        color: #4938D8;
-        font-weight: bold;
-        font-size: 18px;
-        margin-left: 10px;
-    }
-
-    .footer {
-        text-align: center;
-        margin-top: 40px;
-        color: #666;
-        font-size: 12px;
-    }
-</style>
-
-
-<div class="login-container">
-    <div class="login-header">
-        <h1 class="login-title">Login to StrongHelp</h1>
-        <p class="login-subtitle">Enter your credentials to access the loan portal</p>
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4>User Information</h4>
     </div>
-
-    <form method="post" action="/Auth/Login">
-        <label class="form-label" for="username">Username</label>
-        <input type="text" class="form-control" id="username" name="username" placeholder="Enter your employee ID" required />
-
-        <label class="form-label" for="password">Password</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required />
-
-        <button type="submit" class="login-button">Login</button>
-    </form>
-
-    <div class="support-text">
-        Having trouble logging in? Contact IT Support
+    <div class="card-body">
+        @if (Model.IsAuthenticated)
+        {
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Authentication Status:</div>
+                <div class="col-md-9">
+                    <span class="badge bg-success">Authenticated</span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Username:</div>
+                <div class="col-md-9">@Model.Username</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Display Name:</div>
+                <div class="col-md-9">@(Model.DisplayName ?? "Not available")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">AD Email:</div>
+                <div class="col-md-9">@(Model.Email ?? "Not available")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Domain:</div>
+                <div class="col-md-9">@Model.Domain</div>
+            </div>
+            <hr />
+            <h5>SQL Email Check</h5>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">SQL Email:</div>
+                <div class="col-md-9">
+                    @if (Model.EmailExists && !string.IsNullOrEmpty(Model.SQLEmail))
+                    {
+                        @Model.SQLEmail
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Not Found</span>
+                    }
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3 font-weight-bold">Email Match Status:</div>
+                <div class="col-md-9">
+                    @if (Model.EmailMatched == true)
+                    {
+                        <span class="badge bg-success">Matched</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">Not Matched</span>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                You are not currently authenticated. Please log in to access this application.
+            </div>
+        }
     </div>
 </div>
+
+@if (Model.IsAuthenticated)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Roles (Groups)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Roles.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var role in Model.Roles)
+                            {
+                                <li class="list-group-item">@role</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">No roles found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5>All Users in StrongHelp.local</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AllUsers.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var user in Model.AllUsers)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@user.DisplayName</strong> (@user.Username) - @user.Email
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">No users found.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
