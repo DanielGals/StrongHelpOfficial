@@ -40,97 +40,53 @@ public class AuthController : Controller
             userModel.SQLConnectionSuccess = false; // Connection failed
         }
 
-        // Proceed with AD authentication logic if the user is authenticated
-        if (userModel.IsAuthenticated && !string.IsNullOrEmpty(User.Identity?.Name))
+        // Bypass AD authentication for testing
+        userModel.IsAuthenticated = true; // Simulate authentication
+        userModel.Email = "bradlygorgonio@gmail.com"; // Hardcoded email for testing
+        userModel.Username = "asdasd";
+        userModel.Domain = "StrongHelp.local";
+
+        // Check if Email exists in the SQL database table [User]
+        if (!string.IsNullOrEmpty(userModel.Email))
         {
-            userModel.Username = User.Identity.Name;
-            userModel.Domain = GetDomainFromUsername(User.Identity.Name);
-
-            var parts = User.Identity.Name.Split('\\');
-            var domain = parts.Length > 1 ? parts[0] : Environment.UserDomainName;
-            var username = parts.Length > 1 ? parts[1] : parts[0];
-
             try
             {
-                using (var context = new PrincipalContext(ContextType.Domain, domain))
-                using (var userPrincipal = UserPrincipal.FindByIdentity(context, username))
+                using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
                 {
-                    if (userPrincipal != null)
+                    sqlConnection.Open();
+
+                    // Updated query to join User and Role tables
+                    var query = @"
+                    SELECT u.UserID, r.RoleName, u.Email 
+                    FROM [User] u
+                    INNER JOIN [Role] r ON u.RoleID = r.RoleID
+                    WHERE u.Email = @Email";
+
+                    using (var command = new SqlCommand(query, sqlConnection))
                     {
-                        userModel.DisplayName = userPrincipal.DisplayName;
-                        userModel.Email = userPrincipal.EmailAddress;
+                        command.Parameters.AddWithValue("@Email", userModel.Email);
 
-                        // Fetch groups (roles) of the current user
-                        var groups = userPrincipal.GetAuthorizationGroups();
-                        foreach (var group in groups)
+                        using (var reader = command.ExecuteReader())
                         {
-                            if (group is GroupPrincipal gp)
+                            if (reader.Read())
                             {
-                                userModel.Roles.Add(gp.Name); // Add group names as roles
+                                userModel.EmailExists = true;
+                                userModel.SQLEmail = reader["Email"] as string;
+                                userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
+
+                                int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                                string roleName = reader["RoleName"] as string ?? string.Empty;
+
+                                // Store SQL data in session using role name instead of role id.
+                                HttpContext.Session.SetInt32("UserID", userId);
+                                HttpContext.Session.SetString("RoleName", roleName);
+                                HttpContext.Session.SetString("Email", userModel.Email.ToLower());
                             }
-                        }
-
-                        // Fetch all users in the domain
-                        var allUsers = new List<UserInfoViewModel>();
-                        using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
-                        {
-                            foreach (var result in searcher.FindAll())
+                            else
                             {
-                                if (result is UserPrincipal user)
-                                {
-                                    allUsers.Add(new UserInfoViewModel
-                                    {
-                                        Username = user.SamAccountName,
-                                        DisplayName = user.DisplayName,
-                                        Email = user.EmailAddress
-                                    });
-                                }
-                            }
-                        }
-                        userModel.AllUsers = allUsers; // Add all users to the model
-
-                        // Check if Email exists in the SQL database table [User]
-                        if (!string.IsNullOrEmpty(userModel.Email))
-                        {
-                            using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
-                            {
-                                sqlConnection.Open();
-
-                                // Updated query to join User and Role tables
-                                var query = @"
-                                SELECT u.UserID, r.RoleName, u.Email 
-                                FROM [User] u
-                                INNER JOIN [Role] r ON u.RoleID = r.RoleID
-                                WHERE u.Email = @Email";
-
-                                using (var command = new SqlCommand(query, sqlConnection))
-                                {
-                                    command.Parameters.AddWithValue("@Email", userModel.Email);
-
-                                    using (var reader = command.ExecuteReader())
-                                    {
-                                        if (reader.Read())
-                                        {
-                                            userModel.EmailExists = true;
-                                            userModel.SQLEmail = reader["Email"] as string;
-                                            userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
-
-                                            int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
-                                            string roleName = reader["RoleName"] as string ?? string.Empty;
-
-                                            // Store SQL data in session using role name instead of role id.
-                                            HttpContext.Session.SetInt32("UserID", userId);
-                                            HttpContext.Session.SetString("RoleName", roleName);
-                                            HttpContext.Session.SetString("Email", userModel.Email.ToLower());
-                                        }
-                                        else
-                                        {
-                                            userModel.EmailExists = false;
-                                            userModel.SQLEmail = null;
-                                            userModel.EmailMatched = false;
-                                        }
-                                    }
-                                }
+                                userModel.EmailExists = false;
+                                userModel.SQLEmail = null;
+                                userModel.EmailMatched = false;
                             }
                         }
                     }
@@ -138,11 +94,10 @@ public class AuthController : Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching AD user details.");
+                _logger.LogError(ex, "Error checking email in SQL database.");
             }
         }
 
-        // If the user is authenticated and the email matches SQL, redirect based on RoleName.
         // If the user is authenticated and the email matches SQL, redirect based on RoleName.
         if (userModel.IsAuthenticated && userModel.EmailExists && userModel.EmailMatched == true &&
             !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")))
@@ -162,7 +117,6 @@ public class AuthController : Controller
             }
         }
 
-
         // Otherwise, display the login view.
         return View(userModel);
     }
@@ -179,7 +133,6 @@ public class AuthController : Controller
 
         return Environment.UserDomainName;
     }
-
 
     public IActionResult Privacy()
     {
