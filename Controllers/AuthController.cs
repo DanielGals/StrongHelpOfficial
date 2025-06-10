@@ -42,9 +42,9 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "bradlygorgonio@gmail.com"; // Hardcoded email for testing
+        userModel.Email = "axelsacdal@gmail.com"; // Hardcoded email for testing
         userModel.Username = "asdasd";
-        userModel.Domain = "StrongHelp.local";
+        userModel.Domain = "Sample Tae";
 
         // Check if Email exists in the SQL database table [User]
         if (!string.IsNullOrEmpty(userModel.Email))
