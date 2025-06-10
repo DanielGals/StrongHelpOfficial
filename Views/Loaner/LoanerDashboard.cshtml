@@ -1,10 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Loaner Dashboard";
-    var userId = ViewData["UserID"];
-    var roleName = ViewData["RoleName"];
-    var email = ViewData["Email"];
+﻿@model StrongHelpOfficial.Models.LoanerDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<h2>Loaner Dashboard</h2>
-<p>Welcome to the Loaner dashboard, @email!</p>
-<p>User ID: @userId</p>
-<p>Role: @roleName</p>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LoanerDashboard.css" asp-append-version="true" />
+}
+
+<div class="dashboard-content">
+    <div class="welcome-section">
+        <h2>Welcome, @Model.UserName!</h2>
+        <p>Here's an overview of your loan applications and requirements.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-credit-card"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Active Loan</h3>
+                <p class="stat-number">@Model.ActiveLoans</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Pending Applications</h3>
+                <p class="stat-number">@Model.PendingApplications</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="activity-section">
+            <h3>Recent Activities</h3>
+            <div class="activity-list">
+                @if (Model.RecentActivities != null && Model.RecentActivities.Any())
+                {
+                    @foreach (var activity in Model.RecentActivities)
+                    {
+                        <div class="activity-item">
+                            <i class="bi bi-clock"></i>
+                            <span>@activity</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="no-activity">
+                        <p>No recent activities</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="@Url.Action("ApplyForLoan", "LoanerDashboard")" class="action-btn primary">
+                    <i class="bi bi-plus"></i>
+                    Add New Loan
+                </a>
+                <a href="@Url.Action("MyApplication", "LoanerDashboard")" class="action-btn secondary">
+                    <i class="bi bi-list"></i>
+                    View All Loans
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

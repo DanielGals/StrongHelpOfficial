@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/StrongHelpOfficial.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    @RenderSection("Styles", required: false)
     <style>
         :root {
             --primary-color: #4355db;
@@ -169,7 +170,7 @@
 
         .main-content {
             flex: 1;
-            padding: 1rem 1.5rem;
+            padding: 0 1.5rem 1rem 1.5rem;
         }
 
         footer {
@@ -178,31 +179,148 @@
             box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.05);
         }
 
+        .topbar {
+            background: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin: 1rem 0 30px 0;
+            border-radius: 12px;
+            width: 100%;
+        }
+
+        .topbar-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification {
+            position: relative;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+            .notification:hover {
+                background-color: #f8f9fa;
+            }
+
+            .notification i {
+                font-size: 1.2rem;
+                color: #6c757d;
+            }
+
+        .notification-bell-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            background-color: #dc3545;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #333;
+            margin-left: 12px;
+        }
+
         /* Responsive */
         @@media (max-width: 768px) {
-            #sidebar-wrapper
+            #sidebar-wrapper {
+                margin-left: calc(var(--sidebar-width) * -1);
+            }
+
+                #sidebar-wrapper.collapsed {
+                    margin-left: 0;
+                    width: var(--sidebar-width);
+                }
+
+            #content-wrapper {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .sidebar-collapsed #content-wrapper {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            #sidebar-toggle {
+                right: -45px;
+            }
+
+            .topbar {
+                margin: 0.5rem 0 20px 0;
+                padding: 15px 20px;
+            }
+
+            .topbar-title {
+                font-size: 1.25rem;
+            }
+
+            .topbar-actions {
+                gap: 15px;
+            }
+
+            .user-name {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .topbar-actions
 
         {
-            margin-left: calc(var(--sidebar-width) * -1);
+            gap: 10px;
         }
 
-        #sidebar-wrapper.collapsed {
-            margin-left: 0;
-            width: var(--sidebar-width);
+        .topbar {
+            padding: 12px 15px;
         }
 
-        #content-wrapper {
-            width: 100%;
-            margin-left: 0;
-        }
-
-        .sidebar-collapsed #content-wrapper {
-            width: 100%;
-            margin-left: 0;
-        }
-
-        #sidebar-toggle {
-            right: -45px;
+        .main-content {
+            padding: 0 1rem 1rem 1rem;
         }
 
         }
@@ -319,6 +437,7 @@
                             <span>Loan Information</span>
                         </a>
                     }
+
                     else
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
@@ -338,26 +457,93 @@
                         </a>
                     }
                     <div class="mt-auto pt-3">
-                        <a class="nav-link" href="/Auth/Logout">
+                        <a class="nav-link" href="/LoanerDashboard/Logout?returnUrl=/">
                             <i class="bi bi-box-arrow-right"></i>
                             <span>Logout</span>
                         </a>
+
                     </div>
                 </nav>
             </div>
 
             <div id="content-wrapper">
                 <div class="main-content">
+                    <!-- Topbar Start -->
+                    <header class="topbar">
+                        <div class="topbar-title">
+                            <span>@ViewData["Title"]</span>
+                        </div>
+                        <div class="topbar-actions">
+                            <div class="notification">
+                                <span class="notification-bell-wrapper">
+                                    <i class="bi bi-bell"></i>
+                                    <span class="notification-dot"></span>
+                                </span>
+                            </div>
+
+                            <div class="user-avatar">
+                                @{
+                                    var firstName = Context.Session.GetString("FirstName") ?? "";
+                                    var lastName = Context.Session.GetString("LastName") ?? "";
+                                    string initials;
+                                    string displayName;
+
+                                    if (!string.IsNullOrWhiteSpace(firstName) || !string.IsNullOrWhiteSpace(lastName))
+                                    {
+                                        initials = (firstName.Length > 0 ? firstName[0].ToString().ToUpper() : "") +
+                                        (lastName.Length > 0 ? lastName[0].ToString().ToUpper() : "");
+                                        displayName = ((firstName + " " + lastName).Trim());
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(email) && email.Contains("@"))
+                                    {
+                                        var namePart = email.Split('@')[0];
+                                        var nameParts = namePart.Split(new[] { '.', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+                                        if (nameParts.Length >= 2)
+                                        {
+                                            initials = string.Join(" ", nameParts.Select(np => np[0].ToString().ToUpper()));
+                                            displayName = string.Join(" ", nameParts.Select(np => char.ToUpper(np[0]) + np.Substring(1)));
+                                        }
+                                        else if (namePart.Length > 4)
+                                        {
+                                            // Heuristic: first 4 letters as first name, rest as last name
+                                            var first = namePart.Substring(0, 4);
+                                            var last = namePart.Substring(4);
+                                            initials = (first.Length > 0 ? first[0].ToString().ToUpper() : "") +
+                                            (last.Length > 0 ? last[0].ToString().ToUpper() : "");
+                                            displayName = char.ToUpper(first[0]) + first.Substring(1) + " " +
+                                            (last.Length > 0 ? char.ToUpper(last[0]) + last.Substring(1) : "");
+                                        }
+                                        else
+                                        {
+                                            initials = namePart[0].ToString().ToUpper();
+                                            displayName = char.ToUpper(namePart[0]) + namePart.Substring(1);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        initials = "U";
+                                        displayName = "User";
+                                    }
+                                }
+                                <span class="avatar-circle">
+                                    @initials
+                                </span>
+                                <span class="user-name">
+                                    @displayName
+                                </span>
+
+
+                            </div>
+
+                    </header>
+                    <!-- Topbar End -->
                     @RenderBody()
                 </div>
-
                 <footer class="border-top footer text-muted">
-                    <div class="container">
-                        &copy; 2025 StrongHelp. All rights reserved. A capstone project by STI College Global City.
-                        <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    </div>
+                    ...
                 </footer>
             </div>
+
         </div>
     }
 
