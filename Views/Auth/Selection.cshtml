@@ -1,0 +1,149 @@
+﻿@{
+    ViewData["Title"] = "Choose Your Portal Access";
+}
+
+<style>
+    .portal-selection-container {
+        max-width: 960px;
+        margin: 60px auto;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        background-color: #fff;
+    }
+
+    .portal-selection-title {
+        font-size: 32px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .portal-cards-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .portal-card {
+        flex: 1;
+        padding: 30px 25px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .portal-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .borrower-icon {
+        background-color: #d7e5ff;
+        color: #0044ff;
+    }
+
+    .approver-icon {
+        background-color: #d7f8ee;
+        color: #008066;
+    }
+
+    .portal-icon i {
+        font-size: 36px;
+    }
+
+    .portal-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .borrower-title {
+        color: #3a3ac3;
+    }
+
+    .approver-title {
+        color: #0d7963;
+    }
+
+    .portal-description {
+        color: #6c757d;
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+
+    .portal-button {
+        display: block;
+        width: 100%;
+        padding: 12px 0;
+        border-radius: 8px;
+        font-weight: 600;
+        color: white;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .borrower-button {
+        background-color: #27279c;
+    }
+
+        .borrower-button:hover {
+            background-color: #1e1e80;
+            color: white;
+        }
+
+    .approver-button {
+        background-color: #08664e;
+    }
+
+        .approver-button:hover {
+            background-color: #065541;
+            color: white;
+        }
+</style>
+
+<div class="portal-selection-container">
+    <h1 class="portal-selection-title">Choose Your Portal Access</h1>
+
+    <div class="portal-cards-container">
+        <!-- Borrower Portal Card -->
+        <div class="portal-card">
+            <div class="portal-icon borrower-icon">
+                <i class="bi bi-person"></i>
+            </div>
+            <h2 class="portal-title borrower-title">Borrower Portal</h2>
+            <p class="portal-description">Apply for loans and track your applications</p>
+            <a href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })" class="portal-button borrower-button">Go to Employee Portal</a>
+        </div>
+
+        <!-- Approver Portal Card -->
+        <div class="portal-card">
+            <div class="portal-icon approver-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h2 class="portal-title approver-title">Approver Portal</h2>
+            <p class="portal-description">Review and approve loan applications</p>
+            <a href="@Url.Action("Index", "ApproverDashboard", new { area = "Approver" })" class="portal-button approver-button">Go to Approver Portal</a>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons if not already included in layout -->
+@section Scripts {
+    <script>
+        // Any additional scripts can go here
+    </script>
+}

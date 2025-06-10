@@ -1,5 +1,10 @@
 ﻿@{
     ViewData["Title"] = "Loaner Dashboard";
+    var userId = ViewData["UserID"];
+    var roleName = ViewData["RoleName"];
+    var email = ViewData["Email"];
 }
 <h2>Loaner Dashboard</h2>
-<p>Welcome to the Loaner dashboard!</p>
+<p>Welcome to the Loaner dashboard, @email!</p>
+<p>User ID: @userId</p>
+<p>Role: @roleName</p>

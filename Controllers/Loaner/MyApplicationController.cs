@@ -2,7 +2,7 @@
 
 namespace StrongHelpOfficial.Controllers.Loaner
 {
-    public class LoanerDashboardController : Controller
+    public class MyApplicationController : Controller
     {
         public IActionResult Index()
         {
@@ -11,7 +11,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
             ViewData["RoleName"] = HttpContext.Session.GetString("RoleName");
             ViewData["Email"] = HttpContext.Session.GetString("Email");
 
-            return View("~/Views/Loaner/LoanerDashboard.cshtml");
+            return View("~/Views/Loaner/MyApplication.cshtml");
         }
     }
 }
