@@ -4,10 +4,12 @@ namespace StrongHelpOfficial.Models
 {
     public class ApplyForLoanViewModel
     {
+        [Required(ErrorMessage = "Uploaded documents are required!")]
+        public List<IFormFile> Files { get; set; }
         //LoanDocument
         public int LoanDocumentID { get; set; }
         public byte[] Filecontent { get; set; } = Array.Empty<byte>();
-        public string[] LoanDocumentName { get; set; }
+        public string[]? LoanDocumentName { get; set; }
         //LoanApplication
         public int LoanID { get; set; }
         public int UserID { get; set; }

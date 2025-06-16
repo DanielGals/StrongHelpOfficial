@@ -30,14 +30,16 @@
 <div class="afl-content">
     <div class="row">
         <div class="col-md-8 mb-3">
-            @if (TempData["test"] != null)
-            {
-                @TempData["test"];
-            }
             @if (TempData["submitResult"] != null)
             {
                 <div class="alert alert-success" role="alert">
                     @TempData["submitResult"]
+                </div>
+            }
+            @if (TempData["failedSubmitResult"] != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @TempData["failedSubmitResult"]
                 </div>
             }
                 
@@ -64,74 +66,66 @@
                     </div>
                     <!-- actual file upload -->
                     <div class="mb-4">
-                            <!-- Replace the file input and add a script to append file name and type to hidden fields for the model -->
-                            <div class="mb-4">
-                                <div id="drop-area" class="drop-area rounded p-4 text-center text-muted" onclick="document.getElementById('files').click();">
-                                    Drop files here or click to select
-                                    <input type="file" accept=".pdf" id="files" asp-for="Filecontent" hidden multiple onchange="handleFileSelect(event)">
-                                    <!-- Hidden fields for file name and type -->
-                                    <input type="hidden" id="LoanDocumentName" name="LoanDocumentName" value="@Model.LoanDocumentName" />
-                                    <input type="hidden" id="FileContent" name="FileContent" value="@Model.Filecontent" />
-                                </div>
+                        <!-- Replace the file input and add a script to append file name and type to hidden fields for the model -->
+                        <div class="mb-4">
+                            <div id="drop-area" class="drop-area rounded p-4 text-center text-muted" onclick="document.getElementById('files').click();">
+                                Drop files here or click to select
+                                <input type="file" accept=".pdf" id="files" name="Files" hidden multiple <!--onchange="handleFileSelect(event)"-->>
+                                <!-- Hidden fields for file name and type -->
+                                <input type="hidden" id="LoanDocumentName" name="LoanDocumentName" value="@Model.LoanDocumentName" />
+                                <input type="hidden" id="FileContent" name="FileContent" value="@Model.Filecontent" />
                             </div>
+                        </div>
                         <script>
-                            
-                            function handleFileSelect(event) {
-                                const files = event.target.files;
+                            let allFiles = [];
 
-                                if (files.length > 0) {
-                                    // Prepare arrays to hold file names and file objects
-                                    let fileNames=[];
-                                    let fileContents=[];
-                                    for (let i = 0; i < files.length; i++) {
-                                        fileNames.push(files[i].name);
-                                        fileContents.push(files[i]);
+                            document.getElementById('files').addEventListener('change', function (event) {
+                                // Add new files, avoiding duplicates
+                                const newFiles = Array.from(event.target.files);
+                                for (const file of newFiles) {
+                                    if (!allFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) {
+                                        allFiles.push(file);
                                     }
-
-                                    for (let j = 0; j < fileNames.length; j++) {
-                                        // Create a new div for each file name
-                                        const docItem = document.createElement('div');
-                                        docItem.className = 'doc-item d-flex align-items-center justify-content-between';
-
-                                        // Create the readonly input for file name
-                                        const input = document.createElement('input');
-                                        input.type = 'text';
-                                        input.value = fileNames[j];
-                                        input.readOnly = true;
-                                        input.className = 'form-control';
-
-                                        // Create the delete button
-                                        const deleteBtn = document.createElement('button');
-                                        deleteBtn.type = 'button';
-                                        deleteBtn.className = 'btn btn-danger btn-sm ms-2';
-                                        deleteBtn.style.marginLeft = 'auto';
-                                        deleteBtn.innerHTML = '<i class="bi bi-x"></i> Delete';
-
-                                        // Attach click event to remove the file
-                                        deleteBtn.addEventListener('click', function () {
-                                            files.splice(files.findIndex(files.name.find(fileNames[j])), 1);
-
-                                            // Update hidden fields
-                                            //document.getElementById('LoanDocumentName').value = fileNames.join(',');
-                                            //document.getElementById('FileContent').value = fileContents.join(',');
-
-                                            // Remove the element from DOM
-                                            docItem.remove();
-                                        });
-
-                                        // Append input and button to the docItem div
-                                        docItem.appendChild(input);
-                                        docItem.appendChild(deleteBtn);
-
-                                        document.getElementById('submittedDocs').appendChild(docItem);
-                                    }
-
-                                    // Store file objects in a global array for further processing (e.g., upload via AJAX)
-                                    window.selectedFiles = fileContents;
-
-                                    // Optionally, update a hidden field with the count or a placeholder value
-                                    //document.getElementById('FileContent').value = fileContents.join(',');
                                 }
+                                renderFileList();
+                                updateFileInput();
+                            });
+
+                            function renderFileList() {
+                                const submittedDocs = document.getElementById('submittedDocs');
+                                // Remove all children except the title
+                                submittedDocs.innerHTML = '<strong class="d-block mb-2">Submitted Documents:</strong>';
+                                allFiles.forEach((file, idx) => {
+                                    const docItem = document.createElement('div');
+                                    docItem.className = 'doc-item d-flex align-items-center justify-content-between';
+
+                                    const input = document.createElement('input');
+                                    input.type = 'text';
+                                    input.value = file.name;
+                                    input.readOnly = true;
+                                    input.className = 'form-control';
+
+                                    const deleteBtn = document.createElement('button');
+                                    deleteBtn.type = 'button';
+                                    deleteBtn.className = 'btn btn-danger btn-sm ms-2';
+                                    deleteBtn.innerHTML = '<i class="bi bi-x"></i> Delete';
+                                    deleteBtn.onclick = function () {
+                                        allFiles.splice(idx, 1);
+                                        renderFileList();
+                                        updateFileInput();
+                                    };
+
+                                    docItem.appendChild(input);
+                                    docItem.appendChild(deleteBtn);
+                                    submittedDocs.appendChild(docItem);
+                                });
+                            }
+
+                            function updateFileInput() {
+                                const fileInput = document.getElementById('files');
+                                const dt = new DataTransfer();
+                                allFiles.forEach(file => dt.items.add(file));
+                                fileInput.files = dt.files;
                             }
                         </script>
                     </div>
