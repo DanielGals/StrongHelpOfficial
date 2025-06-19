@@ -1,0 +1,115 @@
+﻿.content {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.myapp-card-body {
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border: none
+}
+
+.myapp-no-margin-progress {
+    margin-bottom: 0 !important;
+}
+
+.myapp-amount {
+    margin-top: 4px;
+}
+
+.myapp-application-wrapper {
+    position: relative;
+}
+
+    .myapp-application-wrapper > .text-end {
+        padding-right: 8px;
+        margin-top: 50px;
+    }
+
+.status-badge {
+    display: inline-block;
+    padding: 0.5em 1.5em;
+    border-radius: 999px;
+    font-weight: bold;
+    font-size: 1em;
+    border: none;
+    color: #fff;
+    background: #757e87; 
+}
+
+.status-submitted {
+    background: var(--primary-dark);
+}
+
+
+.status-inreview {
+    background: #f7c948; 
+    color: #222;
+}
+
+.status-approved {
+    background: #38a169; 
+}
+
+.status-rejected {
+    background: #e53e3e; 
+}
+
+.btn-primary-action {
+    background: var(--primary-dark);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 1em;
+    font-weight: 500;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+    .btn-primary-action:hover,
+    .btn-primary-action:focus {
+        background: #222e99;
+        color: #fff;
+        text-decoration: none;
+    }
+
+.status-tab-group {
+    display: flex;
+    background: #f1f1f1;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 10px;
+    margin-bottom: 1.5rem;
+    gap: 8px;
+    max-width: 650px;
+}
+
+.status-tab {
+    font-weight: 600;
+    font-size: 1em;
+    color: #888;
+    background: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 7px 28px;
+    transition: background 0.2s, color 0.2s;
+    text-decoration: none !important;
+}
+
+    .status-tab.active {
+        background: var(--primary-dark);
+        color: #fff;
+        cursor: default;
+    }
+
+    .status-tab:not(.active):hover {
+        background: #f3f3f3;
+        color: #444;
+    }

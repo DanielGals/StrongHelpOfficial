@@ -9,10 +9,8 @@
 }
 
 <div class="dashboard-content">
-    <div class="welcome-section">
-        <h2>Welcome, @Model.UserName!</h2>
-        <p>Here's an overview of your loan applications and requirements.</p>
-    </div>
+        <h2 class="fw-bold mb-1">Welcome, @Model.UserName!</h2>
+        <p class="text-muted">Here's an overview of your loan applications and requirements.</p>
 
     <div class="stats-grid">
         <div class="stat-card">
@@ -62,15 +60,17 @@
         <div class="quick-actions">
             <h3>Quick Actions</h3>
             <div class="action-buttons">
-                <a href="@Url.Action("ApplyForLoan", "LoanerDashboard")" class="action-btn primary">
+                <a href="@Url.Action("Index", "ApplyForLoan", new { area = "Loaner" })" class="action-btn primary">
                     <i class="bi bi-plus"></i>
                     Add New Loan
                 </a>
-                <a href="@Url.Action("MyApplication", "LoanerDashboard")" class="action-btn secondary">
+
+                <a href="@Url.Action("Index", "LoanerLoanHistory", new { area = "Loaner" })" class="action-btn secondary">
                     <i class="bi bi-list"></i>
                     View All Loans
                 </a>
             </div>
+
         </div>
     </div>
 </div>

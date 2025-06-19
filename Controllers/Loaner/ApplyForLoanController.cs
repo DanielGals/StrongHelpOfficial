@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace StrongHelpOfficial.Controllers.Loaner
 {
+    [Area("Loaner")]
     public class ApplyForLoanController : Controller
     {
 
@@ -60,44 +61,44 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 if (files.Count >= 3 && loanAmount != 0)
                 {
-                    model.Filecontent = new byte[files.Sum(f => f.Length)];
-                    model.LoanDocumentName = new string[files.Count];
-                    int offset = 0;
-                    int nameIndex = 0;
-                    foreach (var file in files)
-                    {
-                        using var memoryStream = new MemoryStream();
-                        await file.CopyToAsync(memoryStream);
-                        var fileBytes = memoryStream.ToArray();
-                        Array.Copy(fileBytes, 0, model.Filecontent, offset, fileBytes.Length);
-                        offset += fileBytes.Length;
-
-                        model.LoanDocumentName[nameIndex++] = file.FileName;
-                    }
                     using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
                     {
                         await conn.OpenAsync();
                         var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
+                        // Insert LoanApplication
                         using (var cmd = new SqlCommand("INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID) VALUES (@LoanAmount, @DateSubmitted, @UserID)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
-                            // Get UserID from session or set to 0 if not found
                             cmd.Parameters.AddWithValue("@UserID", userId);
                             await cmd.ExecuteNonQueryAsync();
                         }
-                        for (int i = 0; i < model.LoanDocumentName.Length; i++)
+                        // Get the LoanID of the just-inserted application
+                        int loanId = 0;
+                        using (var cmd = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn))
                         {
-                            // Insert each document into the LoanDocument table
-                            using (var cmd = new SqlCommand("INSERT INTO LoanDocument (LoanID, FileContent, LoanDocumentName) VALUES ((SELECT LoanID FROM LoanApplication WHERE UserID = @UserID), @FileContent, @LoanDocumentName)", conn))
+                            cmd.Parameters.AddWithValue("@UserID", userId);
+                            loanId = (int)(await cmd.ExecuteScalarAsync() ?? 0);
+                        }
+                        // Insert each document
+                        foreach (var file in files)
+                        {
+                            byte[] fileBytes;
+                            using (var memoryStream = new MemoryStream())
                             {
-                                cmd.Parameters.AddWithValue("@UserID", userId);
-                                cmd.Parameters.AddWithValue("@FileContent", model.Filecontent[i]);
-                                cmd.Parameters.AddWithValue("@LoanDocumentName", model.LoanDocumentName[i]);
+                                await file.CopyToAsync(memoryStream);
+                                fileBytes = memoryStream.ToArray();
+                            }
+                            using (var cmd = new SqlCommand("INSERT INTO LoanDocument (LoanID, FileContent, LoanDocumentName) VALUES (@LoanID, @FileContent, @LoanDocumentName)", conn))
+                            {
+                                cmd.Parameters.AddWithValue("@LoanID", loanId);
+                                cmd.Parameters.AddWithValue("@FileContent", fileBytes);
+                                cmd.Parameters.AddWithValue("@LoanDocumentName", file.FileName);
                                 await cmd.ExecuteNonQueryAsync();
                             }
                         }
                     }
+
                     submissionResult(model);
                 }
                 else

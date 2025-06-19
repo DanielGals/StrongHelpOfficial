@@ -105,7 +105,7 @@ public class AuthController : Controller
             string roleName = HttpContext.Session.GetString("RoleName")!;
             if (roleName == "Employee") // Employee goes to Loaner Dashboard.
             {
-                return RedirectToAction("Index", "LoanerDashboard", new { area = "" });
+                return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
             }
             else if (roleName == "Benefits Assistant") // Benefits Assistant.
             {

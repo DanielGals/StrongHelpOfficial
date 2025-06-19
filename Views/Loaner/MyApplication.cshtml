@@ -1,10 +1,77 @@
-﻿@{
+﻿@model List<StrongHelpOfficial.Models.MyApplicationViewModel>
+@{
     ViewData["Title"] = "My Applications";
-    var userId = ViewData["UserID"];
-    var roleName = ViewData["RoleName"];
-    var email = ViewData["Email"];
+    var email = ViewData["Email"] as string ?? "user@example.com";
 }
-<h2>My Applications</h2>
-<p>Welcome, @email. Here are your loan applications:</p>
 
-<!-- List of applications will go here -->
+@section Styles {
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">My Loan Applications</h2>
+        <div class="text-muted">Track and manage all your loan applications</div>
+    </div>
+    <a href="@Url.Action("Index", "ApplyForLoan", new { area = "Loaner" })" class="btn btn-primary-action mt-3 mt-md-0">
+        <i class="bi bi-plus-circle me-2"></i>Apply for a New Loan
+    </a>
+</div>
+
+<div class="card myapp-card-body">
+    <div class="card-body">
+        <h5 class="card-title fw-semibold mb-2">My Application</h5>
+        <div class="text-muted mb-3" style="font-size: 0.95em;">
+            View all your loan applications regardless of status
+        </div>
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var app in Model)
+            {
+                <div class="myapp-application-wrapper mb-3">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <div class="fw-bold">Bank Salary Loan</div>
+                                <div class="text-muted" style="font-size: 0.95em;">
+                                    Applied on: @app.DateSubmitted.ToString("MMMM dd, yyyy")
+                                </div>
+                            </div>
+                            @{
+                                string statusClass = app.ApplicationStatus switch
+                                {
+                                    "Submitted" => "status-badge status-submitted",
+                                    "In Review" => "status-badge status-inreview",
+                                    "Approved" => "status-badge status-approved",
+                                    "Rejected" => "status-badge status-rejected",
+                                    _ => "status-badge status-submitted"
+                                };
+                            }
+                            <span class="@statusClass">
+                                @app.ApplicationStatus
+                            </span>
+                        </div>
+                        <div>
+                            <div class="text-muted mb-1" style="font-size: 0.95em;">Application Process</div>
+                            <div class="progress myapp-no-margin-progress" style="height: 10px;">
+                                <div class="progress-bar bg-dark" role="progressbar" style="width: @app.ProgressPercent%;" aria-valuenow="@app.ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="d-flex justify-content-between" style="font-size: 0.95em;">
+                                <span></span>
+                                <span class="text-muted">@app.ProgressPercent%</span>
+                            </div>
+                        </div>
+                        <div class="fw-semibold myapp-amount">Amount: ₱@app.LoanAmount.ToString("N0")</div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a href="@Url.Action("Details", "MyApplication", new { area = "Loaner", loanId = app.LoanID })" class="btn btn-primary-action">View Details</a>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">No loan applications found.</div>
+        }
+    </div>
+</div>

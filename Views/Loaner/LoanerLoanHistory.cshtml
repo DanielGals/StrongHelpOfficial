@@ -1,10 +1,102 @@
-﻿@{
+﻿@model StrongHelpOfficial.Models.LoanerLoanHistoryViewModel
+@{
     ViewData["Title"] = "Loan History";
-    var userId = ViewData["UserID"];
-    var roleName = ViewData["RoleName"];
-    var email = ViewData["Email"];
+    var filteredLoans = Model.Applications?
+        .Where(l => Model.SelectedStatus == null || l.ApplicationStatus == Model.SelectedStatus)
+        .ToList() ?? new List<StrongHelpOfficial.Models.MyApplicationViewModel>();
 }
-<h2>Loan History</h2>
-<p>Welcome, @email. Here is your loan history:</p>
 
-<!-- Loan history will go here -->
+@section Styles {
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+}
+
+<div class="loan-history-header mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Loan History</h2>
+        <p class="text-muted">Manage all your past loan applications</p>
+    </div>
+</div>
+
+
+<div class="loan-tabs mb-3">
+    <div class="status-tab-group">
+        <a class="status-tab @(Model.SelectedStatus == null ? "active" : "")" href="?">All</a>
+        @foreach (var status in Model.Statuses)
+        {
+            <a class="status-tab @(Model.SelectedStatus == status ? "active" : "")" href="?status=@status">@status</a>
+        }
+    </div>
+</div>
+
+<div class="all-applications-box mb-4">
+    <div class="card myapp-card-body">
+        <div class="card-body">
+            <h5 class="fw-semibold mb-2">All Applications</h5>
+            <p class="text-muted" style="font-size: 0.95em;">View all your loan applications regardless of status</p>
+
+            @if (filteredLoans.Any())
+            {
+                @foreach (var loan in filteredLoans)
+                {
+                    <div class="myapp-application-wrapper mb-3">
+                        <div class="border rounded p-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <div class="fw-bold">Bank Salary Loan</div>
+                                    <div class="text-muted" style="font-size: 0.95em;">
+                                        Applied on: @loan.DateSubmitted.ToString("MMMM d, yyyy")
+                                    </div>
+                                </div>
+                                @{
+                                    string statusClass = loan.ApplicationStatus switch
+                                    {
+                                        "Submitted" => "status-badge status-submitted",
+                                        "In Review" => "status-badge status-inreview",
+                                        "Approved" => "status-badge status-approved",
+                                        "Rejected" or "Declined" => "status-badge status-rejected",
+                                        _ => "status-badge status-submitted"
+                                    };
+                                }
+                                <span class="@statusClass">
+                                    @loan.ApplicationStatus
+                                </span>
+                            </div>
+                            <div>
+                                <div class="text-muted mb-1" style="font-size: 0.95em;">Application Process</div>
+                                <div class="progress myapp-no-margin-progress" style="height: 10px;">
+                                    <div class="progress-bar bg-dark"
+                                         role="progressbar"
+                                         style="width: @loan.ProgressPercent%;"
+                                         aria-valuenow="@loan.ProgressPercent"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between" style="font-size: 0.95em;">
+                                    <span></span>
+                                    <span class="text-muted">@loan.ProgressPercent%</span>
+                                </div>
+                            </div>
+                            <div class="fw-semibold myapp-amount">Amount: ₱@loan.LoanAmount.ToString("N0")</div>
+                        </div>
+                        <div class="text-end mt-2">
+                            <a href="@Url.Action("Details", "LoanerLoanHistory", new { id = loan.LoanID })" class="btn btn-primary-action">View Details</a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    @if (Model.SelectedStatus == null)
+                    {
+                        <span>No loan applications found.</span>
+                    }
+                    else
+                    {
+                        <span>There are no @Model.SelectedStatus loans yet.</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,34 @@
+﻿@{
+    var loanId = ViewBag.LoanID ?? (Model?.LoanID ?? 0);
+    var status = !string.IsNullOrWhiteSpace(ViewBag.Status as string)
+    ? ViewBag.Status
+    : (!string.IsNullOrWhiteSpace(Model?.ApplicationStatus) ? Model.ApplicationStatus : "Submitted");
+    string statusClass = status switch
+    {
+        "Submitted" => "status-badge status-submitted",
+        "In Review" => "status-badge status-inreview",
+        "Approved" => "status-badge status-approved",
+        "Rejected" => "status-badge status-rejected",
+        _ => "status-badge status-submitted"
+    };
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+}
+<div class="d-flex flex-column flex-md-row align-items-md-center mb-4 gap-3">
+    <div class="loan-details-tab-group mb-0">
+        <a class="loan-details-tab @(currentAction == "Details" ? "active" : "")"
+           href="@Url.Action("Details", "MyApplication", new { area = "Loaner", loanId = loanId })">
+            Details
+        </a>
+        <a class="loan-details-tab @(currentAction == "ApprovalFlow" ? "active" : "")"
+           href="@Url.Action("ApprovalFlow", "MyApplication", new { area = "Loaner", loanId = loanId })">
+            Approval Flow
+        </a>
+        <a class="loan-details-tab @(currentAction == "ApprovalHistory" ? "active" : "")"
+           href="@Url.Action("ApprovalHistory", "MyApplication", new { area = "Loaner", loanId = loanId })">
+            Approval History
+        </a>
+    </div>
+    <span class="@statusClass" style="min-width:120px;">
+        @status
+    </span>
+</div>

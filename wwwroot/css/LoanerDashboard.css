@@ -1,10 +1,4 @@
-﻿.dashboard-container {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Dashboard Content */
-.dashboard-content {
+﻿.dashboard-content {
     width: 100%;
     margin: 0 auto;
 }
@@ -124,10 +118,6 @@
         width: 20px;
         font-size: 18px;
     }
-
-.activity-details {
-    flex: 1;
-}
 
 .no-activity {
     text-align: center;
