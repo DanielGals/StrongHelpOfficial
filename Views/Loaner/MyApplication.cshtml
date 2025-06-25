@@ -71,7 +71,15 @@
         }
         else
         {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success" style="color: #198754; background-color: #d1e7dd; border-color: #badbcc;">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+            else{
             <div class="alert alert-info">No loan applications found.</div>
+            }
         }
     </div>
 </div>

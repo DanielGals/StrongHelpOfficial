@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using StrongHelpOfficial.Models;
+using System.Reflection;
 
 namespace StrongHelpOfficial.Controllers.Loaner
 {
@@ -200,5 +201,24 @@ namespace StrongHelpOfficial.Controllers.Loaner
             return View("~/Views/Loaner/ApprovalHistory.cshtml", model);
         }
 
+        public async Task<IActionResult> DeleteSubmission(int loanId)
+        {
+            var userId = HttpContext.Session.GetInt32("UserID");
+
+            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+            {
+                await conn.OpenAsync();
+                var cmd = new SqlCommand(@"
+                    DELETE FROM LoanDocument WHERE LoanID = @LoanID;
+                    DELETE FROM LoanApplication WHERE LoanID = @LoanID;
+                ", conn);
+                cmd.Parameters.AddWithValue("@LoanID", loanId);
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            TempData["SuccessMessage"] = "Your application was successfully deleted.";
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
