@@ -1,5 +1,131 @@
-﻿@{
+﻿@model StrongHelpOfficial.Models.BenefitsAssistantDashboardViewModel
+@{
     ViewData["Title"] = "Benefits Assistant Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<h2>Benefits Assistant Dashboard</h2>
-<p>Welcome to the Benefits Assistant dashboard!</p>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LoanerDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BenefitsAssistantDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+}
+
+<div class="dashboard-content">
+    <h2 class="fw-bold mb-1">Welcome, @Model.UserName!</h2>
+    <p class="text-muted">
+        Here's an overview of loans applications requiring your attention
+    </p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-clipboard-data"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Applications</h3>
+                <p class="stat-number">@Model.TotalApplications</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Pending Review</h3>
+                <p class="stat-number">@Model.PendingReview</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Approved Today</h3>
+                <p class="stat-number">@Model.ApprovedToday</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Rejected Today</h3>
+                <p class="stat-number">@Model.RejectedToday</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="benefits-content-grid">
+        <div class="pending-applications-section">
+            <h2>Pending Applications</h2>
+            <p class="text-muted">Loan Applications awaiting your approval</p>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Loan Type</th>
+                            <th>Amount</th>
+                            <th>Date Applied</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PendingApplications != null && Model.PendingApplications.Any())
+                        {
+                            foreach (var app in Model.PendingApplications)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-2">
+                                                @app.Initials
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">@app.EmployeeName</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@app.LoanType</td>
+                                    <td>₱@app.Amount.ToString("N0")</td>
+                                    <td>@app.DateApplied.ToString("MMMM d, yyyy")</td>
+                                    <td>
+                                        @{
+                                            string statusClass = app.Status switch
+                                            {
+                                                "Submitted" => "status-badge status-submitted",
+                                                "In Review" => "status-badge status-inreview",
+                                                "Approved" => "status-badge status-approved",
+                                                "Rejected" => "status-badge status-rejected",
+                                                _ => "status-badge status-submitted"
+                                            };
+                                        }
+                                        <span class="@statusClass">
+                                            @app.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Details", "BenefitsAssistantApplications", new { id = app.ApplicationId })" class="btn btn-primary-action">Review</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center">No pending applications</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-end mt-2">
+                <a href="@Url.Action("Index", "BenefitsAssistantApplications")" class="btn btn-outline-primary">
+                    View All Applications <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

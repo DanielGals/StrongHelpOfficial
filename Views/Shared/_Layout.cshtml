@@ -97,16 +97,18 @@
 
                     else if (roleName == "Benefits Assistant")
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="/BenefitsAssistant/BenefitsAssistantDashboard/Index">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantDashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "BenefitsAssistantDashboard", new { area = "" })">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Applications" ? "active" : "")"
-                           href="/BenefitsAssistant/Applications">
+
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantApplications" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "BenefitsAssistantApplications", new { area = "" })">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
+
                         <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Reports" ? "active" : "")"
                            href="/BenefitsAssistant/Reports">
                             <i class="bi bi-bar-chart"></i>

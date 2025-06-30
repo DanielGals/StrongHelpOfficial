@@ -1,0 +1,98 @@
+﻿.benefits-content-grid {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+.pending-applications-section {
+    width: 100%;
+}
+
+.table-responsive {
+    width: 100%;
+}
+
+.table {
+    width: 100%;
+    min-width: 0;
+    font-size: 1.07em;
+}
+
+
+    .table th, .table td {
+        padding: 1.1rem 1.25rem; 
+    }
+
+.avatar-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #3f51b5;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.table thead th {
+    border-bottom: 2px solid #3f51b5;
+    font-weight: 700;
+    background: #fff;
+}
+
+.table-hover tbody tr:hover {
+    background: #f5f7fa;
+}
+
+.pending-applications-section {
+    width: 100%;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(60, 72, 88, 0.08);
+    padding: 32px 24px 24px 24px;
+    margin-bottom: 32px;
+    transition: box-shadow 0.2s;
+}
+    .pending-applications-section:hover {
+        box-shadow: 0 8px 32px rgba(60, 72, 88, 0.14);
+    }
+
+.review-btn {
+    padding: 0.5em 1.5em;
+    border-radius: 999px;
+    font-size: 1em;
+    font-weight: bold;
+    min-width: 100px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(33, 150, 83, 0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+    .review-btn:hover,
+    .review-btn:focus {
+        background: #17643a;
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(33, 150, 83, 0.16);
+    }
+
+/* Optional: Style for the Review button to match screenshot */
+.btn-primary-action {
+    background: #373fcf;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5em 1.5em;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+    .btn-primary-action:hover {
+        background: #2327a3;
+        color: #fff;
+    }
