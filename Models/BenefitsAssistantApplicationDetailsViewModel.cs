@@ -10,6 +10,8 @@
         public string ApplicationStatus { get; set; }
         public DateTime DateSubmitted { get; set; }
         public List<BADocumentViewModel> Documents { get; set; } = new();
+        public string Remarks { get; set; } = string.Empty;
+
 
     }
 

@@ -118,5 +118,26 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             }
             return model;
         }
+        [HttpPost]
+        public async Task<IActionResult> RejectApplication(int id, string remarks)
+        {
+            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+            {
+                await conn.OpenAsync();
+                var cmd = new SqlCommand(@"
+            UPDATE LoanApplication
+            SET Remarks = @Remarks, ApplicationStatus = @Status
+            WHERE LoanID = @LoanID
+        ", conn);
+                cmd.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
+                cmd.Parameters.AddWithValue("@Status", "Rejected");
+                cmd.Parameters.AddWithValue("@LoanID", id);
+
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            // Optionally, redirect to details or index
+            return RedirectToAction("Index", new { id });
+        }
     }
 }
