@@ -10,61 +10,165 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <style>
+        .subtitle-green {
+            color: #198754;
+            font-size: 1.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-yellow {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+            .alert-yellow .icon {
+                margin-right: 0.75rem;
+                font-size: 1.5em;
+                flex-shrink: 0;
+            }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-burger {
+            width: 100%;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            font-size: 1.1em;
+        }
+
+        .btn-outline-danger {
+            border-width: 2px;
+        }
+        /* Validation checklist item styles */
+        .checklist-item {
+            font-size: 1.2em;
+            color: #198754;
+            display: flex;
+            align-items: center;
+        }
+
+            .checklist-item .form-check-input {
+                width: 1.5em;
+                height: 1.5em;
+                margin-right: 0.75em;
+            }
+    </style>
 }
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1">Loan Application Details</h2>
-        <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
-    </div>
-</div>
-
-@await Html.PartialAsync("_LoanApplicationTabs")
-
-<div class="row mb-3">
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Employee Name</div>
-        <div>@Model.EmployeeName</div>
-    </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Amount Applied For</div>
-        <div>₱@Model.LoanAmount.ToString("N0")</div>
-    </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Department</div>
-        <div>@Model.Department</div>
-    </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Payroll Account Number</div>
-        <div>@Model.PayrollAccountNumber</div>
-    </div>
-</div>
-<hr />
-
-<h5 class="fw-bold mb-3">Documents Submitted</h5>
-@if (Model.Documents != null && Model.Documents.Any())
-{
-    foreach (var doc in Model.Documents)
-    {
-        <div class="loan-details-document">
+<div class="row">
+    <div class="col-md-8">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
             <div>
-                <div class="doc-title">@doc.Name</div>
-                <div class="doc-type">@doc.Type</div>
+                <h2 class="fw-bold mb-1">Loan Application Details</h2>
+                <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
             </div>
-            <button type="button"
-                    class="btn btn-light doc-view-btn"
-                    data-doc-url="@Url.Action("Preview", "Document", new { area = "Loaner", id = doc.LoanDocumentID })"
-                    data-doc-type="@doc.Type"
-                    data-doc-name="@doc.Name">
-                View
-            </button>
         </div>
-    }
-}
-else
-{
-    <div class="alert alert-info">No documents submitted.</div>
-}
+
+        @await Html.PartialAsync("_LoanApplicationTabs")
+
+        <div class="row mb-3">
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Employee Name</div>
+                <div>@Model.EmployeeName</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Amount Applied For</div>
+                <div>₱@Model.LoanAmount.ToString("N0")</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Department</div>
+                <div>@Model.Department</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Payroll Account Number</div>
+                <div>@Model.PayrollAccountNumber</div>
+            </div>
+        </div>
+        <hr />
+
+        <h5 class="fw-bold mb-3">Documents Submitted</h5>
+        @if (Model.Documents != null && Model.Documents.Any())
+        {
+            foreach (var doc in Model.Documents)
+            {
+                <div class="loan-details-document">
+                    <div>
+                        <div class="doc-title">@doc.Name</div>
+                        <div class="doc-type">@doc.Type</div>
+                    </div>
+                    <button type="button"
+                            class="btn btn-light doc-view-btn"
+                            data-doc-url="@Url.Action("Preview", "Document", new { area = "Loaner", id = doc.LoanDocumentID })"
+                            data-doc-type="@doc.Type"
+                            data-doc-name="@doc.Name">
+                        View
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">No documents submitted.</div>
+        }
+    </div>
+    <div class="col-md-4">
+        <!-- application decision -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3 class="card-title">Application Decision</h3>
+
+                <div class="subtitle-green">Review and make a decision on this application</div>
+
+                <div class="alert-yellow">
+                    <span class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24">
+                            <polygon points="12,2 2,22 22,22" fill="none" stroke="#facc15" stroke-width="2" />
+                            <line x1="12" y1="8" x2="12" y2="14" stroke="#facc15" stroke-width="2" />
+                            <circle cx="12" cy="17" r="1.5" fill="#facc15" />
+                        </svg>
+                    </span>
+                    <span>
+                        <strong>Attention:</strong> Please complete the validation checklist before forwarding the application.
+                    </span>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="forwardApplicationBtn" type="button" class="btn btn-success btn-burger" disabled>Forward Application</button>
+                    <button type="button" class="btn btn-outline-danger btn-burger">Reject Application</button>
+                </div>
+            </div>
+        </div>
+        <!-- Validation checklist card (add id for checklist items container) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3 class="card-title d-flex justify-content-between align-items-center">
+                    Validation Checklist
+                </h3>
+                <div id="checklistItemsContainer" class="mt-3"></div>
+                <button id="addItemBtn" type="button" class="btn btn-success d-flex align-items-center mt-3 ms-auto" style="gap:0.5rem;">
+                    <span class="d-flex align-items-center justify-content-center" style="width:1.8em; height:1.8em;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="white" viewBox="0 0 16 16">
+                            <circle cx="8" cy="8" r="8" fill="white" fill-opacity="0.2" />
+                            <path d="M8 4.5a.75.75 0 0 1 .75.75v2a.25.25 0 0 0 .25.25h2a.75.75 0 0 1 0 1.5h-2a.25.25 0 0 0-.25.25v2a.75.75 0 0 1-1.5 0v-2a.25.25 0 0 0-.25-.25h-2a.75.75 0 0 1 0-1.5h2a.25.25 0 0 0 .25-.25v-2A.75.75 0 0 1 8 4.5z" fill="white" />
+                        </svg>
+                    </span>
+                    <span>Add Item</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal for document preview -->
 <div class="modal fade" id="docPreviewModal" tabindex="-1" aria-labelledby="docPreviewModalLabel" aria-hidden="true">
@@ -76,6 +180,26 @@ else
             </div>
             <div class="modal-body" id="docPreviewBody" style="min-height:60vh;">
                 <!-- Content will be injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for adding checklist item -->
+<div class="modal fade" id="addChecklistItemModal" tabindex="-1" aria-labelledby="addChecklistItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addChecklistItemModalLabel">Add Checklist Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="conditionTextInput" class="form-control" placeholder="Enter checklist item" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmAddChecklistBtn">Add</button>
+                <button type="button" class="btn btn-info" id="fillPreexistingChecklistBtn">Fill with Pre-existing Checklist</button>
             </div>
         </div>
     </div>
@@ -106,6 +230,156 @@ else
                     previewModal.show();
                 });
             });
+            // Checklist add item modal logic
+            const addItemBtn = document.getElementById('addItemBtn');
+            const checklistItemsContainer = document.getElementById('checklistItemsContainer');
+            const forwardBtn = document.getElementById('forwardApplicationBtn');
+
+            let addChecklistItemModal = null;
+            let confirmAddChecklistBtn = null;
+            let conditionTextInput = null;
+
+            addItemBtn.addEventListener('click', function () {
+                if (!addChecklistItemModal) {
+                    addChecklistItemModal = new bootstrap.Modal(document.getElementById('addChecklistItemModal'));
+                    confirmAddChecklistBtn = document.getElementById('confirmAddChecklistBtn');
+                    conditionTextInput = document.getElementById('conditionTextInput');
+                }
+                conditionTextInput.value = '';
+                addChecklistItemModal.show();
+            });
+
+            // Function to check if all checklist checkboxes are checked
+            function updateRejectButtonState() {
+                const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+                if (checkboxes.length === 0) {
+                    forwardBtn.disabled = true;
+                    return;
+                }
+                forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
+            }
+
+            // Listen for changes on checklist checkboxes
+            checklistItemsContainer.addEventListener('change', function (e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    updateRejectButtonState();
+                }
+            });
+
+            // Remove checklist item logic
+            checklistItemsContainer.addEventListener('click', function (e) {
+                if (e.target.closest('.checklist-remove-btn')) {
+                    const btn = e.target.closest('.checklist-remove-btn');
+                    btn.parentElement.parentElement.remove();
+                    updateRejectButtonState();
+                }
+            });
+
+            // Confirm add checklist item
+            document.getElementById('confirmAddChecklistBtn').addEventListener('click', function () {
+                if (!conditionTextInput) {
+                    conditionTextInput = document.getElementById('conditionTextInput');
+                }
+                const text = conditionTextInput.value.trim();
+                if (text.length > 0) {
+                    const id = 'checklist_' + Date.now();
+                    const div = document.createElement('div');
+                    div.className = 'form-check mb-2';
+                    div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center flex-grow-1">
+                                            <input class="form-check-input" type="checkbox" id="${id}">
+                                            <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
+                                        </div>
+                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                <path d="M10 11v6" />
+                                                <path d="M14 11v6" />
+                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                            </svg>
+                                        </button>
+                                    </div>`;
+                    checklistItemsContainer.appendChild(div);
+                    addChecklistItemModal.hide();
+                    updateRejectButtonState();
+                } else {
+                    conditionTextInput.focus();
+                }
+            });
+
+            document.getElementById('fillPreexistingChecklistBtn').addEventListener('click', function () {
+                if (!conditionTextInput) {
+                    conditionTextInput = document.getElementById('conditionTextInput');
+                }
+                    for(let i = 0; i<3; i++){
+                        const id = 'checklist_' + Date.now();
+                        const div = document.createElement('div');
+                        div.className = 'form-check mb-2';
+                        if(i===0){
+                            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <input class="form-check-input" type="checkbox" id="checklist_1">
+                                                <label class="form-check-label checklist-item ms-2" for="checklist_1">No existing active loans</label>
+                                            </div>
+                                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                </svg>
+                                            </button>
+                                        </div>`;
+                            checklistItemsContainer.appendChild(div);
+                        }
+                        else if(i===1){
+                            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <input class="form-check-input" type="checkbox" id="checklist_2">
+                                                <label class="form-check-label checklist-item ms-2" for="checklist_2">Not a co-maker for another active loan</label>
+                                            </div>
+                                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                </svg>
+                                            </button>
+                                        </div>`;
+                            checklistItemsContainer.appendChild(div);
+                        }
+                        else if(i===2){
+                            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <input class="form-check-input" type="checkbox" id="checklist_3">
+                                                <label class="form-check-label checklist-item ms-2" for="checklist_3">No derogatory legal records (civil/criminal cases)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                </svg>
+                                            </button>
+                                        </div>`;
+                            checklistItemsContainer.appendChild(div);
+                        }
+
+                    }
+
+                    addChecklistItemModal.hide();
+                    updateRejectButtonState();
+            });
+
+
+            // Initial state
+            updateRejectButtonState();
         });
     </script>
 }
