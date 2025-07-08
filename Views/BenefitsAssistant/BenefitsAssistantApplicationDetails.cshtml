@@ -1,8 +1,10 @@
-﻿@model LoanApplicationDetailsViewModel
+﻿@model BenefitsAssistantApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Loan Application Details";
-    ViewBag.LoanID = Model.LoanID;
-    ViewBag.Status = Model.ApplicationStatus;
+    ViewBag.LoanID = Model.LoanID; 
+    ViewBag.Status = Model.ApplicationStatus; 
+    ViewBag.TabArea = ""; 
+    ViewBag.IdParamName = "id"; 
 }
 
 @section Styles {

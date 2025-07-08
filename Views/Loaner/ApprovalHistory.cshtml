@@ -1,6 +1,10 @@
 ﻿@model LoanApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Approval History";
+    ViewBag.IdParamName = "id";
+    ViewBag.LoanID = Model.LoanID;
+    ViewBag.Status = Model.ApplicationStatus;
+    ViewBag.TabArea = "";
 }
 
 @section Styles {
