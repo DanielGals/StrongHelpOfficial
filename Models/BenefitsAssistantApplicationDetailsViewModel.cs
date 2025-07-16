@@ -11,8 +11,7 @@
         public DateTime DateSubmitted { get; set; }
         public List<BADocumentViewModel> Documents { get; set; } = new();
         public string Remarks { get; set; } = string.Empty;
-
-
+        public List<ApproverViewModel> Approvers { get; set; } = new();
     }
 
     public class BADocumentViewModel
@@ -22,4 +21,38 @@
         public string Type { get; set; }
     }
 
+    public class ApproverViewModel
+    {
+        public int RoleId { get; set; }
+        public string RoleName { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; }
+        public string Email { get; set; }
+        public int Order { get; set; }
+        public string Description { get; set; }
+    }
+
+    // Request models for the controller actions
+    public class SaveApproverRequest
+    {
+        public int LoanId { get; set; }
+        public int RoleId { get; set; }
+        public int UserId { get; set; }
+        public int PhaseOrder { get; set; }
+        public string Description { get; set; }
+    }
+
+    public class ForwardApplicationRequest
+    {
+        public int LoanId { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public List<ForwardApproverDto> Approvers { get; set; }
+    }
+
+    public class ForwardApproverDto
+    {
+        public int UserId { get; set; }
+        public int Order { get; set; }
+    }
 }
