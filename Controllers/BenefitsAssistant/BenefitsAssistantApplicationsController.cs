@@ -74,13 +74,13 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         statusFilter = tab;
                 }
 
-                // Build SQL query for applications
+                // Build SQL query for applications - MODIFIED to include unassigned applications
                 var sql = @"
-                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
-                    FROM LoanApplication la
-                    INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.BenefitAssistantUserID = @UserId
-                ";
+            SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
+            FROM LoanApplication la
+            INNER JOIN [User] u ON la.UserID = u.UserID
+            WHERE (la.BenefitAssistantUserID = @UserId OR la.BenefitAssistantUserID IS NULL)
+        ";
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {
@@ -126,7 +126,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 }
             }
 
-            // Pagination logic
+            // Pagination logic remains the same
             int pageSize = 5;
             int totalApplications = model.Applications.Count;
             model.TotalApplications = totalApplications;

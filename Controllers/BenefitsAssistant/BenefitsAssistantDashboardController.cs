@@ -61,7 +61,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // 1. Get stats
+                // 1. Get stats - MODIFIED to include applications without BenefitAssistantUserID
                 using (var cmd = new SqlCommand(@"
                     SELECT 
                         COUNT(*) AS TotalApplications,
@@ -69,7 +69,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         SUM(CASE WHEN ApplicationStatus = 'Approved' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS ApprovedToday,
                         SUM(CASE WHEN ApplicationStatus = 'Rejected' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS RejectedToday
                     FROM LoanApplication
-                    WHERE BenefitAssistantUserID = @UserId
+                    WHERE BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);
@@ -85,13 +85,13 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // 2. Get pending applications (with status)
+                // 2. Get pending applications - MODIFIED to include applications without BenefitAssistantUserID
                 var pendingApps = new List<PendingApplicationViewModel>();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.BenefitAssistantUserID = @UserId
+                    WHERE (la.BenefitAssistantUserID = @UserId OR la.BenefitAssistantUserID IS NULL)
                       AND la.ApplicationStatus IN ('Submitted', 'In Review')
                     ORDER BY la.DateSubmitted DESC
                 ", conn))

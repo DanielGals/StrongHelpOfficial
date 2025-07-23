@@ -1,0 +1,615 @@
+﻿@model StrongHelpOfficial.Models.BenefitsAssistantLogsViewModel
+@{
+    ViewData["Title"] = "Activity Logs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Don't override the page size from controller
+    // Model.PageSize = 5; (removed)
+
+    // Store whether we're filtering and if we found results
+    bool isFiltering = !string.IsNullOrEmpty(Model.FilterBy) || Model.FilterDate.HasValue;
+    bool hasFilteredResults = Model.Logs.Any();
+
+    // Calculate pagination values
+    int start = ((Model.CurrentPage - 1) * Model.PageSize) + (Model.TotalItems == 0 ? 0 : 1);
+    int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/BenefitsAssistantDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <style>
+        .pagination {
+            display: flex;
+            gap: 4px;
+        }
+
+        .page-item {
+            display: inline-block;
+        }
+
+        .page-link {
+            border: 1px solid #ccc;
+            padding: 4px 16px;
+            border-radius: 4px;
+            color: var(--primary-dark);
+            background: #fff;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            font-weight: 500;
+        }
+
+            .page-link:hover,
+            .page-link:focus {
+                background: #fff;
+                color: var(--primary-dark);
+                border-color: #ccc;
+            }
+
+        .page-item.active .page-link {
+            background: var(--primary-dark);
+            color: #fff;
+            border-color: var(--primary-dark);
+        }
+
+        .page-item.disabled .page-link {
+            color: #aaa;
+            pointer-events: none;
+            background: #f5f5f5;
+            border-color: #eee;
+        }
+
+        .pagination-summary {
+            font-weight: normal;
+            color: #6c757d;
+        }
+
+            .pagination-summary strong {
+                font-weight: bold;
+                color: var(--primary-dark);
+            }
+
+        /* Logs Header styling */
+        .logs-header {
+            margin-bottom: 20px;
+        }
+
+        .logs-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .filter-date-btn, .filter-status-btn {
+            background: var(--primary-dark, #373fcf);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(55, 63, 207, 0.08);
+            min-width: 140px;
+        }
+
+        .filter-status-btn {
+            width: 100%;
+        }
+
+        /* Card and box styling with sharp edges */
+        .all-logs-box {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+        }
+
+        .myapp-card-body {
+            padding: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Table styling */
+        .table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: collapse;
+        }
+
+            .table th, .table td {
+                padding: 12px 16px;
+                vertical-align: middle;
+            }
+
+            .table th {
+                font-weight: 600;
+                color: #495057;
+                background-color: #f8f9fa;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .table td {
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .table tr:last-child td {
+                border-bottom: none;
+            }
+
+        /* Status badge styling */
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .status-inreview {
+            background-color: #ffd54f;
+            color: #000;
+        }
+
+        .status-approved {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .status-rejected {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .status-submitted {
+            background-color: #3949ab;
+            color: white;
+        }
+
+        /* Action badge styling */
+        .action-badge {
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+        }
+
+            .action-badge.approved {
+                background-color: #4caf50;
+                color: white;
+            }
+
+            .action-badge.rejected {
+                background-color: #f44336;
+                color: white;
+            }
+
+            .action-badge.inreview {
+                background-color: #ffd54f;
+                color: #000;
+            }
+
+        /* Search styling */
+        .search-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            position: relative;
+            flex-grow: 1;
+        }
+
+        .search-actions {
+            width: 160px; /* Reduced width */
+            flex-shrink: 0;
+        }
+
+        .input-group-text {
+            background: #fff;
+            border-right: 0;
+        }
+
+        .form-control {
+            border-left: 0;
+        }
+
+        /* Search styling */
+        .input-group {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* Dropdown specific styling */
+        .dropdown-toggle::after {
+            display: none; /* Hide default caret */
+        }
+
+        .dropdown-menu {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: none;
+            padding: 8px 0;
+        }
+
+        .dropdown-item {
+            padding: 8px 16px;
+            font-size: 0.95rem;
+        }
+
+            .dropdown-item:hover {
+                background-color: #f8f9fa;
+                color: var(--primary-dark);
+            }
+
+        /* Toast notification styling */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+
+        .toast {
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+            border-left: 4px solid var(--primary-dark);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Badge for active filters */
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e9ecef;
+            color: #495057;
+            border-radius: 50px;
+            padding: 4px 12px;
+            margin-right: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+            .filter-badge .filter-remove {
+                margin-left: 6px;
+                cursor: pointer;
+                font-size: 1rem;
+                color: #777;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+                .filter-badge .filter-remove:hover {
+                    color: #555;
+                }
+
+        .active-filters {
+            margin-bottom: 12px;
+        }
+
+        /* Reset filters button */
+        .reset-filters {
+            background: none;
+            border: none;
+            color: var(--primary-dark);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 8px;
+        }
+    </style>
+}
+
+<!-- Toast notification container -->
+<div class="toast-container">
+    <div id="filterToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="toast-header">
+            <strong class="me-auto">Filter Results</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+</div>
+
+<div class="logs-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Activity Logs</h2>
+            <p class="text-muted">View your activity history related to loan application processing</p>
+        </div>
+        <button class="filter-date-btn" data-bs-toggle="modal" data-bs-target="#dateFilterModal">
+            <i class="bi bi-calendar"></i> Filter by Date
+        </button>
+    </div>
+</div>
+
+<!-- Active filters display -->
+@if (isFiltering)
+{
+    <div class="active-filters">
+        @if (!string.IsNullOrEmpty(Model.FilterBy))
+        {
+            <span class="filter-badge">
+                Status: @Model.FilterBy
+                <a href="@Url.Action("Index", new { filterDate = Model.FilterDate, page = 1 })" class="filter-remove"><i class="bi bi-x"></i></a>
+            </span>
+        }
+        @if (Model.FilterDate.HasValue)
+        {
+            <span class="filter-badge">
+                Date: @Model.FilterDate.Value.ToString("yyyy-MM-dd")
+                <a href="@Url.Action("Index", new { filterBy = Model.FilterBy, page = 1 })" class="filter-remove"><i class="bi bi-x"></i></a>
+            </span>
+        }
+        <a href="@Url.Action("Index")" class="reset-filters">Reset all filters</a>
+    </div>
+}
+
+<div class="search-row">
+    <div class="search-input">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" id="searchLogs" class="form-control border-start-0" placeholder="Search logs..." />
+        </div>
+    </div>
+    <div class="search-actions">
+        <div class="dropdown">
+            <form method="get" id="statusFilterForm">
+                <input type="hidden" name="filterBy" id="filterByInput" value="@(Model.FilterBy ?? "")" />
+                @if (Model.FilterDate.HasValue)
+                {
+                    <input type="hidden" name="filterDate" value="@Model.FilterDate.Value.ToString("yyyy-MM-dd")" />
+                }
+                <input type="hidden" name="page" value="1" />
+
+                <button class="filter-status-btn dropdown-toggle" type="button" id="statusDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span>@(string.IsNullOrEmpty(Model.FilterBy) ? "All Actions" : Model.FilterBy)</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="statusDropdown">
+                    <li><a class="dropdown-item" href="#" data-value="">All Actions</a></li>
+                    <li><a class="dropdown-item" href="#" data-value="In Review">In Review</a></li>
+                    <li><a class="dropdown-item" href="#" data-value="Approved">Approved</a></li>
+                    <li><a class="dropdown-item" href="#" data-value="Rejected">Rejected</a></li>
+                </ul>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="all-logs-box mb-4">
+    <div class="card myapp-card-body">
+        <div class="card-body">
+            <h5 class="fw-semibold mb-2">Activity Logs</h5>
+            <p class="text-muted" style="font-size: 0.95em;">Review your recent activities on loan applications</p>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Action</th>
+                            <th>Application ID</th>
+                            <th>Details</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Logs.Any())
+                        {
+                            foreach (var log in Model.Logs)
+                            {
+                                string actionClass = log.Action.Trim() switch
+                                {
+                                    "Approved" => "action-badge approved",
+                                    "Rejected" => "action-badge rejected",
+                                    "In Review" => "action-badge inreview",
+                                    _ => "action-badge"
+                                };
+
+                                <tr>
+                                    <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                    <td>
+                                        <span class="@actionClass">@log.Action</span>
+                                    </td>
+                                    <td>@log.ApplicationID</td>
+                                    <td>@log.Details</td>
+                                    <td>
+                                        @{
+                                            string normalizedStatus = log.Status.Trim();
+                                            string statusClass = normalizedStatus switch
+                                            {
+                                                "In Review" => "status-badge status-inreview",
+                                                "Approved" => "status-badge status-approved",
+                                                "Rejected" => "status-badge status-rejected",
+                                                _ => "status-badge"
+                                            };
+                                        }
+                                        <span class="@statusClass">
+                                            @normalizedStatus
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="alert alert-info mb-0">
+                                        @if (isFiltering)
+                                        {
+                                            <div>
+                                                <i class="bi bi-exclamation-circle me-2"></i>
+                                                No activity logs found with the selected filters.
+                                            </div>
+                                            <div class="mt-2">
+                                                <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-primary">Clear filters</a>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span>No activity logs found.</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination controls below the table -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    <span class="pagination-summary text-teal">
+                        Showing <strong>@start</strong> to <strong>@end</strong> of <strong>@Model.TotalItems</strong> entries
+                    </span>
+                </div>
+                <nav>
+                    <ul class="pagination mb-0">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { filterBy = Model.FilterBy, filterDate = Model.FilterDate, page = Math.Max(1, Model.CurrentPage - 1) })">Previous</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { filterBy = Model.FilterBy, filterDate = Model.FilterDate, page = i })">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages || Model.TotalPages == 0 ? "disabled" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { filterBy = Model.FilterBy, filterDate = Model.FilterDate, page = Math.Min(Model.TotalPages, Model.CurrentPage + 1) })">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Filter Modal -->
+<div class="modal fade" id="dateFilterModal" tabindex="-1" aria-labelledby="dateFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dateFilterModalLabel">Filter by Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="get" id="dateFilterForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="filterDate" class="form-label">Select Date</label>
+                        <input type="date" class="form-control" id="filterDate" name="filterDate" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.FilterBy))
+                    {
+                        <input type="hidden" name="filterBy" value="@Model.FilterBy">
+                    }
+                    <input type="hidden" name="page" value="1">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('searchLogs');
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.table tbody tr');
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+
+            // Status dropdown functionality
+            const filterForm = document.getElementById('statusFilterForm');
+            const filterByInput = document.getElementById('filterByInput');
+            const statusDropdown = document.getElementById('statusDropdown');
+
+            // Add event listeners for dropdown items
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Update displayed text
+                    const value = this.getAttribute('data-value');
+                    const displayText = this.textContent.trim();
+                    statusDropdown.querySelector('span').textContent = displayText;
+
+                    // Update form input
+                    filterByInput.value = value;
+
+                    // Submit form
+                    filterForm.submit();
+                });
+            });
+
+            // Date filter form submission
+            const dateFilterForm = document.getElementById('dateFilterForm');
+            dateFilterForm.addEventListener('submit', function(e) {
+                const dateInput = document.getElementById('filterDate');
+                // Only submit if a date is selected
+                if (!dateInput.value) {
+                    e.preventDefault();
+                    showToast('Please select a date before applying the filter.');
+                }
+            });
+
+            // Initialize Bootstrap toast
+            const toastElement = document.getElementById('filterToast');
+            const toast = new bootstrap.Toast(toastElement);
+
+            // Show toast if we're filtering but no results
+        @if (isFiltering && !hasFilteredResults)
+        {
+            <text>
+                        showToast('No logs found for the selected filters.');
+            </text>
+        }
+
+            // Function to show toast messages
+            function showToast(message) {
+                document.getElementById('toastMessage').textContent = message;
+                toast.show();
+            }
+        });
+    </script>
+}

@@ -23,9 +23,10 @@
 <div class="d-flex flex-column flex-md-row align-items-md-center mb-4 gap-3">
     <div class="loan-details-tab-group mb-0">
         <a class="loan-details-tab @(currentAction == "Index" || currentAction == "Details" ? "active" : "")"
-           href="@Url.Action("Index", (string)tabController, idRouteValues)">
+           href="@Url.Action((tabController == "MyApplication" ? "Details" : "Index"), (string)tabController, idRouteValues)">
             Details
         </a>
+
         <a class="loan-details-tab @(currentAction == "ApprovalFlow" ? "active" : "")"
            href="@Url.Action("ApprovalFlow", (string)tabController, idRouteValues)">
             Approval Flow
