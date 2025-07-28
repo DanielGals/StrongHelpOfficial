@@ -21,6 +21,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
         public async Task<IActionResult> Index(string? tab, string? search, int page = 1)
         {
             // Set SelectedTab for view/tab highlighting
+            //Set SelectedTab for tab highlighting
             var model = new BenefitsAssistantApplicationsViewModel
             {
                 SelectedTab = string.IsNullOrEmpty(tab) ? "Submitted" : (tab == "All Applications" ? null : tab),
@@ -32,6 +33,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             if (string.IsNullOrEmpty(email))
             {
                 // Optionally redirect or show error
+                // redirect or show error
                 return View("~/Views/BenefitsAssistant/BenefitsAssistantApplications.cshtml", model);
             }
 
@@ -41,6 +43,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
 
                 // Get the current Benefits Assistant's UserID
+                //Get the current Benefits Assistant's UserID
                 using (var cmd = new SqlCommand("SELECT UserID FROM [User] WHERE Email = @Email", conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -54,10 +57,12 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 }
 
                 // Map tab to actual status in DB
+                //Map tab to actual status in DB
                 string? statusFilter = null;
                 if (string.IsNullOrEmpty(tab))
                 {
                     // Default to "Submitted" on first load
+                    //Default to "Submitted" on first load
                     statusFilter = "Submitted";
                 }
                 else if (tab != "All Applications")
@@ -75,12 +80,12 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 }
 
                 // Build SQL query for applications - MODIFIED to include unassigned applications
+
                 var sql = @"
-            SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
-            FROM LoanApplication la
-            INNER JOIN [User] u ON la.UserID = u.UserID
-            WHERE (la.BenefitAssistantUserID = @UserId OR la.BenefitAssistantUserID IS NULL)
-        ";
+                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
+                    FROM LoanApplication la
+                    INNER JOIN [User] u ON la.UserID = u.UserID
+                    WHERE (la.BenefitAssistantUserID = @UserId OR la.BenefitAssistantUserID IS NULL)";
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {
@@ -127,6 +132,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             }
 
             // Pagination logic remains the same
+
             int pageSize = 5;
             int totalApplications = model.Applications.Count;
             model.TotalApplications = totalApplications;
@@ -149,12 +155,13 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
 
                 // Fetch main application details (do NOT select Department or PayrollAccountNumber)
+                //Fetch main application details
                 using (var cmd = new SqlCommand(@"
-            SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                   u.FirstName, u.LastName
-            FROM LoanApplication la
-            INNER JOIN [User] u ON la.UserID = u.UserID
-            WHERE la.LoanID = @LoanID
+                    SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           u.FirstName, u.LastName
+                    FROM LoanApplication la
+                    INNER JOIN [User] u ON la.UserID = u.UserID
+                    WHERE la.LoanID = @LoanID
         ", conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", id);
@@ -171,6 +178,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 ApplicationStatus = reader["ApplicationStatus"]?.ToString(),
                                 EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}",
                                 // Set placeholders since these columns do not exist
+                                //Set placeholders 
                                 Department = "IT Department",
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<DocumentViewModel>()
@@ -183,11 +191,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     return NotFound();
 
                 // Fetch documents
+                //Fetch documents
                 using (var cmd = new SqlCommand(@"
-            SELECT LoanDocumentID, LoanDocumentName, '' AS [Type]
-            FROM LoanDocument
-            WHERE LoanID = @LoanID
-        ", conn))
+                    SELECT LoanDocumentID, LoanDocumentName, '' AS [Type]
+                    FROM LoanDocument
+                    WHERE LoanID = @LoanID", conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", id);
 

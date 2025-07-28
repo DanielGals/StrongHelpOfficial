@@ -2,51 +2,99 @@
 using StrongHelpOfficial.Models;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace StrongHelpOfficial.Controllers.Loaner
 {
     [Area("Loaner")]
     public class ApplyForLoanController : Controller
     {
-
         private readonly IConfiguration _config;
-        public ApplyForLoanController(IConfiguration config)
+        private readonly IMemoryCache _memoryCache;
+        private const string RequiredDocumentsCacheKey = "RequiredDocuments"; // Same key as in BenefitsAssistantController
+
+        public ApplyForLoanController(IConfiguration config, IMemoryCache memoryCache)
         {
             _config = config;
+            _memoryCache = memoryCache;
         }
+
         public IActionResult Index()
         {
             var model = new ApplyForLoanViewModel();
-            model.BenefitsAssistantUserID = 2; // Default Benefits Assistant ID
+            model.BenefitsAssistantUserID = 2; //Default Benefits Assistant ID
+
+            // Get required documents from memory cache
+            if (_memoryCache.TryGetValue(RequiredDocumentsCacheKey, out List<string> documents))
+            {
+                model.RequiredDocuments = documents;
+            }
+            else
+            {
+                // Default documents if not in cache
+                model.RequiredDocuments = new List<string>
+                {
+                    "Latest 2 months payslip",
+                    "Certificate of Employment",
+                    "Valid government-issued ID"
+                };
+            }
+
             using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            // Get user data from session
             ViewData["UserID"] = HttpContext.Session.GetInt32("UserID");
             ViewData["RoleName"] = HttpContext.Session.GetString("RoleName");
             ViewData["Email"] = HttpContext.Session.GetString("Email");
-            return View("~/Views/Loaner/ApplyForLoan.cshtml", model);
 
+            // Calculate document count
+            var userId = HttpContext.Session.GetInt32("UserID");
+            int documentCount = 0;
+            if (userId.HasValue)
+            {
+                try
+                {
+                    conn.Open();
+                    var cmdLoan = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn);
+                    cmdLoan.Parameters.AddWithValue("@UserID", userId);
+                    var loanId = cmdLoan.ExecuteScalar();
+
+                    if (loanId != null)
+                    {
+                        var cmdCount = new SqlCommand("SELECT COUNT(*) FROM LoanDocument WHERE LoanID = @LoanID", conn);
+                        cmdCount.Parameters.AddWithValue("@LoanID", loanId);
+                        documentCount = (int)cmdCount.ExecuteScalar();
+                    }
+                }
+                catch
+                {
+                    // Ignore errors
+                }
+            }
+            ViewData["DocumentCount"] = documentCount;
+
+            return View("~/Views/Loaner/ApplyForLoan.cshtml", model);
         }
+
         public IActionResult submissionResult(ApplyForLoanViewModel model)
         {
             TempData["submitResult"] = "Loan request submitted successfully!";
             return RedirectToAction("Index", "ApplyForLoan");
         }
+
         public IActionResult failedSubmissionResult(ApplyForLoanViewModel model)
         {
             TempData["failedSubmitResult"] = "Your loan must at least have an amount and submitted 3 required documents";
             return RedirectToAction("Index", "ApplyForLoan");
         }
 
-
         [HttpPost]
         public async Task<IActionResult> UploadDocuments(ApplyForLoanViewModel model)
         {
-            // Get uploaded files from the Request
+            //Get uploaded files from the Request
             var files = model.Files;
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             var loanAmount = model.LoanAmount;
 
-            // Set model properties
+            //Set model properties
             if (files != null && loanAmount != null)
             {
                 if (files.Count >= 3 && loanAmount != 0)
@@ -56,7 +104,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         await conn.OpenAsync();
                         var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
-                        // Insert LoanApplication - MODIFIED to add ApplicationStatus and BenefitsAssistantUserID
+                        //Insert LoanApplication
                         using (var cmd = new SqlCommand(
                             "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, BenefitAssistantUserID, DateAssigned) " +
                             "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, @BenefitAssistantUserID, @DateAssigned)", conn))
@@ -65,13 +113,13 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
                             cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
-                            cmd.Parameters.AddWithValue("@Title", "Salary Loan"); // Default title
-                            cmd.Parameters.AddWithValue("@BenefitAssistantUserID", 2); // Set to Benefits Assistant with ID 2
+                            cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan"); //Default title
+                            cmd.Parameters.AddWithValue("@BenefitAssistantUserID", 2); //Set to Benefits Assistant with ID 2
                             cmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
                             await cmd.ExecuteNonQueryAsync();
                         }
 
-                        // Get the LoanID of the just-inserted application
+                        //Get the LoanID of the inserted application
                         int loanId = 0;
                         using (var cmd = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn))
                         {
@@ -79,7 +127,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             loanId = (int)(await cmd.ExecuteScalarAsync() ?? 0);
                         }
 
-                        // Insert each document
+                        //Insert each document
                         foreach (var file in files)
                         {
                             byte[] fileBytes;

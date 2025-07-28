@@ -1,0 +1,51 @@
+﻿.loan-details-document {
+    position: relative;
+}
+
+.delete-doc-btn {
+    color: #ffffff;
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+    .delete-doc-btn:hover {
+        opacity: 1;
+    }
+
+.add-document-btn {
+    background-color: var(--primary-dark);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.save-changes-btn {
+    background-color: #198754;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.is-deleted {
+    display: none;
+}

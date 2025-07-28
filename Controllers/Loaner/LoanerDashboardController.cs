@@ -53,19 +53,33 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
             if (userId != 0)
             {
-                using (var cmd = new SqlCommand("SELECT COUNT(*) FROM LoanApplication WHERE UserID = @UserID AND IsActive = 1", conn))
+                using (var cmd = new SqlCommand(@"SELECT COUNT(*) 
+                                                  FROM LoanApplication 
+                                                  WHERE UserID = @UserID 
+                                                  AND ApplicationStatus != 'Rejected' 
+                                                  AND IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
                     model.ActiveLoans = (int)cmd.ExecuteScalar();
                 }
 
-                using (var cmd = new SqlCommand("SELECT COUNT(*) FROM LoanApplication WHERE UserID = @UserID AND ApplicationStatus IN ('Submitted', 'In Review')", conn))
+                using (var cmd = new SqlCommand(@"SELECT COUNT(*) 
+                                                  FROM LoanApplication 
+                                                  WHERE UserID = @UserID 
+                                                  AND ApplicationStatus IN ('Active', 'In Review', 'Submitted', 'Pending')
+                                                  AND IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
-                    model.PendingApplications = (int)cmd.ExecuteScalar();
+                    model.ActiveLoans = (int)cmd.ExecuteScalar();
                 }
 
-                using (var cmd = new SqlCommand("SELECT TOP 5 CONCAT(Title, ' - ', ApplicationStatus, ' (', CONVERT(varchar, DateSubmitted, 120), ')') AS Activity FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn))
+
+                using (var cmd = new SqlCommand("SELECT TOP 5 " +
+                                                "CONCAT(Title, ' - ', ApplicationStatus, ' " +
+                                                "(', CONVERT(varchar, DateSubmitted, 120), ')') " +
+                                                "AS Activity FROM LoanApplication " +
+                                                "WHERE UserID = @UserID " +
+                                                "ORDER BY DateSubmitted DESC", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
                     using var reader = cmd.ExecuteReader();
@@ -93,9 +107,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 conn.Open();
                 using (var cmd = new SqlCommand(
                     @"SELECT COUNT(*) 
-              FROM LoanDocument d
-              INNER JOIN LoanApplication a ON d.LoanID = a.LoanID
-              WHERE a.UserID = @UserID", conn))
+                      FROM LoanDocument d
+                      INNER JOIN LoanApplication a ON d.LoanID = a.LoanID
+                      WHERE a.UserID = @UserID", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
                     documentCount = (int)cmd.ExecuteScalar();

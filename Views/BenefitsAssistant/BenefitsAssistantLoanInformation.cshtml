@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Loan Information Management";
+    ViewBag.TabArea = "";
+
+    // Get required documents from ViewData
+    var requiredDocuments = ViewData["RequiredDocuments"] as List<string> ?? new List<string>
+    {
+        "Latest 2 months payslip",
+        "Certificate of Employment",
+        "Valid government-issued ID"
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BenefitsAssistantLoanInformation.css" asp-append-version="true" />
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Loan Information Management</h2>
+        <div class="text-muted mb-2" style="font-size:1em;">Edit loan details, requirements, and processing information</div>
+    </div>
+    <button type="button" class="btn btn-primary-action" id="editInfoBtn">
+        <i class="bi bi-pencil"></i> Edit Information
+    </button>
+</div>
+
+<div class="myapp-card-body p-4 mb-4">
+    <h5 class="mb-1">Required Documents</h5>
+    <p class="text-muted" style="font-size: 0.95em; margin-bottom: 1.5rem;">Documents needed for loan application</p>
+
+    <div id="documentList" class="mb-3">
+        @foreach (var doc in requiredDocuments)
+        {
+            <div class="loan-details-document mb-3" data-document="@doc">
+                <div>
+                    <div class="doc-title">@doc</div>
+                    <div class="doc-type">Required Document</div>
+                </div>
+                <button type="button" class="delete-doc-btn" style="display: none;"><i class="bi bi-trash"></i></button>
+            </div>
+        }
+    </div>
+
+    <button type="button" class="add-document-btn" id="addDocumentBtn" style="display: none;">
+        <i class="bi bi-plus-circle"></i> Add Document
+    </button>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/BenefitsAssistantLoanInformation.js" asp-append-version="true"></script>
+}
+

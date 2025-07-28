@@ -10,83 +10,60 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
-    <style>
-        .subtitle-green {
-            color: #198754;
-            font-size: 1.1em;
-            margin-bottom: 0.5rem;
-        }
-
-        .alert-yellow {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            border-radius: 0.25rem;
-            padding: 1rem;
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-            .alert-yellow .icon {
-                margin-right: 0.75rem;
-                font-size: 1.5em;
-                flex-shrink: 0;
-            }
-
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .btn-burger {
-            width: 100%;
-            font-weight: 600;
-            padding: 0.75rem 1rem;
-            font-size: 1.1em;
-        }
-
-        .btn-outline-danger {
-            border-width: 2px;
-        }
-        /* Validation checklist item styles */
-        .checklist-item {
-            font-size: 1.2em;
-            color: #198754;
-            display: flex;
-            align-items: center;
-        }
-
-            .checklist-item .form-check-input {
-                width: 1.5em;
-                height: 1.5em;
-                margin-right: 0.75em;
-            }
-    </style>
+    <link rel="stylesheet" href="~/css/BenefitsAssistantApprovalHistory.css" asp-append-version="true" />
 }
 
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Approval History</h2>
+        <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
+    </div>
+</div>
+
+@{
+    ViewBag.LoanID = Model.LoanID;
+    ViewBag.Status = Model.ApplicationStatus;
+}
+@await Html.PartialAsync("_LoanApplicationTabs")
+
+@if (Model.Approvers != null && Model.Approvers.Any())
+{
+    @foreach (var approval in Model.Approvers)
+    {
+        // Determine the color based on status
+        var statusColor = approval.Status switch
+        {
+            "Approved" => "#28a745", // Green
+            "Rejected" => "#dc3545", // Red
+            "Reviewed" => "#17a2b8", // Blue
+            _ => "#dc3545" // Default to red for pending
+        };
+
+        <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
+            <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+                @approval.RoleName @(approval.RoleName.Contains("Benefits Assistant") ? "Review" : "Approval")
+            </div>
             <div>
-                <h2 class="fw-bold mb-1">Approval History</h2>
-                <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
+                <span>
+                    @approval.Status by @approval.UserName on @DateTime.Now.ToString("yyyy-MM-dd")
+                </span>
+                @if (!string.IsNullOrEmpty(approval.Description))
+                {
+                    <div class="approval-comments mt-2">
+                        <i class="bi bi-chat-left-text"></i> @approval.Description
+                    </div>
+                }
             </div>
         </div>
+    }
+}
 
-        @{
-            ViewBag.LoanID = Model.LoanID;
-            ViewBag.Status = Model.ApplicationStatus;
-        }
-        @await Html.PartialAsync("_LoanApplicationTabs")
-
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 0;">
-                <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
-                <div>
-                    <span>
-                        Submitted by @Model.EmployeeName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
-                    </span>
-                </div>
-            </div>
-        </div>
-
+<!-- Application Submission -->
+<div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
+    <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
+    <div>
+        <span>
+            Submitted by @Model.EmployeeName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+        </span>
+    </div>
+</div>

@@ -20,7 +20,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
             ViewData["RoleName"] = HttpContext.Session.GetString("RoleName");
             ViewData["Email"] = HttpContext.Session.GetString("Email");
 
-            var statuses = new List<string> { "Submitted", "In Progress", "Approved", "Declined" };
+            var statuses = new List<string> { "Submitted", "In Review", "Approved", "Rejected" };
             var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
             var applications = new List<MyApplicationViewModel>();
 
@@ -28,10 +28,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 conn.Open();
                 var sql = @"
-                    SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
-                    FROM LoanApplication
-                    WHERE UserID = @UserID
-                    ORDER BY DateSubmitted DESC";
+            SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
+            FROM LoanApplication
+            WHERE UserID = @UserID
+            ORDER BY DateSubmitted DESC";
                 using (var cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
@@ -74,12 +74,13 @@ namespace StrongHelpOfficial.Controllers.Loaner
             return status switch
             {
                 "Submitted" => 20,
-                "In Progress" => 60,
+                "In Review" => 60,
                 "Approved" => 100,
-                "Declined" => 100,
+                "Rejected" => 100,
                 _ => 20
             };
         }
+
 
         public IActionResult Details(int id)
         {
@@ -108,7 +109,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 DateSubmitted = (DateTime)reader["DateSubmitted"],
                                 ApplicationStatus = reader["ApplicationStatus"] as string,
                                 EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}",
-                                // Department and PayrollAccountNumber removed
                                 Documents = new List<DocumentViewModel>()
                             };
                         }
@@ -118,10 +118,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 // Fetch documents for this loan
                 if (loan != null)
                 {
-                    var docSql = @"
-    SELECT LoanDocumentID, LoanDocumentName
-    FROM LoanDocument
-    WHERE LoanID = @LoanID";
+                    var docSql = @"SELECT LoanDocumentID, LoanDocumentName
+                                    FROM LoanDocument
+                                    WHERE LoanID = @LoanID";
                     using (var docCmd = new SqlCommand(docSql, conn))
                     {
                         docCmd.Parameters.AddWithValue("@LoanID", id);

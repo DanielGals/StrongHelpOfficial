@@ -25,6 +25,33 @@
 }
 @await Html.PartialAsync("_LoanApplicationTabs")
 
+@if (Model.Approvers != null && Model.Approvers.Any())
+{
+    @foreach (var approval in Model.Approvers)
+    {
+        // Determine the color based on status
+        var statusColor = approval.Status switch
+        {
+            "Approved" => "#28a745", // Green
+            "Rejected" => "#dc3545", // Red
+            "Reviewed" => "#17a2b8", // Blue
+            _ => "#dc3545" // Default to red for pending
+        };
+
+        <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
+            <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+                @approval.RoleName @(approval.RoleName.Contains("Benefits Assistant") ? "Review" : "Approval")
+            </div>
+            <div>
+                <span>
+                    @approval.Status by @approval.ApproverName on @(approval.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+                </span>
+            </div>
+        </div>
+    }
+}
+
+<!-- Application Submission -->
 <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
     <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
     <div>
@@ -33,6 +60,3 @@
         </span>
     </div>
 </div>
-
-
-

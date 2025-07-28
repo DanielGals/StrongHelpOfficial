@@ -14,6 +14,8 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(); // Add session services
 builder.Services.AddRazorPages();
+builder.Services.AddMemoryCache();
+
 
 var app = builder.Build();
 

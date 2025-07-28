@@ -10,6 +10,12 @@
         public string Department { get; set; }
         public string PayrollAccountNumber { get; set; }
         public List<DocumentViewModel> Documents { get; set; }
+        public List<ApprovalViewModel> ApprovalHistory { get; set; } = new List<ApprovalViewModel>();
+        public int? BenefitAssistantUserID { get; set; }
+        public string BenefitAssistantName { get; set; }
+        public DateTime? DateAssigned { get; set; }
+        public string Remarks { get; set; }
+        public List<ApprovalViewModel> Approvers => ApprovalHistory;
     }
 
     public class DocumentViewModel
@@ -19,5 +25,3 @@
         public string Type { get; set; }
     }
 }
-
-

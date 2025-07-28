@@ -18,7 +18,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
         public IActionResult Index()
         {
-            // Get the logged-in user's email from session
             var email = HttpContext.Session.GetString("Email");
             var model = new BenefitsAssistantDashboardViewModel();
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -37,7 +36,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 conn.Open();
 
-                // Get UserID, FirstName, and LastName for the logged-in user
                 using (var cmd = new SqlCommand("SELECT UserID, FirstName, LastName FROM [User] WHERE Email = @Email", conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -49,7 +47,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                             firstName = reader["FirstName"].ToString() ?? "";
                             lastName = reader["LastName"].ToString() ?? "";
                             model.UserName = firstName;
-                            // Update session with correct names
                             HttpContext.Session.SetString("FirstName", firstName);
                             HttpContext.Session.SetString("LastName", lastName);
                         }
@@ -61,7 +58,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // 1. Get stats - MODIFIED to include applications without BenefitAssistantUserID
+                //Get stats
                 using (var cmd = new SqlCommand(@"
                     SELECT 
                         COUNT(*) AS TotalApplications,
@@ -85,7 +82,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // 2. Get pending applications - MODIFIED to include applications without BenefitAssistantUserID
+                //Get pending applications
                 var pendingApps = new List<PendingApplicationViewModel>();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
@@ -119,7 +116,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         }
                     }
                 }
-                // Only take 5
+                
                 model.PendingApplications = pendingApps.Take(5).ToList();
             }
             return View("~/Views/BenefitsAssistant/BenefitsAssistantDashboard.cshtml", model);

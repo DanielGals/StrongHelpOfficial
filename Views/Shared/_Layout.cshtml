@@ -79,8 +79,6 @@
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Apply For Loan</span>
                         </a>
-
-
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MyApplication" &&
                          ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
                            href="@Url.Action("Index", "MyApplication", new { area = "Loaner" })">
@@ -94,7 +92,6 @@
                             <span>Loan History</span>
                         </a>
                     }
-
                     else if (roleName == "Benefits Assistant")
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantDashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
@@ -102,13 +99,11 @@
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
-
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantApplications" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
                            href="@Url.Action("Index", "BenefitsAssistantApplications", new { area = "" })">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
-
                         <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Reports" ? "active" : "")"
                            href="/BenefitsAssistant/Reports">
                             <i class="bi bi-bar-chart"></i>
@@ -119,13 +114,12 @@
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "LoanInformation" ? "active" : "")"
-                           href="/BenefitsAssistant/LoanInformation">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistant" && ViewContext.RouteData.Values["Action"]?.ToString() == "LoanInformation" ? "active" : "")"
+                           href="@Url.Action("LoanInformation", "BenefitsAssistant", new { area = "" })">
                             <i class="bi bi-info-circle"></i>
                             <span>Loan Information</span>
                         </a>
                     }
-
                     else
                     {
                         <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
@@ -149,11 +143,9 @@
                             <i class="bi bi-box-arrow-right"></i>
                             <span>Logout</span>
                         </a>
-
                     </div>
                 </nav>
             </div>
-
             <div id="content-wrapper">
                 <div class="main-content">
                     <!-- Topbar Start -->
@@ -168,7 +160,6 @@
                                     <span class="notification-dot"></span>
                                 </span>
                             </div>
-
                             <div class="user-avatar">
                                 @{
                                     var firstName = Context.Session.GetString("FirstName") ?? "";
@@ -193,7 +184,6 @@
                                         }
                                         else if (namePart.Length > 4)
                                         {
-                                            // Heuristic: first 4 letters as first name, rest as last name
                                             var first = namePart.Substring(0, 4);
                                             var last = namePart.Substring(4);
                                             initials = (first.Length > 0 ? first[0].ToString().ToUpper() : "") +
@@ -219,10 +209,7 @@
                                 <span class="user-name">
                                     @displayName
                                 </span>
-
-
                             </div>
-
                     </header>
                     <!-- Topbar End -->
                     @RenderBody()
@@ -232,56 +219,14 @@
                         &copy; 2025 StrongHelp. All rights reserved. A capstone project by STI College Global City.
                     </div>
                 </footer>
-
             </div>
-
         </div>
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const sidebarWrapper = document.getElementById('sidebar-wrapper');
-            const bodyElement = document.body;
-
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    sidebarWrapper.classList.toggle('collapsed');
-                    bodyElement.classList.toggle('sidebar-collapsed');
-
-                    const icon = sidebarToggle.querySelector('i');
-                    if (sidebarWrapper.classList.contains('collapsed')) {
-                        icon.classList.remove('bi-chevron-left');
-                        icon.classList.add('bi-chevron-right');
-                    } else {
-                        icon.classList.remove('bi-chevron-right');
-                        icon.classList.add('bi-chevron-left');
-                    }
-                });
-            }
-
-            // Handle mobile responsiveness
-            function checkWidth() {
-                if (window.innerWidth < 768) {
-                    sidebarWrapper.classList.add('collapsed');
-                    bodyElement.classList.add('sidebar-collapsed');
-                    const icon = sidebarToggle.querySelector('i');
-                    icon.classList.remove('bi-chevron-left');
-                    icon.classList.add('bi-chevron-right');
-                }
-            }
-
-            // Check width on page load
-            checkWidth();
-
-            // Check width on resize
-            window.addEventListener('resize', checkWidth);
-        });
-    </script>
+    <script src="~/js/_Layout.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

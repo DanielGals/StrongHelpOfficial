@@ -87,10 +87,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Loan details
                 var loanCmd = new SqlCommand(@"
-            SELECT la.*, u.FirstName, u.LastName, u.Email, u.ContactNum, u.RoleID
-            FROM LoanApplication la
-            JOIN [User] u ON la.UserID = u.UserID
-            WHERE la.LoanID = @LoanID", conn);
+                    SELECT la.*, u.FirstName, u.LastName, u.Email, u.ContactNum, u.RoleID
+                    FROM LoanApplication la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
                 using (var reader = await loanCmd.ExecuteReaderAsync())
@@ -109,9 +109,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Documents: Now include LoanDocumentID and determine file type
                 var docCmd = new SqlCommand(@"
-            SELECT LoanDocumentID, LoanDocumentName
-            FROM LoanDocument
-            WHERE LoanID = @LoanID", conn);
+                    SELECT LoanDocumentID, LoanDocumentName
+                    FROM LoanDocument
+                    WHERE LoanID = @LoanID", conn);
                 docCmd.Parameters.AddWithValue("@LoanID", loanId);
 
                 using (var docReader = await docCmd.ExecuteReaderAsync())
@@ -151,10 +151,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Loan details
                 var loanCmd = new SqlCommand(@"
-            SELECT la.*, u.FirstName, u.LastName
-            FROM LoanApplication la
-            JOIN [User] u ON la.UserID = u.UserID
-            WHERE la.LoanID = @LoanID", conn);
+                    SELECT la.*, u.FirstName, u.LastName
+                    FROM LoanApplication la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
                 using (var reader = await loanCmd.ExecuteReaderAsync())
@@ -179,10 +179,17 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 await conn.OpenAsync();
 
+                // Get loan application details including Benefits Assistant info
                 var loanCmd = new SqlCommand(@"
-            SELECT la.*, u.FirstName, u.LastName
+            SELECT la.*, 
+                   u.FirstName, u.LastName,
+                   ba.UserID AS BenefitAssistantUserID,
+                   ba.FirstName + ' ' + ba.LastName AS BenefitAssistantName,
+                   la.DateAssigned,
+                   la.Remarks
             FROM LoanApplication la
             JOIN [User] u ON la.UserID = u.UserID
+            LEFT JOIN [User] ba ON la.BenefitAssistantUserID = ba.UserID
             WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -194,12 +201,85 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         model.ApplicationStatus = reader["ApplicationStatus"] as string ?? "Submitted";
                         model.EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}";
                         model.DateSubmitted = (DateTime)reader["DateSubmitted"];
+                        model.LoanAmount = (decimal)reader["LoanAmount"];
+                        model.BenefitAssistantUserID = reader["BenefitAssistantUserID"] as int?;
+                        model.BenefitAssistantName = reader["BenefitAssistantName"] as string;
+                        model.DateAssigned = reader["DateAssigned"] as DateTime?;
+                        model.Remarks = reader["Remarks"] as string;
                     }
+                }
+
+                // Get approval history - ONLY get approved/rejected entries
+                var approvalCmd = new SqlCommand(@"
+            SELECT 
+                la.LoanApprovalID,  
+                la.ApproverUserID,
+                u.FirstName + ' ' + u.LastName AS ApproverName,
+                r.RoleName,
+                la.ApprovedDate,
+                la.Status,
+                la.Comment,  
+                la.[Order]
+            FROM LoanApproval la
+            JOIN [User] u ON la.ApproverUserID = u.UserID
+            JOIN Role r ON u.RoleID = r.RoleID
+            WHERE la.LoanID = @LoanID
+            AND (la.Status = 'Approved' OR la.Status = 'Rejected' OR la.Status = 'Reviewed')
+            ORDER BY la.[Order]", conn);
+
+
+                approvalCmd.Parameters.AddWithValue("@LoanID", loanId);
+
+                model.ApprovalHistory = new List<ApprovalViewModel>();
+                using (var reader = await approvalCmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        model.ApprovalHistory.Add(new ApprovalViewModel
+                        {
+                            ApproverUserID = (int)reader["ApproverUserID"],
+                            ApproverName = reader["ApproverName"].ToString(),
+                            RoleName = reader["RoleName"].ToString(),
+                            ApprovedDate = reader["ApprovedDate"] as DateTime?,
+                            Status = reader["Status"].ToString(),
+                            Comment = reader["Comment"] as string,
+                            Order = (int)reader["Order"]
+                        });
+                    }
+                }
+
+                // Add Benefits Assistant review if application is beyond Submitted
+                // and no Benefits Assistant entry exists in ApprovalHistory yet
+                bool hasBenefitsAssistantInHistory = model.ApprovalHistory.Any(a =>
+                    a.RoleName.Contains("Benefits Assistant"));
+
+                if (model.ApplicationStatus != "Submitted" &&
+                    model.ApplicationStatus != "Draft" &&
+                    model.BenefitAssistantUserID.HasValue &&
+                    !string.IsNullOrEmpty(model.BenefitAssistantName) &&
+                    !hasBenefitsAssistantInHistory)
+                {
+                    model.ApprovalHistory.Add(new ApprovalViewModel
+                    {
+                        ApproverUserID = model.BenefitAssistantUserID.Value,
+                        ApproverName = model.BenefitAssistantName,
+                        RoleName = "Benefits Assistant",
+                        ApprovedDate = model.DateAssigned,
+                        Status = "Reviewed",
+                        Comment = model.Remarks ?? "Application reviewed",
+                        Order = 0 // Always first in sequence
+                    });
                 }
             }
 
+            // Sort approvals by order
+            model.ApprovalHistory = model.ApprovalHistory.OrderByDescending(a => a.Order).ToList();
+
             return View("~/Views/Loaner/ApprovalHistory.cshtml", model);
         }
+
+
+
 
         public async Task<IActionResult> DeleteSubmission(int loanId)
         {
@@ -219,6 +299,110 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
             TempData["SuccessMessage"] = "Your application was successfully deleted.";
             return RedirectToAction(nameof(Index));
+        }
+        [HttpGet]
+        [HttpGet]
+        [HttpGet]
+        public async Task<IActionResult> GetApprovers(int loanId)
+        {
+            var approvers = new List<object>();
+
+            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+            {
+                await conn.OpenAsync();
+
+                // First get the application status
+                string applicationStatus = "";
+                using (var statusCmd = new SqlCommand(@"
+            SELECT ApplicationStatus, BenefitAssistantUserID 
+            FROM LoanApplication 
+            WHERE LoanID = @LoanID", conn))
+                {
+                    statusCmd.Parameters.AddWithValue("@LoanID", loanId);
+                    using (var reader = await statusCmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            applicationStatus = reader["ApplicationStatus"] as string ?? "Submitted";
+                        }
+                    }
+                }
+
+                // Get all approvers including Benefits Assistant
+                var cmd = new SqlCommand(@"
+            SELECT 
+                la.ApproverUserID,
+                u.FirstName + ' ' + u.LastName AS ApproverName,
+                r.RoleName,
+                la.[Order],
+                la.Status,
+                la.Comment
+            FROM LoanApproval la
+            JOIN [User] u ON la.ApproverUserID = u.UserID
+            JOIN Role r ON u.RoleID = r.RoleID
+            WHERE la.LoanID = @LoanID
+            ORDER BY la.[Order]", conn);
+
+                cmd.Parameters.AddWithValue("@LoanID", loanId);
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        approvers.Add(new
+                        {
+                            userId = (int)reader["ApproverUserID"],
+                            userName = reader["ApproverName"].ToString(),
+                            roleName = reader["RoleName"].ToString(),
+                            order = (int)reader["Order"],
+                            status = reader["Status"].ToString(),
+                            description = reader["Comment"] as string ?? ""
+                        });
+                    }
+                }
+
+                // If no Benefits Assistant was found in the approval records but the application 
+                // has been reviewed (status "In Review" or beyond), add Benefits Assistant manually
+                bool hasBenefitsAssistant = approvers.Any(a => a.ToString().Contains("Benefits Assistant"));
+
+                if (!hasBenefitsAssistant &&
+                    (applicationStatus == "In Review" || applicationStatus == "Approved" || applicationStatus == "Rejected"))
+                {
+                    // Get Benefits Assistant info from LoanApplication
+                    using (var baCmd = new SqlCommand(@"
+                SELECT 
+                    la.BenefitAssistantUserID,
+                    u.FirstName + ' ' + u.LastName AS BenefitAssistantName,
+                    'Benefits Assistant' AS RoleName,
+                    la.Remarks,
+                    la.DateAssigned
+                FROM LoanApplication la
+                LEFT JOIN [User] u ON la.BenefitAssistantUserID = u.UserID
+                WHERE la.LoanID = @LoanID
+                AND la.BenefitAssistantUserID IS NOT NULL", conn))
+                    {
+                        baCmd.Parameters.AddWithValue("@LoanID", loanId);
+
+                        using (var reader = await baCmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                approvers.Add(new
+                                {
+                                    userId = (int)reader["BenefitAssistantUserID"],
+                                    userName = reader["BenefitAssistantName"].ToString(),
+                                    roleName = "Benefits Assistant",
+                                    order = 0, // Always first in sequence
+                                    status = "Reviewed",
+                                    description = reader["Remarks"] as string ?? "Application reviewed"
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            return Json(approvers);
         }
     }
 }

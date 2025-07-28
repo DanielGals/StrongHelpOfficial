@@ -9,485 +9,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
-    <style>
-
-        /* Form validation styles */
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-        }
-
-        .form-control.is-valid {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-        }
-
-        /* Loading state for forward button */
-        .btn-burger:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Required field indicator */
-        .required-field::after {
-            content: " *";
-            color: #dc3545;
-            font-weight: bold;
-        }
-
-        /* Highlight empty required fields */
-        .form-control:invalid {
-            border-color: #ffc107;
-        }
-
-        /* Success message styling */
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            border-radius: 0.25rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .subtitle-green {
-            color: #198754;
-            font-size: 1.1em;
-            margin-bottom: 0.5rem;
-        }
-
-        .alert-yellow {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            border-radius: 0.25rem;
-            padding: 1rem;
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-            .alert-yellow .icon {
-                margin-right: 0.75rem;
-                font-size: 1.5em;
-                flex-shrink: 0;
-            }
-
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .btn-burger {
-            width: 100%;
-            font-weight: 600;
-            padding: 0.75rem 1rem;
-            font-size: 1.1em;
-        }
-
-        .btn-outline-danger {
-            border-width: 2px;
-        }
-        /* Validation checklist item styles */
-        .checklist-item {
-            font-size: 1.2em;
-            color: #198754;
-            display: flex;
-            align-items: center;
-        }
-
-            .checklist-item .form-check-input {
-                width: 1.5em;
-                height: 1.5em;
-                margin-right: 0.75em;
-            }
-
-        /* New styles for added elements */
-        .btn-add-approver {
-            background-color: #115E59;
-            border-color: #115E59;
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.375rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            width: 100%;
-            justify-content: center;
-        }
-
-            .btn-add-approver:hover {
-                background-color: #0d4b47;
-                border-color: #0d4b47;
-                color: white;
-            }
-
-        .form-section {
-            margin-bottom: 2rem;
-        }
-
-        .form-label-custom {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .message-textarea {
-            min-height: 150px;
-            resize: vertical;
-        }
-
-        /* Modal styles */
-        .modal-backdrop-custom {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0);
-            display: none;
-            z-index: 1050;
-            transition: background-color 0.3s ease;
-        }
-
-            .modal-backdrop-custom.show {
-                background-color: rgba(0, 0, 0, 0.5);
-            }
-
-        .modal-content-custom {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.7);
-            background: white;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 1051;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .modal-backdrop-custom.show .modal-content-custom {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-        }
-
-        .modal-header-custom {
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .modal-body-custom {
-            padding: 1.5rem;
-        }
-
-        .modal-footer-custom {
-            padding: 1rem 1.5rem 1.5rem 1.5rem;
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-
-        .btn-cancel {
-            background-color: #6c757d;
-            border-color: #6c757d;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-        }
-
-            .btn-cancel:hover {
-                background-color: #5a6268;
-                border-color: #545b62;
-            }
-
-        .btn-save {
-            background-color: #115E59;
-            border-color: #115E59;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-        }
-
-            .btn-save:hover {
-                background-color: #0d4b47;
-                border-color: #0d4b47;
-            }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-        }
-
-            .form-control:focus {
-                outline: none;
-                border-color: #115E59;
-                box-shadow: 0 0 0 0.2rem rgba(17, 94, 89, 0.25);
-            }
-
-            .form-control:disabled {
-                background-color: #e9ecef;
-                opacity: 1;
-            }
-
-        .form-select {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            background-color: white;
-        }
-
-            .form-select:focus {
-                outline: none;
-                border-color: #115E59;
-                box-shadow: 0 0 0 0.2rem rgba(17, 94, 89, 0.25);
-            }
-
-        .description-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .show {
-            display: block !important;
-        }
-
-        #approverDropdownGroup {
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateY(-10px);
-        }
-
-            #approverDropdownGroup.show {
-                max-height: 100px;
-                opacity: 1;
-                transform: translateY(0);
-            }
-
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        @@keyframes cardSlideIn {
-            0% {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.95);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Approval card animation */
-        .approval-card {
-            border: 1px solid #dee2e6;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background-color: #f8f9fa;
-            opacity: 0;
-            transform: translateY(-20px) scale(0.95);
-            animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        .approval-card-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-            color: #495057;
-        }
-
-        .approval-card-subtitle {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 0.75rem;
-        }
-
-        .approval-card-content {
-            color: #198754;
-            font-size: 0.9rem;
-        }
-
-            .approval-card-content div {
-                margin-bottom: 0.25rem;
-            }
-        /* Confirmation modal specific styles */
-        .confirmation-details {
-            margin-top: 1rem;
-        }
-
-        .confirmation-item {
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-            .confirmation-item:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-            }
-
-            .confirmation-item .form-label {
-                font-weight: 600;
-                color: #495057;
-                margin-bottom: 0.25rem;
-                font-size: 0.875rem;
-            }
-
-        .confirmation-value {
-            background-color: #f8f9fa;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            border: 1px solid #dee2e6;
-            font-size: 0.9rem;
-            color: #495057;
-            max-height: 100px;
-            overflow-y: auto;
-        }
-
-            .confirmation-value.empty {
-                font-style: italic;
-                color: #6c757d;
-            }
-
-        .approver-sequence-item {
-            display: flex;
-            align-items: center;
-            padding: 0.25rem 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-            .approver-sequence-item:last-child {
-                border-bottom: none;
-            }
-
-        .approver-order {
-            background-color: #115E59;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-        }
-
-        .approver-info {
-            flex-grow: 1;
-        }
-
-        .approver-name {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.875rem;
-        }
-
-        .approver-role {
-            color: #6c757d;
-            font-size: 0.75rem;
-        }
-
-        /* Loading state for confirm button */
-        .btn-save:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        /* Order information styling */
-        .order-info {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background-color: #f8f9fa;
-            border-radius: 0.375rem;
-            border: 1px solid #dee2e6;
-        }
-
-            .order-info small {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #6c757d;
-            }
-
-            .order-info i {
-                color: #17a2b8;
-            }
-
-        /* Style for disabled order dropdown when no options available */
-        .form-select:disabled {
-            background-color: #e9ecef;
-            color: #6c757d;
-            cursor: not-allowed;
-        }
-
-        /* Visual enhancement for order selection */
-        .form-group.order-selection {
-            position: relative;
-        }
-
-        .order-selection::before {
-            content: '';
-            position: absolute;
-            left: -3px;
-            top: 28px;
-            bottom: 0;
-            width: 3px;
-            background-color: #115E59;
-            border-radius: 2px;
-            opacity: 0.3;
-        }
-
-        /* Add a subtle animation when order options change */
-        .form-select.order-updated {
-            animation: orderUpdated 0.3s ease-in-out;
-        }
-
-        @@keyframes orderUpdated {
-            0%
-
-        {
-            background-color: #fff3cd;
-            border-color: #ffc107;
-        }
-
-        100% {
-            background-color: white;
-            border-color: #ced4da;
-        }
-
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/BenefitsAssistantApprovalFLow.css" asp-append-version="true" />
 }
 <div class="row">
     <div class="col-md-8">
@@ -629,797 +151,49 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Add Approver Modal Functionality
-        let approversList = [];
-        let rolesData = [];
-        let usersData = [];
-        const loanId = @Model.LoanID;
-
-        window.openModal = async function() {
-            const modal = document.getElementById('approverModal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-
-            // Load roles and order dropdown
-            await loadRoles();
-            await loadOrderDropdown(); // This now includes database orders
-        }
-
-        window.closeModal = function() {
-            const modal = document.getElementById('approverModal');
-            modal.classList.remove('show');
-
-            setTimeout(() => {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 300);
-
-            document.getElementById('roleSelect').value = '';
-            document.getElementById('approverSelect').value = '';
-            document.getElementById('emailField').value = '';
-            document.getElementById('descriptionField').value = '';
-
-            const approverGroup = document.getElementById('approverDropdownGroup');
-            approverGroup.classList.remove('show');
-        }
-
-        async function loadOrderDropdown() {
-            try {
-                const response = await fetch(`/BenefitsAssistantApplicationDetails/GetNextPhaseOrder?loanId=${loanId}`);
-                const result = await response.json();
-                const dropdown = document.getElementById('phaseOrderField');
-                dropdown.innerHTML = '';
-        
-                // Get orders from database (already saved approvers)
-                const databaseUsedOrders = result.usedOrders || [];
-        
-                // Get orders from current session (newly added approvers)
-                const sessionUsedOrders = approversList.map(approver => approver.order);
-        
-                // Combine both database and session orders
-                const allUsedOrders = [...databaseUsedOrders, ...sessionUsedOrders];
-        
-                console.log('Database orders:', databaseUsedOrders);
-                console.log('Session orders:', sessionUsedOrders);
-                console.log('All used orders:', allUsedOrders);
-        
-                // Generate options from 1 to 7, excluding all used orders
-                for (let i = 1; i <= 7; i++) {
-                    if (!allUsedOrders.includes(i)) {
-                        const option = document.createElement('option');
-                        option.value = i;
-                        option.textContent = i;
-                        dropdown.appendChild(option);
-                    }
-                }
-        
-                // If no options are available, show a message
-                if (dropdown.options.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'No available order numbers';
-                    option.disabled = true;
-                    dropdown.appendChild(option);
-                    dropdown.disabled = true;
-                } else {
-                    dropdown.disabled = false;
-                }
-        
-                // Add visual feedback
-                dropdown.classList.add('order-updated');
-                setTimeout(() => {
-                    dropdown.classList.remove('order-updated');
-                }, 300);
-        
-                // Update the order info display
-                updateOrderDropdownStyle(allUsedOrders);
-            } catch (error) {
-                console.error('Error loading order:', error);
-                const dropdown = document.getElementById('phaseOrderField');
-                dropdown.innerHTML = '<option value="1">1</option>';
-            }
-        }
-
-        function updateOrderDropdownStyle(allUsedOrders = null) {
-            const dropdown = document.getElementById('phaseOrderField');
-    
-            // If no orders provided, calculate them
-            if (allUsedOrders === null) {
-                // This is for when we call it from other places - we need to get database orders
-                // For now, just use session orders
-                allUsedOrders = approversList.map(approver => approver.order);
-            }
-    
-            // Remove existing order info
-            const existingOrderInfo = document.getElementById('orderInfo');
-            if (existingOrderInfo) {
-                existingOrderInfo.remove();
-            }
-    
-            // Add order group styling
-            const orderGroup = dropdown.closest('.form-group');
-            if (orderGroup) {
-                orderGroup.classList.add('order-selection');
-            }
-    
-            // Add visual indicator showing which orders are used
-            if (allUsedOrders.length > 0) {
-                const infoDiv = document.createElement('div');
-                infoDiv.id = 'orderInfo';
-                infoDiv.className = 'order-info';
-                infoDiv.innerHTML = `
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle"></i> 
-                        Used order numbers: ${allUsedOrders.sort((a, b) => a - b).join(', ')}
-                    </small>
-                `;
-                dropdown.parentNode.appendChild(infoDiv);
-            }
-        }
-
-
-        async function loadRoles() {
-            try {
-                const roleSelect = document.getElementById('roleSelect');
-                roleSelect.classList.add('loading');
-
-                const response = await fetch('/BenefitsAssistantApplicationDetails/GetRoles');
-                rolesData = await response.json();
-
-                roleSelect.innerHTML = '<option value="">Select a role...</option>';
-
-                // Filter out unwanted roles
-                const excludedRoles = ['Employee', 'Benefits Assistant', 'Admin'];
-
-                rolesData.forEach(role => {
-                    // Check if the role name contains any of the excluded terms
-                    const shouldExclude = excludedRoles.some(excludedRole =>
-                        role.roleName.includes(excludedRole)
-                    );
-
-                    // Only add the role if it's not excluded
-                    if (!shouldExclude) {
-                        const option = document.createElement('option');
-                        option.value = role.roleId;
-                        option.textContent = role.roleName;
-                        roleSelect.appendChild(option);
-                    }
-                });
-
-                roleSelect.classList.remove('loading');
-            } catch (error) {
-                console.error('Error loading roles:', error);
-                alert('Error loading roles. Please try again.');
-            }
-        }
-
-
-        window.handleRoleChange = async function() {
-            const roleId = document.getElementById('roleSelect').value;
-            const approverDropdown = document.getElementById('approverSelect');
-            const approverGroup = document.getElementById('approverDropdownGroup');
-            const emailField = document.getElementById('emailField');
-
-            if (roleId) {
-                try {
-                    approverGroup.style.display = 'block';
-                    setTimeout(() => {
-                        approverGroup.classList.add('show');
-                    }, 10);
-
-                    approverDropdown.classList.add('loading');
-                    approverDropdown.innerHTML = '<option value="">Loading...</option>';
-
-                    const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}`);
-                    usersData = await response.json();
-
-                    approverDropdown.innerHTML = '<option value="">Select an approver...</option>';
-
-                    usersData.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.userId;
-                        option.textContent = user.name;
-                        option.dataset.email = user.email;
-                        approverDropdown.appendChild(option);
-                    });
-
-                    approverDropdown.classList.remove('loading');
-                    emailField.value = '';
-                } catch (error) {
-                    console.error('Error loading users:', error);
-                    alert('Error loading users. Please try again.');
-                    approverDropdown.classList.remove('loading');
-                }
-            } else {
-                approverGroup.classList.remove('show');
-                approverDropdown.innerHTML = '<option value="">Select an approver...</option>';
-                emailField.value = '';
-            }
-        }
-
-        window.handleApproverChange = function() {
-            const approverSelect = document.getElementById('approverSelect');
-            const emailField = document.getElementById('emailField');
-            const selectedOption = approverSelect.options[approverSelect.selectedIndex];
-
-            if (selectedOption.dataset.email) {
-                emailField.value = selectedOption.dataset.email;
-            } else {
-                emailField.value = '';
-            }
-        }
-
-        window.saveApprover = async function() {
-            const roleId = document.getElementById('roleSelect').value;
-            const userId = document.getElementById('approverSelect').value;
-            const email = document.getElementById('emailField').value;
-            const description = document.getElementById('descriptionField').value;
-            const phaseOrder = document.getElementById('phaseOrderField').value;
-
-            if (!roleId || !userId || !email || !phaseOrder) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            // Get current order information from server
-            try {
-                const orderResponse = await fetch(`/BenefitsAssistantApplicationDetails/GetNextPhaseOrder?loanId=${loanId}`);
-                const orderResult = await orderResponse.json();
-                const databaseUsedOrders = orderResult.usedOrders || [];
-                const sessionUsedOrders = approversList.map(approver => approver.order);
-                const allUsedOrders = [...databaseUsedOrders, ...sessionUsedOrders];
-
-                // Check if the selected order is already used
-                if (allUsedOrders.includes(parseInt(phaseOrder))) {
-                    alert('This order number is already assigned to another approver. Please select a different order.');
-                    // Refresh the dropdown to show current available orders
-                    await loadOrderDropdown();
-                    return;
-                }
-            } catch (error) {
-                console.error('Error validating order:', error);
-                alert('Error validating order number. Please try again.');
-                return;
-            }
-
-            try {
-                const saveButton = document.querySelector('.btn-save');
-                saveButton.classList.add('loading');
-                saveButton.textContent = 'Saving...';
-
-                const response = await fetch('/BenefitsAssistantApplicationDetails/SaveApprover', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        loanId: loanId,
-                        roleId: parseInt(roleId),
-                        userId: parseInt(userId),
-                        phaseOrder: parseInt(phaseOrder),
-                        description: description
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    createApprovalCard(result.approverData);
-                    approversList.push(result.approverData); // Save to local list
-                    closeModal();
-                    await loadOrderDropdown(); // Refresh the dropdown to remove the used order
-                } else {
-                    alert(result.message);
-                }
-
-                saveButton.classList.remove('loading');
-                saveButton.textContent = 'Save';
-            } catch (error) {
-                console.error('Error saving approver:', error);
-                alert('Error saving approver. Please try again.');
-                saveButton.classList.remove('loading');
-                saveButton.textContent = 'Save';
-            }
-        }
-
-
-        function createApprovalCard(approverData) {
-            const container = document.getElementById('approvalCardsContainer');
-            const card = document.createElement('div');
-            card.className = 'approval-card';
-            card.dataset.userName = approverData.userName;
-            card.dataset.order = approverData.order;
-            card.dataset.roleName = approverData.roleName;
-
-            card.innerHTML = `
-                <div class="approval-card-title">${approverData.roleName}</div>
-                <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
-                <div class="approval-card-content">
-                    <div><strong>User:</strong> ${approverData.userName}</div>
-                    <div><strong>Order:</strong> ${approverData.order}</div>
-                    <div><strong>Department:</strong> ${approverData.roleName}</div>
-                </div>
-                <button type="button" class="btn btn-outline-danger btn-sm mt-2 remove-approver-btn">
-                    Remove
-                </button>
-            `;
-
-            // Attach remove event
-            card.querySelector('.remove-approver-btn').addEventListener('click', function () {
-                removeApprovalCard(card, approverData);
-            });
-
-            // Insert the card in the correct position based on order
-            const existingCards = Array.from(container.children);
-            let insertPosition = existingCards.length;
-    
-            for (let i = 0; i < existingCards.length; i++) {
-                const existingOrder = parseInt(existingCards[i].dataset.order);
-                if (approverData.order < existingOrder) {
-                    insertPosition = i;
-                    break;
-                }
-            }
-    
-            if (insertPosition === existingCards.length) {
-                container.appendChild(card);
-            } else {
-                container.insertBefore(card, existingCards[insertPosition]);
-            }
-        }
-
-        function removeApprovalCard(cardElement, approverData) {
-            // Remove from DOM
-            cardElement.remove();
-
-            // Remove from approversList
-            approversList = approversList.filter(item =>
-                !(item.userName === approverData.userName &&
-                  item.order === approverData.order &&
-                  item.roleName === approverData.roleName)
-            );
-    
-            // Refresh the order dropdown to make the removed order available again
-            // Only refresh if the modal is currently open
-            if (document.getElementById('approverModal').classList.contains('show')) {
-                loadOrderDropdown(); // This will now properly account for database orders
-            }
-        }
-
-
-        // Close modal when clicking outside
-        document.getElementById('approverModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.getElementById('approverModal').classList.contains('show')) {
-                closeModal();
-            }
-        });
-
-        // ===== PARTIAL VIEW FUNCTIONALITY (Same as BenefitsAssistantApplicationDetails.cshtml) =====
-
-        // Checklist add item modal logic
-        const addItemBtn = document.getElementById('addItemBtn');
-        const checklistItemsContainer = document.getElementById('checklistItemsContainer');
-        const forwardBtn = document.getElementById('forwardApplicationBtn');
-
-        let addChecklistItemModal = null;
-        let confirmAddChecklistBtn = null;
-        let conditionTextInput = null;
-
-            if (document.readyState === "complete" || document.readyState === "interactive") {
-                for(let i = 0; i<3; i++){
-                    const id = 'checklist_' + Date.now() + '_' + i;
-                    const div = document.createElement('div');
-                    div.className = 'form-check mb-2';
-                    if(i===0){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">No existing active loans</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                    else if(i===1){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">Not a co-maker for another active loan</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                    else if(i===2){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">No derogatory legal records (civil/criminal cases)</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                }
-            }
-        
-
-        if (addItemBtn) {
-            addItemBtn.addEventListener('click', function () {
-                if (!addChecklistItemModal) {
-                    addChecklistItemModal = new bootstrap.Modal(document.getElementById('addChecklistItemModal'));
-                    confirmAddChecklistBtn = document.getElementById('confirmAddChecklistBtn');
-                    conditionTextInput = document.getElementById('conditionTextInput');
-                }
-                conditionTextInput.value = '';
-                addChecklistItemModal.show();
-            });
-        }
-
-        // Function to check if all checklist checkboxes are checked
-        function updateRejectButtonState() {
-            if (!forwardBtn || !checklistItemsContainer) return;
-
-            const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
-            if (checkboxes.length === 0) {
-                forwardBtn.disabled = true;
-                return;
-            }
-            forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
-        }
-
-        // Listen for changes on checklist checkboxes
-        if (checklistItemsContainer) {
-            checklistItemsContainer.addEventListener('change', function (e) {
-                if (e.target && e.target.type === 'checkbox') {
-                    updateRejectButtonState();
-                }
-            });
-
-            // Remove checklist item logic
-            checklistItemsContainer.addEventListener('click', function (e) {
-                if (e.target.closest('.checklist-remove-btn')) {
-                    const btn = e.target.closest('.checklist-remove-btn');
-                    btn.parentElement.parentElement.remove();
-                    updateRejectButtonState();
-                }
-            });
-        }
-
-        // Confirm add checklist item
-        const confirmAddChecklistBtnElement = document.getElementById('confirmAddChecklistBtn');
-        if (confirmAddChecklistBtnElement) {
-            confirmAddChecklistBtnElement.addEventListener('click', function () {
-                if (!conditionTextInput) {
-                    conditionTextInput = document.getElementById('conditionTextInput');
-                }
-                const text = conditionTextInput.value.trim();
-                if (text.length > 0) {
-                    const id = 'checklist_' + Date.now();
-                    const div = document.createElement('div');
-                    div.className = 'form-check mb-2';
-                    div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                    checklistItemsContainer.appendChild(div);
-                    addChecklistItemModal.hide();
-                    updateRejectButtonState();
-                } else {
-                    conditionTextInput.focus();
-                }
-            });
-        }
-
-        const fillPreexistingChecklistBtn = document.getElementById('fillPreexistingChecklistBtn');
-        if (fillPreexistingChecklistBtn) {
-            fillPreexistingChecklistBtn.addEventListener('click', function () {
-                if (!conditionTextInput) {
-                    conditionTextInput = document.getElementById('conditionTextInput');
-                }
-                for(let i = 0; i<3; i++){
-                    const id = 'checklist_' + Date.now() + '_' + i;
-                    const div = document.createElement('div');
-                    div.className = 'form-check mb-2';
-                    if(i===0){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">No existing active loans</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                    else if(i===1){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">Not a co-maker for another active loan</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                    else if(i===2){
-                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center flex-grow-1">
-                                            <input class="form-check-input" type="checkbox" id="${id}">
-                                            <label class="form-check-label checklist-item ms-2" for="${id}">No derogatory legal records (civil/criminal cases)</label>
-                                        </div>
-                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                                <path d="M10 11v6" />
-                                                <path d="M14 11v6" />
-                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                            </svg>
-                                        </button>
-                                    </div>`;
-                        checklistItemsContainer.appendChild(div);
-                    }
-                }
-                addChecklistItemModal.hide();
-                updateRejectButtonState();
-            });
-        }
-
-        // Initial state
-        updateRejectButtonState();
-
-        // Confirmation Modal Functions
-        window.openConfirmationModal = function(loanTitle, messageToApprovers) {
-            const modal = document.getElementById('confirmationModal');
-            modal.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-
-            // Populate confirmation details
-            document.getElementById('confirmLoanTitle').textContent = loanTitle || 'No title provided';
-            document.getElementById('confirmMessage').textContent = messageToApprovers || 'No message provided';
-            document.getElementById('confirmApproversCount').textContent = approversList.length;
-    
-            // Populate approvers list
-            const approversListElement = document.getElementById('confirmApproversList');
-            if (approversList.length > 0) {
-                approversListElement.innerHTML = approversList
-                    .sort((a, b) => a.order - b.order)
-                    .map(approver => `
-                        <div class="approver-sequence-item">
-                            <div class="approver-order">${approver.order}</div>
-                            <div class="approver-info">
-                                <div class="approver-name">${approver.userName}</div>
-                                <div class="approver-role">${approver.roleName}</div>
-                            </div>
-                        </div>
-                    `).join('');
-            } else {
-                approversListElement.innerHTML = '<div class="confirmation-value empty">No approvers selected</div>';
-            }
-
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-        }
-
-        window.closeConfirmationModal = function() {
-            const modal = document.getElementById('confirmationModal');
-            modal.classList.remove('show');
-
-            setTimeout(() => {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }, 300);
-        }
-
-        // This function will be called when the user clicks "Forward Application" in the confirmation modal
-        window.proceedWithForward = async function() {
-            const loanTitle = document.getElementById('loanTitle').value.trim();
-            const messageToApprovers = document.getElementById('messageToApprovers').value.trim();
-            const confirmButton = document.getElementById('confirmForwardBtn');
-            const originalText = confirmButton.textContent;
-
-            try {
-                // Disable the button and show loading state
-                confirmButton.disabled = true;
-                confirmButton.textContent = 'Forwarding...';
-
-                const response = await fetch('/BenefitsAssistantApplicationDetails/ForwardApplication', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        loanId: loanId,
-                        title: loanTitle,
-                        description: messageToApprovers,
-                        approvers: approversList.map(a => ({
-                            userId: a.userId,
-                            order: a.order
-                        }))
-                    })
-                });
-
-                const result = await response.json();
-        
-                if (result.success) {
-                    // Close the modal first
-                    closeConfirmationModal();
-            
-                    // Show success message
-                    alert('Application forwarded successfully!');
-            
-                    // Refresh the page to show updated status
-                    window.location.reload();
-                } else {
-                    alert(result.message || 'Error forwarding application.');
-                    // Re-enable the button if there was an error
-                    confirmButton.disabled = false;
-                    confirmButton.textContent = originalText;
-                }
-            } catch (error) {
-                console.error('Error forwarding application:', error);
-                alert('Error forwarding application. Please try again.');
-                // Re-enable the button if there was an error
-                confirmButton.disabled = false;
-                confirmButton.textContent = originalText;
-            }
-        }
-
-
-        // Forward Application button logic - shows alert since we're already on ApprovalFlow
-        if (forwardBtn) {
-            forwardBtn.addEventListener('click', async function () {
-                if (approversList.length === 0) {
-                    alert('No approvers to forward.');
-                    return;
-                }
-
-                // Validate that all approvers have userId
-                const invalidApprovers = approversList.filter(a => !a.userId);
-                if (invalidApprovers.length > 0) {
-                    alert('Some approvers are missing user ID information. Please remove and re-add them.');
-                    return;
-                }
-
-                // Get the loan title and message from the form fields
-                const loanTitle = document.getElementById('loanTitle').value.trim();
-                const messageToApprovers = document.getElementById('messageToApprovers').value.trim();
-
-                // Validation for required fields
-                if (!loanTitle) {
-                    alert('Please enter a loan title before forwarding the application.');
-                    document.getElementById('loanTitle').focus();
-                    return;
-                }
-
-                if (!messageToApprovers) {
-                    alert('Please enter a message to approvers before forwarding the application.');
-                    document.getElementById('messageToApprovers').focus();
-                    return;
-                }
-
-                // Show confirmation modal instead of simple confirm dialog
-                openConfirmationModal(loanTitle, messageToApprovers);
-            });
-        }
-
-        // Close confirmation modal when clicking outside
+<input type="hidden" id="loanIdField" value="@Model.LoanID" />
+<input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "BenefitsAssistantApplicationDetails")" />
+
+@section Scripts {
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/BenefitsAssistantApprovalFlow.js" asp-append-version="true"></script>
+    <script>
+
+        document.getElementById('loanIdField').value = @Model.LoanID;
         document.addEventListener('DOMContentLoaded', function() {
-            const confirmationModal = document.getElementById('confirmationModal');
-            if (confirmationModal) {
-                confirmationModal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closeConfirmationModal();
-                    }
-                });
-            }
-        });
+            const checklistItemsContainer = document.getElementById('checklistItemsContainer');
+            const forwardBtn = document.getElementById('forwardApplicationBtn');
 
-        // Close confirmation modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.getElementById('confirmationModal').classList.contains('show')) {
-                closeConfirmationModal();
-            }
-        });
-
-        // Reject Application button logic
-        const rejectBtn = document.getElementById('rejectApplicationBtn');
-        const rejectCommentContainer = document.getElementById('rejectCommentContainer');
-        const confirmRejectBtn = document.getElementById('confirmRejectBtn');
-        const rejectCommentBox = document.getElementById('rejectCommentBox');
-        const rejectConfirmModal = new bootstrap.Modal(document.getElementById('rejectConfirmModal'));
-        const rejectCommentPreview = document.getElementById('rejectCommentPreview');
-
+                const rejectBtn = document.getElementById('rejectApplicationBtn');
         if (rejectBtn) {
+            const rejectCommentContainer = document.getElementById('rejectCommentContainer');
+            const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+            const rejectCommentBox = document.getElementById('rejectCommentBox');
+            const rejectConfirmModal = new bootstrap.Modal(document.getElementById('rejectConfirmModal'));
+            const rejectCommentPreview = document.getElementById('rejectCommentPreview');
+
             rejectBtn.addEventListener('click', function () {
                 rejectCommentContainer.style.display = 'block';
                 rejectCommentBox.focus();
             });
-        }
 
-        if (confirmRejectBtn) {
             confirmRejectBtn.addEventListener('click', function () {
                 const comment = rejectCommentBox.value.trim();
                 rejectCommentPreview.textContent = comment.length > 0 ? comment : "(No comment provided)";
                 rejectConfirmModal.show();
             });
-        }
 
-        // Final reject action
-        const finalRejectBtn = document.getElementById('finalRejectBtn');
-        if (finalRejectBtn) {
-            finalRejectBtn.addEventListener('click', function () {
-                const remarks = rejectCommentBox.value.trim();
+            // Reject action handler
+            document.getElementById('finalRejectBtn').addEventListener('click', function () {
+                const loanId = document.getElementById('loanIdField').value;
+                const remarks = document.getElementById('rejectCommentBox').value.trim();
+                const rejectUrl = document.getElementById('rejectUrlField').value;
 
-                fetch('@Url.Action("RejectApplication", "BenefitsAssistantApplicationDetails")', {
+                fetch(rejectUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                     },
                     body: `id=${encodeURIComponent(loanId)}&remarks=${encodeURIComponent(remarks)}`
                 })
@@ -1433,5 +207,147 @@
                 rejectConfirmModal.hide();
             });
         }
-    });
-</script>
+
+            const addItemBtn = document.getElementById('addItemBtn');
+            if (addItemBtn) {
+                addItemBtn.addEventListener('click', function() {
+                    const addChecklistItemModal = new bootstrap.Modal(document.getElementById('addChecklistItemModal'));
+                    const conditionTextInput = document.getElementById('conditionTextInput');
+                    if (conditionTextInput) {
+                        conditionTextInput.value = '';
+                    }
+                    addChecklistItemModal.show();
+                });
+            }
+
+            // Handle the confirmation of adding a new checklist item
+            const confirmAddChecklistBtn = document.getElementById('confirmAddChecklistBtn');
+            if (confirmAddChecklistBtn) {
+                confirmAddChecklistBtn.addEventListener('click', function() {
+                    const conditionTextInput = document.getElementById('conditionTextInput');
+                    const text = conditionTextInput.value.trim();
+                    if (text.length > 0) {
+                        const id = 'checklist_' + Date.now();
+                        const div = document.createElement('div');
+                        div.className = 'form-check mb-2';
+                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <input class="form-check-input" type="checkbox" id="${id}">
+                                <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                            </button>
+                        </div>`;
+                        checklistItemsContainer.appendChild(div);
+                        bootstrap.Modal.getInstance(document.getElementById('addChecklistItemModal')).hide();
+                        updateForwardButtonState();
+                    } else {
+                        conditionTextInput.focus();
+                    }
+                });
+            }
+
+            // Handle the fill pre-existing checklist button
+            const fillPreexistingChecklistBtn = document.getElementById('fillPreexistingChecklistBtn');
+            if (fillPreexistingChecklistBtn) {
+                fillPreexistingChecklistBtn.addEventListener('click', function() {
+                    const checklistItems = [
+                        'No existing active loans',
+                        'Not a co-maker for another active loan',
+                        'No derogatory legal records (civil/criminal cases)'
+                    ];
+
+                    // Clear existing items
+                    checklistItemsContainer.innerHTML = '';
+
+                    // Add pre-existing items
+                    checklistItems.forEach((item, index) => {
+                        const id = 'checklist_' + Date.now() + '_' + index;
+                        const div = document.createElement('div');
+                        div.className = 'form-check mb-2';
+                        div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <input class="form-check-input" type="checkbox" id="${id}">
+                                <label class="form-check-label checklist-item ms-2" for="${id}">${item}</label>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                            </button>
+                        </div>`;
+                        checklistItemsContainer.appendChild(div);
+                    });
+
+                    bootstrap.Modal.getInstance(document.getElementById('addChecklistItemModal')).hide();
+                    updateForwardButtonState();
+                });
+            }
+
+            if (checklistItemsContainer) {
+                const checklistItems = [
+                    'No existing active loans',
+                    'Not a co-maker for another active loan',
+                    'No derogatory legal records (civil/criminal cases)'
+                ];
+
+                checklistItems.forEach((item, index) => {
+                    const id = 'checklist_' + Date.now() + '_' + index;
+                    const div = document.createElement('div');
+                    div.className = 'form-check mb-2';
+                    div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <input class="form-check-input" type="checkbox" id="${id}">
+                                    <label class="form-check-label checklist-item ms-2" for="${id}">${item}</label>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                        <path d="M10 11v6" />
+                                        <path d="M14 11v6" />
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </button>
+                            </div>`;
+                    checklistItemsContainer.appendChild(div);
+                });
+
+                function updateForwardButtonState() {
+                    const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+                    if (checkboxes.length === 0 || !forwardBtn) {
+                        return;
+                    }
+                    forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
+                }
+
+                checklistItemsContainer.addEventListener('change', function (e) {
+                    if (e.target && e.target.type === 'checkbox') {
+                        updateForwardButtonState();
+                    }
+                });
+
+                checklistItemsContainer.addEventListener('click', function (e) {
+                    if (e.target.closest('.checklist-remove-btn')) {
+                        const btn = e.target.closest('.checklist-remove-btn');
+                        btn.parentElement.parentElement.remove();
+                        updateForwardButtonState();
+                    }
+                });
+
+                updateForwardButtonState();
+            }
+        });
+    </script>
+}

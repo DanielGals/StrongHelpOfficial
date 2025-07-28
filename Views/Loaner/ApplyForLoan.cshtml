@@ -19,14 +19,12 @@
         <div class="col-6">
             <a href="" id="btn1" class="btn custom-highlight w-100">Documents</a>
         </div>
-        <!--CO MAKER HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!-->
         <div class="col-6">
             <a href="" id="btn2" class="btn custom-outline w-100">Co-Maker</a>
         </div>
     </div>
 </div>
 <br />
-<!-- the entire process (loan amount, guidelines, documents-->
 <div class="afl-content">
     <div class="row">
         <div class="col-md-8 mb-3">
@@ -42,16 +40,11 @@
                     @TempData["failedSubmitResult"]
                 </div>
             }
-                
-            <!-- LOAN APPLICATION -->
             <form asp-controller="ApplyForLoan" asp-action="UploadDocuments" method="post" enctype="multipart/form-data">
-
-                <!-- loan amount -->
                 <label for="loanAmount" class="form-label fw-bold mb-1">Loan Amount</label>
                 <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount">
                 <span asp-validation-for="LoanAmount" class="text-danger"></span>
                 <br>
-                <!-- documents upload part -->
                 <div class="upload-container">
                     <h4>Document Upload</h4>
                     <p class="text-muted mb-4">
@@ -64,23 +57,18 @@
                             <p class="mb-0">Please ensure all documents are clear, legible, and in PDF or image format.<br>Documents must be recent and valid</p>
                         </div>
                     </div>
-                    <!-- actual file upload -->
                     <div class="mb-4">
-                        <!-- Replace the file input and add a script to append file name and type to hidden fields for the model -->
                         <div class="mb-4">
                             <div id="drop-area" class="drop-area rounded p-4 text-center text-muted" onclick="document.getElementById('files').click();">
                                 Drop files here or click to select
-                                <input type="file" accept=".pdf" id="files" name="Files" hidden multiple <!--onchange="handleFileSelect(event)"-->>
-                                <!-- Hidden fields for file name and type -->
+                                <input type="file" accept=".pdf" id="files" name="Files" hidden multiple>
                                 <input type="hidden" id="LoanDocumentName" name="LoanDocumentName" value="@Model.LoanDocumentName" />
                                 <input type="hidden" id="FileContent" name="FileContent" value="@Model.Filecontent" />
                             </div>
                         </div>
                         <script>
                             let allFiles = [];
-
                             document.getElementById('files').addEventListener('change', function (event) {
-                                // Add new files, avoiding duplicates
                                 const newFiles = Array.from(event.target.files);
                                 for (const file of newFiles) {
                                     if (!allFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) {
@@ -90,21 +78,17 @@
                                 renderFileList();
                                 updateFileInput();
                             });
-
                             function renderFileList() {
                                 const submittedDocs = document.getElementById('submittedDocs');
-                                // Remove all children except the title
                                 submittedDocs.innerHTML = '<strong class="d-block mb-2">Submitted Documents:</strong>';
                                 allFiles.forEach((file, idx) => {
                                     const docItem = document.createElement('div');
                                     docItem.className = 'doc-item d-flex align-items-center justify-content-between';
-
                                     const input = document.createElement('input');
                                     input.type = 'text';
                                     input.value = file.name;
                                     input.readOnly = true;
                                     input.className = 'form-control';
-
                                     const deleteBtn = document.createElement('button');
                                     deleteBtn.type = 'button';
                                     deleteBtn.className = 'btn btn-danger btn-sm ms-2';
@@ -114,13 +98,11 @@
                                         renderFileList();
                                         updateFileInput();
                                     };
-
                                     docItem.appendChild(input);
                                     docItem.appendChild(deleteBtn);
                                     submittedDocs.appendChild(docItem);
                                 });
                             }
-
                             function updateFileInput() {
                                 const fileInput = document.getElementById('files');
                                 const dt = new DataTransfer();
@@ -129,12 +111,10 @@
                             }
                         </script>
                     </div>
-                    <!-- submitted documents list -->
                     <div id="submittedDocs" class="border rounded p-3">
                         <strong class="d-block mb-2">Submitted Documents:</strong>
                     </div>
                 </div>
-                <!-- SUBMIT BUTTON -->
                 <input class="btn btn-primary w-100" type="submit">
             </form>
         </div>
@@ -142,18 +122,27 @@
             <div class="guideline-box">
                 <h3>Loan Information</h3>
                 <p class="mb-3 fc-gray">
-                    Important details about about our loan offerings and requirements
+                    Important details about our loan offerings and requirements
                 </p>
                 <p class="mb-1 fw-bold">
                     Required Documents
                 </p>
-                <p class="mb-0"> • Latest 2 months payslip</p>
-                <p class="mb-0"> • Certificate of Employment</p>
-                <p class="mb-0"> • Valid government-issued ID</p>
+                @if (Model.RequiredDocuments != null && Model.RequiredDocuments.Any())
+                {
+                    @foreach (var doc in Model.RequiredDocuments)
+                    {
+                        <p class="mb-0"> • @doc</p>
+                    }
+                }
+                else
+                {
+                    <p class="mb-0"> • Latest 2 months payslip</p>
+                    <p class="mb-0"> • Certificate of Employment</p>
+                    <p class="mb-0"> • Valid government-issued ID</p>
+                }
             </div>
         </div>
     </div>
-    <!-- submissions-info-->
     <div class="submissions-box mb-3">
         <div class="info-item">
             <i class="bi bi-file-earmark-text fs-4 text-secondary"></i>
@@ -169,125 +158,126 @@
 <script>
     const btn1 = document.getElementById("btn1");
     const btn2 = document.getElementById("btn2");
-
     btn1.addEventListener("click", () => {
       btn1.classList.replace("custom-outline", "custom-highlight");
       btn2.classList.replace("custom-highlight", "custom-outline");
     });
-
     btn2.addEventListener("click", () => {
       btn2.classList.replace("custom-outline", "custom-highlight");
       btn1.classList.replace("custom-highlight", "custom-outline");
     });
-
 </script>
 
 <style>
-        .custom-row {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: center;
-            background-color: #f0f0f0;
-            padding: 5px;
-            border-radius: 5px;
-        }
+    .custom-row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        background-color: #f0f0f0;
+        padding: 5px;
+        border-radius: 5px;
+    }
 
-        .custom-highlight {
-            background-color: #100899;
-            color: white;
-        }
+    .custom-highlight {
+        background-color: #100899;
+        color: white;
+    }
 
-        .custom-outline {
-            background-color: transparent;
-            color: gray;
-        }
+    .custom-outline {
+        background-color: transparent;
+        color: gray;
+    }
+
         .custom-highlight:hover,
         .custom-outline:hover {
             background-color: inherit !important;
             color: inherit !important;
             border-color: inherit !important;
         }
-        .guideline-box {
-            border: 1px solid #ccc;
-            background-color: transparent;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            height: auto;
-        }
-        .fc-gray{
-            color: gray;
-        }
 
-        .upload-container {
-            border: 1px solid #ccc;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-        }
+    .guideline-box {
+        border: 1px solid #ccc;
+        background-color: transparent;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        height: auto;
+    }
 
-        .info-box {
-            background-color: #e7f1ff;
-            border: 1px solid #0d6efd;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            color: #0d6efd;
-            display: flex;
-            align-items: start;
-            gap: 1rem;
-        }
+    .fc-gray {
+        color: gray;
+    }
 
-        .submissions-box {
-            border: 1px solid #ced4da;
-            border-radius: 0.75rem;
-            padding: 1rem 1.5rem;
-            background-color: #f8f9fa;
-            display: flex;
-            justify-content: flex-start;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    .upload-container {
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
 
-        .info-text {
-            font-weight: 500;
-        }
-        
-        .info-text1 {
-            font-weight: 500;
-        }
+    .info-box {
+        background-color: #e7f1ff;
+        border: 1px solid #0d6efd;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        color: #0d6efd;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+    }
 
-        .drop-area {
-            border: 2px dashed #6c757d;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            color: #6c757d;
-            cursor: pointer;
-        }
+    .submissions-box {
+        border: 1px solid #ced4da;
+        border-radius: 0.75rem;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-text {
+        font-weight: 500;
+    }
+
+    .info-text1 {
+        font-weight: 500;
+    }
+
+    .drop-area {
+        border: 2px dashed #6c757d;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        color: #6c757d;
+        cursor: pointer;
+    }
 
         .drop-area.dragover {
             background-color: #e2e6ea;
         }
 
-        .submitted-docs {
-            border: 1px solid #ccc;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
+    .submitted-docs {
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
 
-        .doc-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
+    .doc-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
 
-            .doc-item input {
-                flex: 1;
-            }
+        .doc-item input {
+            flex: 1;
+        }
 </style>

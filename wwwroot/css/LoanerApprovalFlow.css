@@ -1,0 +1,163 @@
+﻿.approval-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+    .approval-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+.approval-card-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: #495057;
+}
+
+.approval-card-subtitle {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+.approval-card-content {
+    color: #198754;
+    font-size: 0.9rem;
+}
+
+    .approval-card-content div {
+        margin-bottom: 0.25rem;
+    }
+
+/* Status indicator styles */
+.status-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .status-indicator.ongoing {
+        background-color: #ffc107;
+        color: #856404;
+    }
+
+    .status-indicator.approved {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .status-indicator.rejected {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .status-indicator.pending {
+        background-color: #6c757d;
+        color: white;
+    }
+
+/* Application status card */
+.application-status-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #dee2e6;
+}
+
+    .application-status-card h4 {
+        margin-bottom: 1rem;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+.status-indicator {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+    .status-indicator.pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-indicator.in-review {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+
+    .status-indicator.approved {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-indicator.rejected {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+.status-updated {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.status-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    background: #e9ecef;
+}
+
+    .status-dot svg {
+        width: 14px;
+        height: 14px;
+        stroke-width: 2.2;
+        stroke: #fff;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .status-dot.approved {
+        background: #28a745;
+    }
+
+    .status-dot.rejected {
+        background: #dc3545;
+    }
+
+    .status-dot.pending {
+        background: #ffc107;
+    }
+
+    .status-dot.approved svg {
+        stroke: #fff;
+    }
+
+    .status-dot.rejected svg {
+        stroke: #fff;
+    }
+
+    .status-dot.pending svg {
+        stroke: #856404;
+    }
+
