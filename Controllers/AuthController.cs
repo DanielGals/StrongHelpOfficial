@@ -42,7 +42,7 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "maria.santos@example.com"; // Hardcoded email for testing
+        userModel.Email = "ana.reyes@example.com"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
@@ -113,14 +113,33 @@ public class AuthController : Controller
             }
             else // All other roles go to Approver Dashboard.
             {
-                return RedirectToAction("Index", "ApproverDashboard", new { area = "" });
+                // Check if the role is one of the approver roles
+                string[] approverRoles = new[] {
+                "Loans Division Approver",
+                "Specialized Accounting Approver",
+                "Compensation Management Approver",
+                "Benefits Services Officer",
+                "Benefit Management Department Head",
+                "Approving Officer",
+                "Final Disbursement Approver",
+                "Approver"
+            };
+
+                if (approverRoles.Contains(roleName))
+                {
+                    return RedirectToAction("Index", "ApproverDashboard");
+                }
+                else
+                {
+                    // If role doesn't match any known role, display login view with role info
+                    return View(userModel);
+                }
             }
         }
 
         // Otherwise, display the login view.
         return View(userModel);
     }
-
     private string GetDomainFromUsername(string username)
     {
         if (string.IsNullOrEmpty(username))

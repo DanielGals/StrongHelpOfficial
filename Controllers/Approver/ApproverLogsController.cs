@@ -2,12 +2,11 @@
 
 namespace StrongHelpOfficial.Controllers.Approver
 {
-    //[Area("Approver")]
-    public class ApproverDashboardController : Controller
+    public class ApproverLogsController : Controller
     {
         public IActionResult Index()
         {
-            return View("~/Views/Approvers/ApproversDashboard.cshtml");
+            return View("~/Views/Approvers/ApproversLogs.cshtml");
         }
     }
 }

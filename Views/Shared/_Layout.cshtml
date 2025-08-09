@@ -11,8 +11,23 @@
     @RenderSection("Styles", required: false)
 </head>
 <body>
-    @if (string.IsNullOrEmpty(Context.Session.GetString("RoleName")) ||
-    !(new[] { "Employee", "Benefits Assistant", "Approver" }.Contains(Context.Session.GetString("RoleName"))))
+    @{
+        string[] approverRoles = new[] {
+    "Loans Division Approver",
+    "Specialized Accounting Approver",
+    "Compensation Management Approver",
+    "Benefits Services Officer",
+    "Benefit Management Department Head",
+    "Approving Officer",
+    "Final Disbursement Approver",
+    "Approver"
+    };
+
+        string roleName = Context.Session.GetString("RoleName") ?? "";
+        bool isApproverRole = approverRoles.Contains(roleName);
+    }
+
+    @if (string.IsNullOrEmpty(roleName) || !(roleName == "Employee" || roleName == "Benefits Assistant" || isApproverRole))
     {
         <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -46,7 +61,6 @@
     }
     else
     {
-        string roleName = Context.Session.GetString("RoleName")!;
         string email = Context.Session.GetString("Email") ?? "user@example.com";
 
         <div id="wrapper">
@@ -122,18 +136,21 @@
                     }
                     else
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="/Approver/ApproverDashboard/Index">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverDashboard" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "ApproverDashboard")">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Applications" ? "active" : "")"
-                           href="/Approver/Applications">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverApplications" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "ApproverApplications")">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Logs" ? "active" : "")"
-                           href="/Approver/Logs">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverLogs" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "ApproverLogs")">
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
