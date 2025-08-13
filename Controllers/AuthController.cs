@@ -57,7 +57,7 @@ public class AuthController : Controller
 
                     // Updated query to join User and Role tables
                     var query = @"
-                    SELECT u.UserID, r.RoleName, u.Email 
+                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email 
                     FROM [User] u
                     INNER JOIN [Role] r ON u.RoleID = r.RoleID
                     WHERE u.Email = @Email";
@@ -76,10 +76,12 @@ public class AuthController : Controller
 
                                 int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
                                 string roleName = reader["RoleName"] as string ?? string.Empty;
+                                int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
 
                                 // Store SQL data in session using role name instead of role id.
                                 HttpContext.Session.SetInt32("UserID", userId);
                                 HttpContext.Session.SetString("RoleName", roleName);
+                                HttpContext.Session.SetInt32("RoleID", roleId);
                                 HttpContext.Session.SetString("Email", userModel.Email.ToLower());
                             }
                             else
