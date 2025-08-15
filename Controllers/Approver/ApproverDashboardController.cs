@@ -65,15 +65,40 @@ namespace StrongHelpOfficial.Controllers.Approver
                     }
                 }
 
-                // Get application statistics
+                // Get application statistics based on approver role using simpler query
                 using (var cmd = new SqlCommand(@"
+                    -- Get total applications
                     SELECT 
-                        COUNT(*) AS TotalApplications,
-                        SUM(CASE WHEN la.ApplicationStatus IN ('Submitted', 'In Review') THEN 1 ELSE 0 END) AS PendingReview,
-                        SUM(CASE WHEN la.ApplicationStatus = 'Approved' AND CAST(lap.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS ApprovedToday,
-                        SUM(CASE WHEN la.ApplicationStatus = 'Rejected' AND CAST(lap.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS RejectedToday
-                    FROM LoanApplication la
-                    LEFT JOIN LoanApproval lap ON la.LoanID = lap.LoanID AND lap.ApproverUserID = @UserId
+                        (SELECT COUNT(*) FROM LoanApplication) AS TotalApplications,
+                        (
+                            SELECT COUNT(DISTINCT la.LoanID)
+                            FROM LoanApplication la
+                            INNER JOIN LoanApproval current_lap ON la.LoanID = current_lap.LoanID
+                            WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
+                            AND current_lap.ApproverUserID = @UserId
+                            AND current_lap.Status IS NULL
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM LoanApproval prev_lap
+                                WHERE prev_lap.LoanID = la.LoanID
+                                AND prev_lap.[Order] < current_lap.[Order]
+                                AND (prev_lap.Status IS NULL OR prev_lap.Status = 'Pending')
+                            )
+                        ) AS PendingReview,
+                        (
+                            SELECT COUNT(*) 
+                            FROM LoanApproval 
+                            WHERE ApproverUserID = @UserId 
+                            AND Status = 'Approved' 
+                            AND CAST(ApprovedDate AS DATE) = CAST(GETDATE() AS DATE)
+                        ) AS ApprovedToday,
+                        (
+                            SELECT COUNT(*) 
+                            FROM LoanApproval 
+                            WHERE ApproverUserID = @UserId 
+                            AND Status = 'Rejected' 
+                            AND CAST(ApprovedDate AS DATE) = CAST(GETDATE() AS DATE)
+                        ) AS RejectedToday
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", approverUserId);
@@ -89,15 +114,41 @@ namespace StrongHelpOfficial.Controllers.Approver
                     }
                 }
 
-                // Get pending applications for review
+                // Get pending applications for review based on role and approval order
                 var pendingApps = new List<LoanApplicationViewModel>();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    LEFT JOIN LoanApproval lap ON la.LoanID = lap.LoanID AND lap.ApproverUserID = @UserId
                     WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
-                    AND (lap.LoanApprovalID IS NULL OR lap.Status IS NULL)
+                    AND EXISTS (
+                        -- Check if it's this approver's turn based on the approval order
+                        SELECT 1 
+                        FROM LoanApproval currentApproval
+                        WHERE currentApproval.LoanID = la.LoanID
+                        AND currentApproval.[Order] = (
+                            -- Get the current order in the approval process
+                            SELECT MIN(nextApproval.[Order])
+                            FROM LoanApproval nextApproval
+                            WHERE nextApproval.LoanID = la.LoanID
+                            AND (nextApproval.Status IS NULL OR nextApproval.Status = 'Pending')
+                        )
+                        AND currentApproval.ApproverUserID = @UserId
+                    )
+                    -- Ensure all previous approvals in the sequence are completed
+                    AND NOT EXISTS (
+                        SELECT 1 
+                        FROM LoanApproval prevApproval
+                        INNER JOIN LoanApproval currentApproval ON currentApproval.LoanID = prevApproval.LoanID
+                        WHERE prevApproval.LoanID = la.LoanID
+                        AND prevApproval.[Order] < (
+                            SELECT MIN(myApproval.[Order])
+                            FROM LoanApproval myApproval
+                            WHERE myApproval.LoanID = la.LoanID
+                            AND myApproval.ApproverUserID = @UserId
+                        )
+                        AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                    )
                     ORDER BY la.DateSubmitted DESC
                 ", conn))
                 {
@@ -124,10 +175,10 @@ namespace StrongHelpOfficial.Controllers.Approver
                         }
                     }
                 }
-                
+
                 model.PendingApplications = pendingApps.Take(5).ToList();
             }
-            
+
             return View("~/Views/Approvers/ApproversDashboard.cshtml", model);
         }
 
