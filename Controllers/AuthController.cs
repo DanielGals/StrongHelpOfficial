@@ -42,7 +42,7 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "maria.santos@example.com"; // Hardcoded email for testing
+        userModel.Email = "ana.reyes@example.com"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
@@ -57,7 +57,7 @@ public class AuthController : Controller
 
                     // Updated query to join User and Role tables
                     var query = @"
-                    SELECT u.UserID, r.RoleName, u.Email 
+                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email 
                     FROM [User] u
                     INNER JOIN [Role] r ON u.RoleID = r.RoleID
                     WHERE u.Email = @Email";
@@ -76,10 +76,12 @@ public class AuthController : Controller
 
                                 int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
                                 string roleName = reader["RoleName"] as string ?? string.Empty;
+                                int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
 
                                 // Store SQL data in session using role name instead of role id.
                                 HttpContext.Session.SetInt32("UserID", userId);
                                 HttpContext.Session.SetString("RoleName", roleName);
+                                HttpContext.Session.SetInt32("RoleID", roleId);
                                 HttpContext.Session.SetString("Email", userModel.Email.ToLower());
                             }
                             else
@@ -113,14 +115,33 @@ public class AuthController : Controller
             }
             else // All other roles go to Approver Dashboard.
             {
-                return RedirectToAction("Index", "ApproverDashboard", new { area = "" });
+                // Check if the role is one of the approver roles
+                string[] approverRoles = new[] {
+                "Loans Division Approver",
+                "Specialized Accounting Approver",
+                "Compensation Management Approver",
+                "Benefits Services Officer",
+                "Benefit Management Department Head",
+                "Approving Officer",
+                "Final Disbursement Approver",
+                "Approver"
+            };
+
+                if (approverRoles.Contains(roleName))
+                {
+                    return RedirectToAction("Index", "ApproverDashboard");
+                }
+                else
+                {
+                    // If role doesn't match any known role, display login view with role info
+                    return View(userModel);
+                }
             }
         }
 
         // Otherwise, display the login view.
         return View(userModel);
     }
-
     private string GetDomainFromUsername(string username)
     {
         if (string.IsNullOrEmpty(username))
