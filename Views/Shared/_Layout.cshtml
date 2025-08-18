@@ -118,8 +118,8 @@
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Reports" ? "active" : "")"
-                           href="/BenefitsAssistant/Reports">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantReports" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "BenefitsAssistantReports", new { area = "" })">
                             <i class="bi bi-bar-chart"></i>
                             <span>Reports</span>
                         </a>
