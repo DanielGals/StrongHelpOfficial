@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using StrongHelpOfficial.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace StrongHelpOfficial.Controllers.Approver
 {
@@ -16,10 +17,12 @@ namespace StrongHelpOfficial.Controllers.Approver
             _configuration = configuration;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(string searchQuery = "")
         {
             var email = HttpContext.Session.GetString("Email");
             var model = new ApproverDashboardViewModel();
+            model.SearchQuery = searchQuery;
+
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
             if (string.IsNullOrEmpty(email))
@@ -116,7 +119,8 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 // Get pending applications for review based on role and approval order
                 var pendingApps = new List<LoanApplicationViewModel>();
-                using (var cmd = new SqlCommand(@"
+
+                var query = @"
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -148,11 +152,27 @@ namespace StrongHelpOfficial.Controllers.Approver
                             AND myApproval.ApproverUserID = @UserId
                         )
                         AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
-                    )
-                    ORDER BY la.DateSubmitted DESC
-                ", conn))
+                    )";
+
+                // Add search filter if provided
+                if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    query += @" AND (u.FirstName LIKE @SearchQuery OR u.LastName LIKE @SearchQuery 
+                               OR la.Title LIKE @SearchQuery OR CAST(la.LoanID AS VARCHAR) = @SearchQueryExact)";
+                }
+
+                query += " ORDER BY la.DateSubmitted DESC";
+
+                using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", approverUserId);
+
+                    if (!string.IsNullOrWhiteSpace(searchQuery))
+                    {
+                        cmd.Parameters.AddWithValue("@SearchQuery", "%" + searchQuery + "%");
+                        cmd.Parameters.AddWithValue("@SearchQueryExact", searchQuery);
+                    }
+
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
