@@ -55,10 +55,88 @@
         </div>
     </div>
 
+    <!-- Search -->
+    <div class="mb-4">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="applicationSearch"
+                placeholder="Search Applications by employee name or ID..." value="@Model.SearchQuery">
+        </div>
+    </div>
+
+    <!-- JavaScript for client-side search (SPA style) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('applicationSearch');
+            const tableRows = document.querySelectorAll('table tbody tr:not(.no-results)');
+            let noResultsRow = document.querySelector('table tbody tr.no-results');
+
+            if (!noResultsRow) {
+                // Create a "no results" row if it doesn't exist
+                noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results';
+                noResultsRow.style.display = 'none';
+                const noResultsCell = document.createElement('td');
+                noResultsCell.colSpan = 6;
+                noResultsCell.className = 'text-center';
+                noResultsCell.textContent = 'No matching applications found';
+                noResultsRow.appendChild(noResultsCell);
+
+                if (tableRows.length > 0) {
+                    tableRows[0].parentNode.appendChild(noResultsRow);
+                }
+            }
+
+            // Function to filter table rows based on search term
+            function filterApplications() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                tableRows.forEach(row => {
+                    const employeeNameCell = row.querySelector('td:nth-child(1)');
+                    const loanTypeCell = row.querySelector('td:nth-child(2)');
+                    const amountCell = row.querySelector('td:nth-child(3)');
+                    const applicationIdText = row.querySelector('a[href*="id="]')?.href.match(/id=(\d+)/)?.[1] || '';
+
+                    if (!employeeNameCell) return; // Skip if row structure is unexpected
+
+                    const employeeName = employeeNameCell.textContent.toLowerCase();
+                    const loanType = loanTypeCell?.textContent.toLowerCase() || '';
+                    const amount = amountCell?.textContent.toLowerCase() || '';
+
+                    if (searchTerm === '' ||
+                        employeeName.includes(searchTerm) ||
+                        loanType.includes(searchTerm) ||
+                        amount.includes(searchTerm) ||
+                        applicationIdText.includes(searchTerm)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Show or hide the "no results" row
+                noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+            }
+
+            // Filter applications on keyup with small delay for performance
+            searchInput.addEventListener('keyup', function () {
+                setTimeout(filterApplications, 100);
+            });
+
+            // Initial filter in case there's a search value already
+            filterApplications();
+        });
+    </script>
+
     <div class="benefits-content-grid">
         <div class="pending-applications-section">
             <h2>Pending Applications</h2>
             <p class="text-muted">Loan Applications awaiting your approval</p>
+
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead>
@@ -106,7 +184,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="@Url.Action("Index", "ApproverApplicationDetails", new { id = app.ApplicationId })" class="btn btn-primary-action">Review</a>
+                                        <a href="@Url.Action("Index", "ApproverApplicationDetails", new { id = app.ApplicationId })"
+                                            class="btn btn-primary-action">Review</a>
                                     </td>
                                 </tr>
                             }
