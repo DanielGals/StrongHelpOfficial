@@ -27,10 +27,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 return RedirectToAction("Login", "Auth");
             }
 
-            // Determine if filtering is active
             bool isFilter = startDate.HasValue && endDate.HasValue;
-
-            // For the filter UI, always show the last 30 days by default
             DateTime defaultEnd = DateTime.Today;
             DateTime defaultStart = defaultEnd.AddDays(-30);
 
@@ -44,7 +41,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 TopLoanTypes = new List<LoanTypeStatsViewModel>()
             };
 
-            // Validate date range if filtering
             if (isFilter && startDate > endDate)
             {
                 TempData["Message"] = "Start date cannot be after end date.";
@@ -58,7 +54,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 await conn.OpenAsync();
 
-                using (var cmd = new SqlCommand("SELECT UserID FROM [User] WHERE Email = @Email", conn))
+                using (var cmd = new SqlCommand("SELECT UserID FROM [User] WHERE Email = @Email AND IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
                     var result = await cmd.ExecuteScalarAsync();
@@ -71,7 +67,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await LoadOverviewStatistics(conn, model, benefitsAssistantUserId, isFilter);
                 await LoadApplicationsByStatus(conn, model, benefitsAssistantUserId, isFilter);
 
-                // Set individual status counts for the chart
                 model.ApprovedCount = model.ApplicationsByStatus
                     .FirstOrDefault(x => x.Status == "Approved")?.Count ?? 0;
                 model.RejectedCount = model.ApplicationsByStatus
@@ -108,7 +103,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) AS TotalApprovedAmount,
                         AVG(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE NULL END) AS AverageApprovedAmount
                     FROM LoanApplication
-                    WHERE (BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL)
+                    WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND IsActive = 1
                     AND CAST(DateSubmitted AS DATE) >= @StartDate
                     AND CAST(DateSubmitted AS DATE) <= @EndDate
@@ -126,7 +121,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) AS TotalApprovedAmount,
                         AVG(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE NULL END) AS AverageApprovedAmount
                     FROM LoanApplication
-                    WHERE (BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL)
+                    WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND IsActive = 1
                 ";
             }
@@ -152,7 +147,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         model.TotalApprovedAmount = reader.IsDBNull(reader.GetOrdinal("TotalApprovedAmount")) ? 0 : reader.GetDecimal(reader.GetOrdinal("TotalApprovedAmount"));
                         model.AverageApprovedAmount = reader.IsDBNull(reader.GetOrdinal("AverageApprovedAmount")) ? 0 : reader.GetDecimal(reader.GetOrdinal("AverageApprovedAmount"));
                         model.ApplicationsInPeriod = model.TotalApplications;
-
                     }
                 }
             }
@@ -163,7 +157,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             string query = @"
                 SELECT ISNULL(ApplicationStatus, 'Submitted') as ApplicationStatus, COUNT(*) as Count
                 FROM LoanApplication
-                WHERE (BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL)
+                WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND IsActive = 1
             ";
             if (isFilter)
@@ -211,7 +205,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN 1 ELSE 0 END) as ApprovedCount,
                     SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) as ApprovedAmount
                 FROM LoanApplication
-                WHERE (BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL)
+                WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND IsActive = 1
             ";
             if (isFilter)
@@ -266,7 +260,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     COUNT(*) as Count,
                     SUM(LoanAmount) as TotalAmount
                 FROM LoanApplication
-                WHERE (BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL)
+                WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND IsActive = 1
             ";
             if (isFilter)

@@ -79,7 +79,7 @@
                             <div class="fw-semibold myapp-amount">Amount: ₱@loan.LoanAmount.ToString("N0")</div>
                         </div>
                         <div class="text-end mt-2">
-                            <a href="@Url.Action("Details", "LoanerLoanHistory", new { id = loan.LoanID })" class="btn btn-primary-action">View Details</a>
+                            <a href="@Url.Action("Details", "MyApplication", new { area = "Loaner", loanId = loan.LoanID })" class="btn btn-primary-action">View Details</a>
                         </div>
                     </div>
                 }

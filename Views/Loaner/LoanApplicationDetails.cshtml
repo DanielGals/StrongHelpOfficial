@@ -82,9 +82,12 @@
 <hr />
 
 <h5 class="fw-bold mb-3">Documents Submitted</h5>
-@if (Model.Documents != null && Model.Documents.Any())
+@{
+    var loanerDocs = Model.Documents?.Where(d => d.LoanApprovalID == null).ToList();
+}
+@if (loanerDocs != null && loanerDocs.Any())
 {
-    foreach (var doc in Model.Documents)
+    foreach (var doc in loanerDocs)
     {
         <div class="loan-details-document">
             <div>

@@ -31,7 +31,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 {
                     await conn.OpenAsync();
                     var cmd = new SqlCommand(@"
-                        SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
+                        SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitsAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
                         FROM LoanApplication
                         WHERE UserID = @UserID
                         ORDER BY DateSubmitted DESC", conn);
@@ -48,7 +48,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 LoanAmount = (decimal)reader["LoanAmount"],
                                 DateSubmitted = (DateTime)reader["DateSubmitted"],
                                 IsActive = (bool)reader["IsActive"],
-                                BenefitAssistantUserID = reader["BenefitAssistantUserID"] as int?,
+                                BenefitAssistantUserID = reader["BenefitsAssistantUserID"] as int?,
                                 DateAssigned = reader["DateAssigned"] as DateTime?,
                                 ApplicationStatus = status,
                                 Remarks = reader["Remarks"] as string,
@@ -85,11 +85,16 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 await conn.OpenAsync();
 
-                // Loan details
+                // Loan details, now join Department and Role
                 var loanCmd = new SqlCommand(@"
-                    SELECT la.*, u.FirstName, u.LastName, u.Email, u.ContactNum, u.RoleID
+                    SELECT la.*, 
+                           u.FirstName, u.LastName, u.Email, u.ContactNum, u.RoleID, u.DepartmentID,
+                           d.DepartmentName,
+                           r.RoleName
                     FROM LoanApplication la
                     JOIN [User] u ON la.UserID = u.UserID
+                    LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
+                    LEFT JOIN Role r ON u.RoleID = r.RoleID
                     WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -102,16 +107,16 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         model.DateSubmitted = (DateTime)reader["DateSubmitted"];
                         model.ApplicationStatus = reader["ApplicationStatus"] as string ?? "";
                         model.EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}";
-                        model.Department = "IT Department"; // Replace with actual if available
-                        model.PayrollAccountNumber = "Credit Proceeds to Account Number"; // Replace with actual if available
+                        model.Department = reader["DepartmentName"] as string ?? "";
+                        model.PayrollAccountNumber = reader["ContactNum"] as string ?? "";
                     }
                 }
 
                 // Documents: Now include LoanDocumentID and determine file type
                 var docCmd = new SqlCommand(@"
-                    SELECT LoanDocumentID, LoanDocumentName
-                    FROM LoanDocument
-                    WHERE LoanID = @LoanID", conn);
+    SELECT LoanDocumentID, LoanDocumentName, LoanApprovalID
+    FROM LoanDocument
+    WHERE LoanID = @LoanID AND LoanApprovalID IS NULL", conn);
                 docCmd.Parameters.AddWithValue("@LoanID", loanId);
 
                 using (var docReader = await docCmd.ExecuteReaderAsync())
@@ -129,11 +134,22 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             _ => "Document"
                         };
 
+                        object rawLoanApprovalId = docReader["LoanApprovalID"];
+                        int? loanApprovalId = null;
+                        if (rawLoanApprovalId != DBNull.Value)
+                        {
+                            if (rawLoanApprovalId is int)
+                                loanApprovalId = (int)rawLoanApprovalId;
+                            else if (rawLoanApprovalId is long)
+                                loanApprovalId = Convert.ToInt32(rawLoanApprovalId);
+                        }
+
                         model.Documents.Add(new DocumentViewModel
                         {
                             LoanDocumentID = (int)docReader["LoanDocumentID"],
                             Name = name,
-                            Type = type
+                            Type = type,
+                            LoanApprovalID = loanApprovalId
                         });
                     }
                 }
@@ -141,6 +157,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
             return View("~/Views/Loaner/LoanApplicationDetails.cshtml", model);
         }
+
         public async Task<IActionResult> ApprovalFlow(int loanId)
         {
             var model = new LoanApplicationDetailsViewModel();
@@ -181,16 +198,16 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Get loan application details including Benefits Assistant info
                 var loanCmd = new SqlCommand(@"
-            SELECT la.*, 
-                   u.FirstName, u.LastName,
-                   ba.UserID AS BenefitAssistantUserID,
-                   ba.FirstName + ' ' + ba.LastName AS BenefitAssistantName,
-                   la.DateAssigned,
-                   la.Remarks
-            FROM LoanApplication la
-            JOIN [User] u ON la.UserID = u.UserID
-            LEFT JOIN [User] ba ON la.BenefitAssistantUserID = ba.UserID
-            WHERE la.LoanID = @LoanID", conn);
+                    SELECT la.*, 
+                           u.FirstName, u.LastName,
+                           ba.UserID AS BenefitAssistantUserID,
+                           ba.FirstName + ' ' + ba.LastName AS BenefitAssistantName,
+                           la.DateAssigned,
+                           la.Remarks
+                    FROM LoanApplication la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    LEFT JOIN [User] ba ON la.BenefitsAssistantUserID = ba.UserID
+                    WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
                 using (var reader = await loanCmd.ExecuteReaderAsync())
@@ -211,22 +228,20 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Get approval history - ONLY get approved/rejected entries
                 var approvalCmd = new SqlCommand(@"
-            SELECT 
-                la.LoanApprovalID,  
-                la.ApproverUserID,
-                u.FirstName + ' ' + u.LastName AS ApproverName,
-                r.RoleName,
-                la.ApprovedDate,
-                la.Status,
-                la.Comment,  
-                la.[Order]
-            FROM LoanApproval la
-            JOIN [User] u ON la.ApproverUserID = u.UserID
-            JOIN Role r ON u.RoleID = r.RoleID
-            WHERE la.LoanID = @LoanID
-            AND (la.Status = 'Approved' OR la.Status = 'Rejected' OR la.Status = 'Reviewed')
-            ORDER BY la.[Order]", conn);
-
+                    SELECT 
+                        la.LoanApprovalID,  
+                        la.UserID AS ApproverUserID,
+                        u.FirstName + ' ' + u.LastName AS ApproverName,
+                        r.RoleName,
+                        la.ApprovedDate,
+                        la.Status,
+                        la.Comment,  
+                        la.[Order]
+                    FROM LoanApproval la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    JOIN Role r ON u.RoleID = r.RoleID
+                    WHERE la.LoanID = @LoanID
+                    ORDER BY la.[Order]", conn);
 
                 approvalCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -278,9 +293,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             return View("~/Views/Loaner/ApprovalHistory.cshtml", model);
         }
 
-
-
-
         public async Task<IActionResult> DeleteSubmission(int loanId)
         {
             var userId = HttpContext.Session.GetInt32("UserID");
@@ -300,8 +312,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
             TempData["SuccessMessage"] = "Your application was successfully deleted.";
             return RedirectToAction(nameof(Index));
         }
-        [HttpGet]
-        [HttpGet]
+
         [HttpGet]
         public async Task<IActionResult> GetApprovers(int loanId)
         {
@@ -314,9 +325,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 // First get the application status
                 string applicationStatus = "";
                 using (var statusCmd = new SqlCommand(@"
-            SELECT ApplicationStatus, BenefitAssistantUserID 
-            FROM LoanApplication 
-            WHERE LoanID = @LoanID", conn))
+                    SELECT ApplicationStatus, BenefitsAssistantUserID 
+                    FROM LoanApplication 
+                    WHERE LoanID = @LoanID", conn))
                 {
                     statusCmd.Parameters.AddWithValue("@LoanID", loanId);
                     using (var reader = await statusCmd.ExecuteReaderAsync())
@@ -330,18 +341,18 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 // Get all approvers including Benefits Assistant
                 var cmd = new SqlCommand(@"
-            SELECT 
-                la.ApproverUserID,
-                u.FirstName + ' ' + u.LastName AS ApproverName,
-                r.RoleName,
-                la.[Order],
-                la.Status,
-                la.Comment
-            FROM LoanApproval la
-            JOIN [User] u ON la.ApproverUserID = u.UserID
-            JOIN Role r ON u.RoleID = r.RoleID
-            WHERE la.LoanID = @LoanID
-            ORDER BY la.[Order]", conn);
+                    SELECT 
+                        la.UserID AS ApproverUserID,
+                        u.FirstName + ' ' + u.LastName AS ApproverName,
+                        r.RoleName,
+                        la.[Order],
+                        la.Status,
+                        la.Comment
+                    FROM LoanApproval la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    JOIN Role r ON u.RoleID = r.RoleID
+                    WHERE la.LoanID = @LoanID
+                    ORDER BY la.[Order]", conn);
 
                 cmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -370,16 +381,16 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 {
                     // Get Benefits Assistant info from LoanApplication
                     using (var baCmd = new SqlCommand(@"
-                SELECT 
-                    la.BenefitAssistantUserID,
-                    u.FirstName + ' ' + u.LastName AS BenefitAssistantName,
-                    'Benefits Assistant' AS RoleName,
-                    la.Remarks,
-                    la.DateAssigned
-                FROM LoanApplication la
-                LEFT JOIN [User] u ON la.BenefitAssistantUserID = u.UserID
-                WHERE la.LoanID = @LoanID
-                AND la.BenefitAssistantUserID IS NOT NULL", conn))
+                        SELECT 
+                            la.BenefitsAssistantUserID,
+                            u.FirstName + ' ' + u.LastName AS BenefitAssistantName,
+                            'Benefits Assistant' AS RoleName,
+                            la.Remarks,
+                            la.DateAssigned
+                        FROM LoanApplication la
+                        LEFT JOIN [User] u ON la.BenefitsAssistantUserID = u.UserID
+                        WHERE la.LoanID = @LoanID
+                        AND la.BenefitsAssistantUserID IS NOT NULL", conn))
                     {
                         baCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -389,7 +400,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             {
                                 approvers.Add(new
                                 {
-                                    userId = (int)reader["BenefitAssistantUserID"],
+                                    userId = (int)reader["BenefitsAssistantUserID"],
                                     userName = reader["BenefitAssistantName"].ToString(),
                                     roleName = "Benefits Assistant",
                                     order = 0, // Always first in sequence

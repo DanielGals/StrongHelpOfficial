@@ -25,22 +25,29 @@
 }
 @await Html.PartialAsync("_LoanApplicationTabs")
 
-@if (Model.Approvers != null && Model.Approvers.Any())
+@{
+    var ba = Model.Approvers?.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
+    var others = Model.Approvers?
+        .Where(a => !a.RoleName.Contains("Benefits Assistant"))
+        .OrderBy(a => a.ApprovedDate ?? DateTime.MaxValue)
+        .ToList();
+}
+
+@if (others != null)
 {
-    @foreach (var approval in Model.Approvers)
+    foreach (var approval in others)
     {
-        // Determine the color based on status
         var statusColor = approval.Status switch
         {
             "Approved" => "#28a745", // Green
             "Rejected" => "#dc3545", // Red
             "Reviewed" => "#17a2b8", // Blue
-            _ => "#dc3545" // Default to red for pending
+            _ => "#f7c948" // Default to red for pending
         };
 
         <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
             <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
-                @approval.RoleName @(approval.RoleName.Contains("Benefits Assistant") ? "Review" : "Approval")
+                @approval.RoleName Approval
             </div>
             <div>
                 <span>
@@ -51,7 +58,29 @@
     }
 }
 
-<!-- Application Submission -->
+@if (ba != null)
+{
+    var statusColor = ba.Status switch
+    {
+        "Approved" => "#28a745",
+        "Rejected" => "#dc3545",
+        "Reviewed" => "#17a2b8",
+        _ => "#17a2b8"
+    };
+
+    <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+            @ba.RoleName Review
+        </div>
+        <div>
+            <span>
+                @ba.Status by @ba.ApproverName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+            </span>
+        </div>
+    </div>
+}
+
+<!-- Application Submission (always last) -->
 <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
     <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
     <div>

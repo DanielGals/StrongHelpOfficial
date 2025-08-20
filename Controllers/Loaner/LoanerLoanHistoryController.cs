@@ -28,10 +28,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 conn.Open();
                 var sql = @"
-            SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
-            FROM LoanApplication
-            WHERE UserID = @UserID
-            ORDER BY DateSubmitted DESC";
+                    SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitsAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
+                    FROM LoanApplication
+                    WHERE UserID = @UserID AND IsActive = 1
+                    ORDER BY DateSubmitted DESC";
                 using (var cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
@@ -46,7 +46,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 LoanAmount = (decimal)reader["LoanAmount"],
                                 DateSubmitted = (DateTime)reader["DateSubmitted"],
                                 IsActive = (bool)reader["IsActive"],
-                                BenefitAssistantUserID = reader["BenefitAssistantUserID"] as int?,
+                                BenefitAssistantUserID = reader["BenefitsAssistantUserID"] as int?,
                                 DateAssigned = reader["DateAssigned"] as DateTime?,
                                 ApplicationStatus = appStatus,
                                 Remarks = reader["Remarks"] as string,
@@ -81,7 +81,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             };
         }
 
-
         public IActionResult Details(int id)
         {
             LoanApplicationDetailsViewModel loan = null;
@@ -90,11 +89,11 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 conn.Open();
                 var sql = @"
-            SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                   u.FirstName, u.LastName
-            FROM LoanApplication la
-            JOIN [User] u ON la.UserID = u.UserID
-            WHERE la.LoanID = @LoanID";
+                    SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           u.FirstName, u.LastName
+                    FROM LoanApplication la
+                    JOIN [User] u ON la.UserID = u.UserID
+                    WHERE la.LoanID = @LoanID AND la.IsActive = 1";
                 using (var cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", id);
@@ -120,7 +119,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 {
                     var docSql = @"SELECT LoanDocumentID, LoanDocumentName
                                     FROM LoanDocument
-                                    WHERE LoanID = @LoanID";
+                                    WHERE LoanID = @LoanID AND IsActive = 1";
                     using (var docCmd = new SqlCommand(docSql, conn))
                     {
                         docCmd.Parameters.AddWithValue("@LoanID", id);
@@ -154,7 +153,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 return NotFound();
 
             return View("~/Views/Loaner/LoanApplicationDetails.cshtml", loan);
-
         }
     }
 }

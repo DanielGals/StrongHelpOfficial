@@ -23,11 +23,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
             }
 
             var model = new LoanerDashboardViewModel();
-            var email = HttpContext.Session.GetString("Email"); // Use session
+            var email = HttpContext.Session.GetString("Email");
 
             if (string.IsNullOrEmpty(email))
             {
-                // Handle missing email (redirect, error, etc.)
                 model.UserName = "Unknown User";
                 return View("~/Views/Loaner/LoanerDashboard.cshtml", model);
             }
@@ -36,7 +35,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
             conn.Open();
 
             int userId = 0;
-            using (var cmd = new SqlCommand("SELECT UserID, FirstName, LastName FROM [User] WHERE Email = @Email", conn))
+            using (var cmd = new SqlCommand("SELECT UserID, FirstName, LastName FROM [User] WHERE Email = @Email AND IsActive = 1", conn))
             {
                 cmd.Parameters.AddWithValue("@Email", email);
                 using var reader = cmd.ExecuteReader();
@@ -73,7 +72,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     model.ActiveLoans = (int)cmd.ExecuteScalar();
                 }
 
-
                 using (var cmd = new SqlCommand("SELECT TOP 5 " +
                                                 "CONCAT(Title, ' - ', ApplicationStatus, ' " +
                                                 "(', CONVERT(varchar, DateSubmitted, 120), ')') " +
@@ -109,7 +107,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     @"SELECT COUNT(*) 
                       FROM LoanDocument d
                       INNER JOIN LoanApplication a ON d.LoanID = a.LoanID
-                      WHERE a.UserID = @UserID", conn))
+                      WHERE a.UserID = @UserID AND d.IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
                     documentCount = (int)cmd.ExecuteScalar();
@@ -121,7 +119,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             ViewData["UserID"] = userId;
             ViewData["DocumentCount"] = documentCount;
 
-            // Pass a new model instance to the view
             var model = new ApplyForLoanViewModel();
             return View("~/Views/Loaner/ApplyForLoan.cshtml", model);
         }
@@ -139,9 +136,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 conn.Open();
                 using (var cmd = new SqlCommand(
                     @"SELECT LoanID, LoanAmount, DateSubmitted, ApplicationStatus, Title
-              FROM LoanApplication
-              WHERE UserID = @UserID
-              ORDER BY DateSubmitted DESC", conn))
+                      FROM LoanApplication
+                      WHERE UserID = @UserID AND IsActive = 1
+                      ORDER BY DateSubmitted DESC", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", userId);
                     using (var reader = cmd.ExecuteReader())
@@ -155,7 +152,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 DateSubmitted = reader.GetDateTime(2),
                                 ApplicationStatus = reader.GetString(3),
                                 Title = reader.GetString(4),
-                                ProgressPercent = 0 // Set this based on your logic if needed
+                                ProgressPercent = 0
                             });
                         }
                     }
@@ -169,7 +166,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             return View("~/Views/Loaner/MyApplication.cshtml", model);
         }
 
-        // Add this action for logout
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
