@@ -42,7 +42,7 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "ana.reyes@example.com"; // Hardcoded email for testing
+        userModel.Email = "johndaveravina@gmail.com"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
@@ -112,6 +112,10 @@ public class AuthController : Controller
             else if (roleName == "Benefits Assistant") // Benefits Assistant.
             {
                 return RedirectToAction("Index", "BenefitsAssistantDashboard", new { area = "" });
+            }
+            else if (roleName == "Admin")
+            {
+                return RedirectToAction("Index", "AdminDashboard", new { area = "Admin" });
             }
             else // All other roles go to Approver Dashboard.
             {

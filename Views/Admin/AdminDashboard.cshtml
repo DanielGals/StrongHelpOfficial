@@ -1,6 +1,7 @@
 ﻿@model StrongHelpOfficial.Models.AdminDashboardViewModel
 
 @{
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -107,7 +108,42 @@
     <div class="recent-users-box mt-4">
         <div class="recent-users-title">Recent User Logs</div>
         <div class="recent-users-subtitle">Latest system events and activities</div>
-        
+        <div class="list-group mb-3">
+            @if (Model.RecentLogs != null && Model.RecentLogs.Any())
+            {
+                foreach (var log in Model.RecentLogs)
+                {
+                    var icon = log.EntityType switch
+                    {
+                        "User" => "bi-people",
+                        "Role" => "bi-person-gear",
+                        "Department" => "bi-building-fill",
+                        _ => "bi-info-circle"
+                    };
+                    var title = log.IsCreation
+                        ? $"New {log.EntityType.ToLower()} created"
+                        : $"{log.EntityType} modified";
+                    var daysAgo = (DateTime.Now - log.ActionDate).Days;
+                    var agoText = daysAgo == 0 ? "today" : $"{daysAgo} day{(daysAgo > 1 ? "s" : "")} ago";
+                    var desc = log.IsCreation
+                        ? $"{log.Name} was added to the system {agoText}"
+                        : $"{log.Name} was modified {agoText}";
+        <div class="list-group-item d-flex align-items-start">
+            <span class="me-3" style="font-size: 2rem;">
+                <i class="bi @icon"></i>
+            </span>
+            <div>
+                <div class="fw-semibold">@title</div>
+                <div class="text-muted small">@desc</div>
+            </div>
+        </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted">No recent logs found.</div>
+            }
+        </div>
         <div class="mt-3 text-center">
             <a href="@Url.Action("Index", "AdminLogs")"
                class="btn-viewalluser">

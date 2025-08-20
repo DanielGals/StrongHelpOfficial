@@ -1,0 +1,65 @@
+﻿@model StrongHelpOfficial.Models.AdminRADViewModel
+
+@{
+    ViewData["Title"] = "System Administrator";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeTab = Context.Request.Query["tab"].ToString().ToLower() == "departments" ? "departments" : "roles";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <style>
+        .switch-btns {
+            margin-bottom: 1.5rem;
+        }
+        .switch-btns .quick-action-btn {
+            padding: 0.5rem 1.5rem;
+            margin-right: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            background: #e0e0e0;
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, opacity 0.2s;
+            opacity: 0.7;
+        }
+        .switch-btns .quick-action-btn.active {
+            background: #0078d7;
+            color: #fff;
+            opacity: 1;
+        }
+        .switch-btns .quick-action-btn.inactive {
+            background: #e0e0e0;
+            color: #888;
+            opacity: 0.5;
+            pointer-events: auto;
+        }
+    </style>
+}
+
+<div class="switch-btns quick-actions-row" style="margin-bottom: 1.5rem;">
+    <a asp-page="/Admin/AdminRAD" asp-route-tab="roles"
+       class="quick-action-btn @(activeTab == "roles" ? "active" : "inactive")"
+       style="text-decoration:none;">
+        <span class="quick-action-icon"><i class="bi bi-shield-lock"></i></span>
+        Roles
+    </a>
+    <a asp-page="/Admin/AdminRAD" asp-route-tab="departments"
+       class="quick-action-btn @(activeTab == "departments" ? "active" : "inactive")"
+       style="text-decoration:none;">
+        <span class="quick-action-icon"><i class="bi bi-building-fill"></i></span>
+        Departments
+    </a>
+</div>
+
+<div>
+    @if (activeTab == "roles")
+    {
+        @await Html.PartialAsync("~/Views/Admin/AdminRoles.cshtml")
+    }
+    else if (activeTab == "departments")
+    {
+        @await Html.PartialAsync("~/Views/Admin/AdminDepartments.cshtml")
+    }
+</div>
