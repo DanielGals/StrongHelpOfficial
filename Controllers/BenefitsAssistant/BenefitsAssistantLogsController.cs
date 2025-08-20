@@ -33,7 +33,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 return RedirectToAction("Login", "Auth");
             }
 
-            // Get the current Benefits Assistant's UserID
             int benefitsAssistantUserId = 0;
             string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
@@ -41,8 +40,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 connection.Open();
 
-                // First get the user ID
-                using (var cmd = new SqlCommand("SELECT UserID FROM [User] WHERE Email = @Email", connection))
+                using (var cmd = new SqlCommand("SELECT UserID FROM [User] WHERE Email = @Email AND IsActive = 1", connection))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
                     var result = cmd.ExecuteScalar();
@@ -52,17 +50,13 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // Query to get loan applications with the most accurate timestamps
                 string query = @"
                     SELECT 
                         la.LoanID,
-                        -- Use DateAssigned for 'In Review' status to better reflect when the review began
-                        -- Use the latest ApprovedDate for 'Approved' or 'Rejected' statuses
-                        -- Fall back to DateSubmitted if nothing else available
                         CASE 
                             WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
                             WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID), la.DateSubmitted)
+                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
                             ELSE la.DateSubmitted
                         END AS Timestamp,
                         ISNULL(la.ApplicationStatus, 'Unknown') AS Action,
@@ -78,11 +72,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.BenefitAssistantUserID = @UserId
+                    WHERE la.BenefitsAssistantUserID = @UserId
                     AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
+                    AND la.IsActive = 1
                 ";
 
-                // Add filters if provided
                 if (!string.IsNullOrEmpty(filterBy))
                 {
                     query += " AND la.ApplicationStatus = @FilterBy";
@@ -90,19 +84,17 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                 if (filterDate.HasValue)
                 {
-                    // Modified to filter by our calculated Timestamp
                     query += @" AND CONVERT(date, 
                         CASE 
                             WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
                             WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID), la.DateSubmitted)
+                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
                             ELSE la.DateSubmitted
                         END) = @FilterDate";
                 }
 
                 query += " ORDER BY Timestamp DESC";
 
-                // Add pagination
                 int offset = (page - 1) * model.PageSize;
                 query += " OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
@@ -151,12 +143,12 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                // Get total count for pagination - modified to match the main query criteria
                 string countQuery = @"
                     SELECT COUNT(*) 
                     FROM LoanApplication la
-                    WHERE la.BenefitAssistantUserID = @UserId
+                    WHERE la.BenefitsAssistantUserID = @UserId
                     AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
+                    AND la.IsActive = 1
                 ";
 
                 if (!string.IsNullOrEmpty(filterBy))
@@ -166,12 +158,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                 if (filterDate.HasValue)
                 {
-                    // Modified to filter by our calculated Timestamp
                     countQuery += @" AND CONVERT(date, 
                         CASE 
                             WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
                             WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID), la.DateSubmitted)
+                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
                             ELSE la.DateSubmitted
                         END) = @FilterDate";
                 }
@@ -202,11 +193,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     model.TotalPages = Math.Max(1, (int)Math.Ceiling((double)model.TotalItems / model.PageSize));
                 }
 
-                // Get all distinct statuses for filter dropdown - also limit to the three statuses
                 using (var statusCommand = new SqlCommand(
                     @"SELECT DISTINCT ApplicationStatus FROM LoanApplication 
-                      WHERE BenefitAssistantUserID = @UserId 
+                      WHERE BenefitsAssistantUserID = @UserId 
                       AND ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
+                      AND IsActive = 1
                       ORDER BY ApplicationStatus", connection))
                 {
                     statusCommand.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);

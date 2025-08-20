@@ -12,6 +12,9 @@
         public List<BADocumentViewModel> Documents { get; set; } = new();
         public string Remarks { get; set; } = string.Empty;
         public List<ApproverViewModel> Approvers { get; set; } = new();
+        public DateTime? ApprovedDate { get; set; } // Nullable DateTime property
+        public List<BADocumentViewModel> LoanerDocuments { get; set; } = new List<BADocumentViewModel>();
+        public List<BADocumentViewModel> ApproverDocuments { get; set; } = new List<BADocumentViewModel>();
     }
 
     public class BADocumentViewModel
@@ -19,6 +22,11 @@
         public int LoanDocumentID { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
+
+        public string Url { get; set; }
+
+        public int LoanApprovalID { get; set; }
+
     }
 
     public class ApproverViewModel
@@ -31,6 +39,8 @@
         public int Order { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
+        public DateTime? ApprovedDate { get; set; } // Nullable DateTime property
+        public int LoanApprovalID { get; set; }
     }
 
     // Request models for the controller actions

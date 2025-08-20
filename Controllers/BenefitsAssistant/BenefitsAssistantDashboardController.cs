@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using StrongHelpOfficial.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 {
@@ -36,7 +37,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 conn.Open();
 
-                using (var cmd = new SqlCommand("SELECT UserID, FirstName, LastName FROM [User] WHERE Email = @Email", conn))
+                using (var cmd = new SqlCommand("SELECT UserID, FirstName, LastName FROM [User] WHERE Email = @Email AND IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
                     using (var reader = cmd.ExecuteReader())
@@ -58,7 +59,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                //Get stats
+                // Get stats
                 using (var cmd = new SqlCommand(@"
                     SELECT 
                         COUNT(*) AS TotalApplications,
@@ -66,7 +67,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         SUM(CASE WHEN ApplicationStatus = 'Approved' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS ApprovedToday,
                         SUM(CASE WHEN ApplicationStatus = 'Rejected' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS RejectedToday
                     FROM LoanApplication
-                    WHERE BenefitAssistantUserID = @UserId OR BenefitAssistantUserID IS NULL
+                    WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                      AND IsActive = 1
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);
@@ -74,7 +76,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     {
                         if (reader.Read())
                         {
-                            model.TotalApplications = reader.GetInt32(0);
+                            model.TotalApplications = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
                             model.PendingReview = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
                             model.ApprovedToday = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
                             model.RejectedToday = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
@@ -82,14 +84,15 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                //Get pending applications
+                // Get pending applications
                 var pendingApps = new List<PendingApplicationViewModel>();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE (la.BenefitAssistantUserID = @UserId OR la.BenefitAssistantUserID IS NULL)
+                    WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                       AND la.ApplicationStatus IN ('Submitted', 'In Review')
+                      AND la.IsActive = 1
                     ORDER BY la.DateSubmitted DESC
                 ", conn))
                 {
@@ -116,7 +119,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         }
                     }
                 }
-                
+
                 model.PendingApplications = pendingApps.Take(5).ToList();
             }
             return View("~/Views/BenefitsAssistant/BenefitsAssistantDashboard.cshtml", model);

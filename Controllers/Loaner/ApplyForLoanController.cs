@@ -59,7 +59,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                     if (loanId != null)
                     {
-                        var cmdCount = new SqlCommand("SELECT COUNT(*) FROM LoanDocument WHERE LoanID = @LoanID", conn);
+                        var cmdCount = new SqlCommand("SELECT COUNT(*) FROM LoanDocument WHERE LoanID = @LoanID AND IsActive = 1", conn);
                         cmdCount.Parameters.AddWithValue("@LoanID", loanId);
                         documentCount = (int)cmdCount.ExecuteScalar();
                     }
@@ -89,12 +89,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
         [HttpPost]
         public async Task<IActionResult> UploadDocuments(ApplyForLoanViewModel model)
         {
-            //Get uploaded files from the Request
             var files = model.Files;
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             var loanAmount = model.LoanAmount;
 
-            //Set model properties
             if (files != null && loanAmount != null)
             {
                 if (files.Count >= 3 && loanAmount != 0)
@@ -104,22 +102,24 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         await conn.OpenAsync();
                         var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
-                        //Insert LoanApplication
+                        // Insert LoanApplication (add ComakerUserID and audit fields if needed)
                         using (var cmd = new SqlCommand(
-                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, BenefitAssistantUserID, DateAssigned) " +
-                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, @BenefitAssistantUserID, @DateAssigned)", conn))
+                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, BenefitsAssistantUserID, DateAssigned, IsActive, CreatedAt, CreatedBy) " +
+                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, @BenefitsAssistantUserID, @DateAssigned, 1, @CreatedAt, @CreatedBy)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
                             cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
-                            cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan"); //Default title
-                            cmd.Parameters.AddWithValue("@BenefitAssistantUserID", 2); //Set to Benefits Assistant with ID 2
+                            cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan");
+                            cmd.Parameters.AddWithValue("@BenefitsAssistantUserID", 2);
                             cmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@CreatedBy", userId.ToString());
                             await cmd.ExecuteNonQueryAsync();
                         }
 
-                        //Get the LoanID of the inserted application
+                        // Get the LoanID of the inserted application
                         int loanId = 0;
                         using (var cmd = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn))
                         {
@@ -127,7 +127,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             loanId = (int)(await cmd.ExecuteScalarAsync() ?? 0);
                         }
 
-                        //Insert each document
+                        // Insert each document (add IsActive and audit fields)
                         foreach (var file in files)
                         {
                             byte[] fileBytes;
@@ -136,11 +136,13 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 await file.CopyToAsync(memoryStream);
                                 fileBytes = memoryStream.ToArray();
                             }
-                            using (var cmd = new SqlCommand("INSERT INTO LoanDocument (LoanID, FileContent, LoanDocumentName) VALUES (@LoanID, @FileContent, @LoanDocumentName)", conn))
+                            using (var cmd = new SqlCommand("INSERT INTO LoanDocument (LoanID, FileContent, LoanDocumentName, IsActive, CreatedAt, CreatedBy) VALUES (@LoanID, @FileContent, @LoanDocumentName, 1, @CreatedAt, @CreatedBy)", conn))
                             {
                                 cmd.Parameters.AddWithValue("@LoanID", loanId);
                                 cmd.Parameters.AddWithValue("@FileContent", fileBytes);
                                 cmd.Parameters.AddWithValue("@LoanDocumentName", file.FileName);
+                                cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                                cmd.Parameters.AddWithValue("@CreatedBy", userId.ToString());
                                 await cmd.ExecuteNonQueryAsync();
                             }
                         }

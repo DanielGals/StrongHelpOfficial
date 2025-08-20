@@ -23,9 +23,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 await conn.OpenAsync();
                 var cmd = new SqlCommand(@"
-            SELECT FileContent, LoanDocumentName
-            FROM LoanDocument
-            WHERE LoanDocumentID = @Id", conn);
+                    SELECT FileContent, LoanDocumentName, LoanApprovalID, CreatedAt, CreatedBy, ModifiedAt, ModifiedBy, IsActive
+                    FROM LoanDocument
+                    WHERE LoanDocumentID = @Id AND IsActive = 1", conn);
                 cmd.Parameters.AddWithValue("@Id", id);
 
                 using (var reader = await cmd.ExecuteReaderAsync())
@@ -34,6 +34,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     {
                         fileBytes = reader["FileContent"] as byte[];
                         fileName = reader["LoanDocumentName"] as string;
+                        // You can access LoanApprovalID, CreatedAt, etc. here if needed
                     }
                 }
             }
