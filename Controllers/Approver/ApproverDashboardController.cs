@@ -31,6 +31,9 @@ namespace StrongHelpOfficial.Controllers.Approver
                 return View("~/Views/Approvers/ApproversDashboard.cshtml", model);
             }
 
+            // Log to console for debugging purposes
+            Console.WriteLine("Looking up approver with email: " + email);
+
             int approverUserId = 0;
             string firstName = "";
             string lastName = "";
@@ -40,10 +43,13 @@ namespace StrongHelpOfficial.Controllers.Approver
                 conn.Open();
 
                 // Get the user's details
-                using (var cmd = new SqlCommand(@"SELECT u.UserID, u.FirstName, u.LastName, r.RoleName, r.RoleID 
+                using (var cmd = new SqlCommand(@"SELECT u.UserID, u.FirstName, u.LastName, r.RoleName, r.RoleID, 
+                                                  d.DepartmentName
                                                   FROM [User] u
                                                   INNER JOIN [Role] r ON u.RoleID = r.RoleID
-                                                  WHERE u.Email = @Email AND r.RoleID IN (3,4,5,6,7,8,9)", conn))
+                                                  LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
+                                                  WHERE u.Email = @Email AND r.RoleID IN (3,4,5,6,7,8,9)
+                                                  AND u.IsActive = 1 AND r.IsActive = 1", conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
                     using (var reader = cmd.ExecuteReader())
@@ -56,6 +62,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             model.UserName = firstName;
                             model.RoleName = reader["RoleName"].ToString() ?? "";
                             model.RoleID = reader.GetInt32(reader.GetOrdinal("RoleID"));
+                            model.DepartmentName = reader["DepartmentName"]?.ToString() ?? "";
                             HttpContext.Session.SetString("FirstName", firstName);
                             HttpContext.Session.SetString("LastName", lastName);
                             HttpContext.Session.SetString("ApproverRoleName", model.RoleName);
@@ -72,18 +79,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                 using (var cmd = new SqlCommand(@"
                     -- Get total applications
                     SELECT 
-                        (SELECT COUNT(*) FROM LoanApplication) AS TotalApplications,
+                        (SELECT COUNT(*) FROM LoanApplication WHERE IsActive = 1) AS TotalApplications,
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             INNER JOIN LoanApproval current_lap ON la.LoanID = current_lap.LoanID
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
-                            AND current_lap.ApproverUserID = @UserId
+                            AND la.IsActive = 1
+                            AND current_lap.UserID = @UserId
                             AND current_lap.Status IS NULL
+                            AND current_lap.IsActive = 1
                             AND NOT EXISTS (
                                 SELECT 1
                                 FROM LoanApproval prev_lap
                                 WHERE prev_lap.LoanID = la.LoanID
+                                AND prev_lap.IsActive = 1
                                 AND prev_lap.[Order] < current_lap.[Order]
                                 AND (prev_lap.Status IS NULL OR prev_lap.Status = 'Pending')
                             )
@@ -91,15 +101,17 @@ namespace StrongHelpOfficial.Controllers.Approver
                         (
                             SELECT COUNT(*) 
                             FROM LoanApproval 
-                            WHERE ApproverUserID = @UserId 
+                            WHERE UserID = @UserId 
                             AND Status = 'Approved' 
+                            AND IsActive = 1
                             AND CAST(ApprovedDate AS DATE) = CAST(GETDATE() AS DATE)
                         ) AS ApprovedToday,
                         (
                             SELECT COUNT(*) 
                             FROM LoanApproval 
-                            WHERE ApproverUserID = @UserId 
+                            WHERE UserID = @UserId 
                             AND Status = 'Rejected' 
+                            AND IsActive = 1
                             AND CAST(ApprovedDate AS DATE) = CAST(GETDATE() AS DATE)
                         ) AS RejectedToday
                 ", conn))
@@ -125,19 +137,23 @@ namespace StrongHelpOfficial.Controllers.Approver
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
+                    AND la.IsActive = 1
+                    AND u.IsActive = 1
                     AND EXISTS (
                         -- Check if it's this approver's turn based on the approval order
                         SELECT 1 
                         FROM LoanApproval currentApproval
                         WHERE currentApproval.LoanID = la.LoanID
+                        AND currentApproval.IsActive = 1
                         AND currentApproval.[Order] = (
                             -- Get the current order in the approval process
                             SELECT MIN(nextApproval.[Order])
                             FROM LoanApproval nextApproval
                             WHERE nextApproval.LoanID = la.LoanID
+                            AND nextApproval.IsActive = 1
                             AND (nextApproval.Status IS NULL OR nextApproval.Status = 'Pending')
                         )
-                        AND currentApproval.ApproverUserID = @UserId
+                        AND currentApproval.UserID = @UserId
                     )
                     -- Ensure all previous approvals in the sequence are completed
                     AND NOT EXISTS (
@@ -145,11 +161,14 @@ namespace StrongHelpOfficial.Controllers.Approver
                         FROM LoanApproval prevApproval
                         INNER JOIN LoanApproval currentApproval ON currentApproval.LoanID = prevApproval.LoanID
                         WHERE prevApproval.LoanID = la.LoanID
+                        AND prevApproval.IsActive = 1
+                        AND currentApproval.IsActive = 1
                         AND prevApproval.[Order] < (
                             SELECT MIN(myApproval.[Order])
                             FROM LoanApproval myApproval
                             WHERE myApproval.LoanID = la.LoanID
-                            AND myApproval.ApproverUserID = @UserId
+                            AND myApproval.IsActive = 1
+                            AND myApproval.UserID = @UserId
                         )
                         AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
                     )";

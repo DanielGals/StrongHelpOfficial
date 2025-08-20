@@ -73,6 +73,12 @@
             const tableRows = document.querySelectorAll('table tbody tr:not(.no-results)');
             let noResultsRow = document.querySelector('table tbody tr.no-results');
 
+            // If search input exists but has an error due to layout change, handle it gracefully
+            if (!searchInput) {
+                console.warn('Search input not found. Layout may have changed.');
+                return;
+            }
+
             if (!noResultsRow) {
                 // Create a "no results" row if it doesn't exist
                 noResultsRow = document.createElement('tr');

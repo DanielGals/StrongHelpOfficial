@@ -15,6 +15,7 @@ namespace StrongHelpOfficial.Models
         public List<LoanApplicationViewModel> PendingApplications { get; set; } = new();
         public string SearchQuery { get; set; } = string.Empty;
         public Dictionary<string, bool> Filters { get; set; } = new Dictionary<string, bool>();
+        public string DepartmentName { get; set; } = string.Empty;
     }
 
     public class LoanApplicationViewModel
