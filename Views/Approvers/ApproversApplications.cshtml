@@ -1,5 +1,267 @@
-﻿@{
-    ViewData["Title"] = "Applications";
+﻿@model StrongHelpOfficial.Models.ApproverApplicationsViewModel
+@{
+    ViewData["Title"] = "Loan Applications";
+    int totalPages = (int)Math.Ceiling((double)Model.TotalApplications / Model.PageSize);
+    int start = ((Model.PageNumber - 1) * Model.PageSize) + 1;
+    int end = Math.Min(Model.PageNumber * Model.PageSize, Model.TotalApplications);
 }
-<h2>Applications</h2>
-<p>View and manage all loan applications.</p>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BenefitsAssistantDashboard.css" asp-append-version="true" />
+    <style>
+        .pagination {
+            display: flex;
+            gap: 4px;
+        }
+
+        .page-item {
+            display: inline-block;
+        }
+
+        .page-link {
+            border: 1px solid #ccc;
+            padding: 4px 16px;
+            border-radius: 4px;
+            color: var(--primary-dark);
+            background: #fff;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            font-weight: 500;
+        }
+
+        .page-link:hover,
+        .page-link:focus {
+            background: #fff;
+            color: var(--primary-dark);
+            border-color: #ccc;
+        }
+
+        .page-item.active .page-link {
+            background: var(--primary-dark);
+            color: #fff;
+            border-color: var(--primary-dark);
+        }
+
+        .page-item.disabled .page-link {
+            color: #aaa;
+            pointer-events: none;
+            background: #f5f5f5;
+            border-color: #eee;
+        }
+
+        .pagination-summary strong {
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        /* Override status-tab styles only for ApproverApplications */
+        .status-tab-group {
+            max-width: 100%;
+            width: 1350px;
+            background: #f1f1f1;
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 1.5rem;
+            gap: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-tab-group .status-tab {
+            color: #757e87;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            cursor: pointer;
+            border-radius: 12px;
+            padding: 12px 32px;
+            font-size: 1.08em;
+            transition: background 0.2s, color 0.2s;
+            text-align: center;
+            min-width: 200px;
+            margin: 0 2px;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1.2;
+            white-space: normal;
+        }
+
+        .status-tab-group .status-tab.active {
+            background: var(--primary-dark, #373fcf);
+            color: #fff !important;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(55, 63, 207, 0.08);
+            border: none;
+        }
+
+        .status-tab-group .status-tab:not(.active):hover {
+            background: transparent;
+            color: #757e87;
+        }
+    </style>
+}
+
+<div class="loan-history-header mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Loan Applications</h2>
+        <p class="text-muted">@Model.RoleName - Review and manage loan applications requiring your approval</p>
+    </div>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search"></i>
+        </span>
+        <input type="text" name="search" class="form-control border-start-0"
+            placeholder="Search Applications by employee name..." value="@Model.SearchTerm" />
+    </div>
+</form>
+
+<div class="loan-tabs mb-3">
+    <div class="status-tab-group">
+        <a class="status-tab @(Model.SelectedTab == "Pending Review" ? "active" : "")"
+            href="?tab=Pending Review">Pending Review</a>
+        <a class="status-tab @(Model.SelectedTab == "Approved" ? "active" : "")" href="?tab=Approved">Approved</a>
+        <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected">Rejected</a>
+        <a class="status-tab @(Model.SelectedTab == "All Applications" ? "active" : "")"
+            href="?tab=All Applications">All Applications</a>
+    </div>
+</div>
+
+<div class="all-applications-box mb-4">
+    <div class="card myapp-card-body">
+        <div class="card-body">
+            <h5 class="fw-semibold mb-2">
+                @if (Model.SelectedTab == "All Applications")
+                {
+                    <text>All Applications</text>
+                }
+                else
+                {
+                    <text>@Model.SelectedTab Applications</text>
+                }
+            </h5>
+            <p class="text-muted" style="font-size: 0.95em;">
+                @if (Model.SelectedTab == "Pending Review")
+                {
+                    <text>Applications awaiting your review and approval</text>
+                }
+                else if (Model.SelectedTab == "Approved")
+                {
+                    <text>Applications you have approved</text>
+                }
+                else if (Model.SelectedTab == "Rejected")
+                {
+                    <text>Applications you have rejected</text>
+                }
+                else
+                {
+                    <text>All applications assigned to you for review</text>
+                }
+            </p>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Loan Type</th>
+                            <th>Amount</th>
+                            <th>Date Applied</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Applications.Any())
+                        {
+                            @foreach (var app in Model.Applications)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-2">
+                                                @app.Initials
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">@app.EmployeeName</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@app.LoanType</td>
+                                    <td>₱@app.Amount.ToString("N0")</td>
+                                    <td>@app.DateApplied.ToString("MMMM d, yyyy")</td>
+                                    <td>
+                                        @{
+                                            string statusClass = app.Status switch
+                                            {
+                                                "Submitted" => "status-badge status-submitted",
+                                                "In Review" => "status-badge status-inreview",
+                                                "Approved" => "status-badge status-approved",
+                                                "Rejected" => "status-badge status-rejected",
+                                                _ => "status-badge status-submitted"
+                                            };
+                                        }
+                                        <span class="@statusClass">
+                                            @app.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Index", "ApproverApplicationDetails", new { id = app.ApplicationId })"
+                                            class="btn btn-primary-action">Review</a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6">
+                                    <div class="alert alert-info mb-0">
+                                        No applications found.
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination controls below the table -->
+            @if (Model.TotalApplications > 0)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="pagination-summary text-teal">
+                            Showing <strong>@start</strong> to <strong>@end</strong> of
+                            <strong>@Model.TotalApplications</strong> applications
+                        </span>
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                    href="?page=@(Model.PageNumber - 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Previous</a>
+                            </li>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                                    <a class="page-link"
+                                        href="?page=@i&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                    href="?page=@(Model.PageNumber + 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
