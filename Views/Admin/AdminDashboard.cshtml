@@ -83,7 +83,7 @@
                             <td>@Model.RoleName[i]</td>
                             <td>@Model.Department[i]</td>
                             <td>
-                                <button class="btn-manage">Manage</button>
+                                <button class="btn-manage" onclick="location.href='@Url.Action("Index", "AdminManageUser", new { userId = @Model.UserID[i] })'">Manage</button>
                             </td>
                         </tr>
                     }

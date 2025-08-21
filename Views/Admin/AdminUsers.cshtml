@@ -81,7 +81,7 @@
                                 <td>@user.Role</td>
                                 <td>@user.Department</td>
                                 <td>
-                                    <button class="btn-manage">Manage</button>
+                                    <button class="btn-manage" onclick="location.href='@Url.Action("Index", "AdminManageUser", new { userId = user.UserID })'">Manage</button>
                                 </td>
                             </tr>
                         }

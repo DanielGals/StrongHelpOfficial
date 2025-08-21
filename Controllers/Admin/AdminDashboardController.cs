@@ -30,11 +30,13 @@ namespace StrongHelpOfficial.Controllers.Admin
                 {
                     model.UserCount = (int)command.ExecuteScalar();
                 }
-                using (var command = new SqlCommand("SELECT COUNT(*) FROM [User] WHERE isBanned = 0", connection))
+                // Active users: isActive = 1
+                using (var command = new SqlCommand("SELECT COUNT(*) FROM [User] WHERE isActive = 1", connection))
                 {
                     model.ActiveUserCount = (int)command.ExecuteScalar();
                 }
-                using (var command = new SqlCommand("SELECT COUNT(*) FROM [User] WHERE isBanned = 1", connection))
+                // Inactive users: isActive = 0
+                using (var command = new SqlCommand("SELECT COUNT(*) FROM [User] WHERE isActive = 0", connection))
                 {
                     model.InactiveUserCount = (int)command.ExecuteScalar();
                 }
