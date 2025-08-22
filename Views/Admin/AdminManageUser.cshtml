@@ -1,0 +1,269 @@
+﻿@model StrongHelpOfficial.Models.AdminManageUserViewModel
+
+@{
+    ViewData["Title"] = "Manage User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isEditMode = false;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <style>
+        .btn-back {
+            background: #f5f6fa;
+            color: #2d3748;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            margin-right: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-back:hover {
+            background: #e2e6ea;
+        }
+        .btn-manage {
+            background: #2d6cdf;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn-manage:hover {
+            background: #1b4fa0;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn-danger:hover {
+            background: #c62828;
+        }
+        .user-info-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 2rem 2.5rem 1.5rem 2.5rem;
+            margin-top: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .user-info-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .user-info-desc {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+        .user-info-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .user-info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .user-info-label {
+            flex: 0 0 180px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .user-info-value, .user-info-input {
+            flex: 1 1 0;
+            font-weight: 500;
+        }
+        .user-info-input input, .user-info-input select {
+            width: 100%;
+            padding: 0.35rem 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .user-info-meta {
+            color: #adb5bd;
+            font-size: 0.95rem;
+            margin-top: 2rem;
+            text-align: right;
+        }
+        @@media (max-width: 600px) {
+            .user-info-box { padding: 1rem; }
+            .user-info-label { flex: 0 0 120px; }
+        }
+    </style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3" style="margin-top: 1.5rem;">
+    <div>
+        <a href="@Url.Action("Index", "AdminUsers")" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Back to Users
+        </a>
+    </div>
+    <div>
+        <button id="editUserBtn" class="btn-manage" type="button" onclick="toggleEditMode(true)">Edit User</button>
+        <button id="deactivateBtn" class="btn-danger" type="button" onclick="confirmDeactivate()">Deactivate</button>
+        <button id="saveUserBtn" class="btn-manage d-none" type="button" onclick="confirmSave()">Save User Information</button>
+        <button id="cancelEditBtn" class="btn-danger d-none" type="button" onclick="confirmCancel()">Cancel Change</button>
+    </div>
+</div>
+
+<div class="user-info-box">
+    <div class="user-info-title">User Information</div>
+    <div class="user-info-desc">View and manage user details</div>
+
+    <div class="user-info-section-title">Personal Information</div>
+    <form id="userInfoForm" method="post" asp-action="Edit" asp-controller="AdminManageUser">
+        <input type="hidden" name="userId" value="@Model.userId" />
+        <div class="user-info-row">
+            <div class="user-info-label">First Name</div>
+            <div class="user-info-value" id="firstNameView">@Model.firstName</div>
+            <div class="user-info-input d-none" id="firstNameEdit">
+                <input type="text" name="firstName" value="@Model.firstName" />
+            </div>
+        </div>
+        <div class="user-info-row">
+            <div class="user-info-label">Last Name</div>
+            <div class="user-info-value" id="lastNameView">@Model.lastName</div>
+            <div class="user-info-input d-none" id="lastNameEdit">
+                <input type="text" name="lastName" value="@Model.lastName" />
+            </div>
+        </div>
+        <div class="user-info-row">
+            <div class="user-info-label">Email Address</div>
+            <div class="user-info-value" id="emailView">@Model.email</div>
+            <div class="user-info-input d-none" id="emailEdit">
+                <input type="email" name="email" value="@Model.email" />
+            </div>
+        </div>
+        <div class="user-info-row">
+            <div class="user-info-label">Department</div>
+            <div class="user-info-value" id="departmentView">@Model.departmentName</div>
+            <div class="user-info-input d-none" id="departmentEdit">
+                <select name="department" id="departmentDropdown"></select>
+            </div>
+        </div>
+
+        <div class="user-info-section-title">Account Information</div>
+        <div class="user-info-row">
+            <div class="user-info-label">User ID</div>
+            <div class="user-info-value">@Model.userId</div>
+        </div>
+        <div class="user-info-row">
+            <div class="user-info-label">Role</div>
+            <div class="user-info-value" id="roleView">@Model.roleName</div>
+            <div class="user-info-input d-none" id="roleEdit">
+                <select name="role" id="roleDropdown"></select>
+            </div>
+        </div>
+        <div class="user-info-row">
+            <div class="user-info-label">Status</div>
+            <div class="user-info-value">
+                @if (Model.isActive == 1)
+                {
+                    <span class="badge bg-stronghelp">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inactive</span>
+                }
+            </div>
+        </div>
+    </form>
+    <div class="user-info-meta">
+        Created: @Model.createdAt &nbsp; | &nbsp; Last Updated: @Model.modifiedAt
+    </div>
+</div>
+
+<form id="deactivateForm" method="post" asp-action="Deactivate" asp-controller="AdminManageUser" style="display:none;">
+    <input type="hidden" name="userId" value="@Model.userId" />
+</form>
+
+@if (TempData["EditMessage"] != null)
+{
+    <div class="alert alert-info">@TempData["EditMessage"]</div>
+}
+
+@section Scripts {
+    <script>
+        let isEditMode = false;
+
+        function toggleEditMode(edit) {
+            isEditMode = edit;
+            document.getElementById('editUserBtn').classList.toggle('d-none', edit);
+            document.getElementById('deactivateBtn').classList.toggle('d-none', edit);
+            document.getElementById('saveUserBtn').classList.toggle('d-none', !edit);
+            document.getElementById('cancelEditBtn').classList.toggle('d-none', !edit);
+
+            // Toggle view/edit fields
+            ['firstName', 'lastName', 'email', 'department', 'role'].forEach(function (field) {
+                document.getElementById(field + 'View').classList.toggle('d-none', edit);
+                let editElem = document.getElementById(field + 'Edit');
+                if (editElem) editElem.classList.toggle('d-none', !edit);
+            });
+
+            if (edit) {
+                // Populate dropdowns for department and role
+                fetch('/AdminManageUser/GetDepartments')
+                    .then(res => res.json())
+                    .then(data => {
+                        let deptDropdown = document.getElementById('departmentDropdown');
+                        deptDropdown.innerHTML = '';
+                        data.forEach(function (dept) {
+                            let opt = document.createElement('option');
+                            opt.value = dept.id; // Use ID
+                            opt.text = dept.name;
+                            // Compare with Model.department (which should be the ID)
+                            if (opt.value == '@Model.department') opt.selected = true;
+                            deptDropdown.appendChild(opt);
+                        });
+                    });
+                fetch('/AdminManageUser/GetRoles')
+                    .then(res => res.json())
+                    .then(data => {
+                        let roleDropdown = document.getElementById('roleDropdown');
+                        roleDropdown.innerHTML = '';
+                        data.forEach(function (role) {
+                            let opt = document.createElement('option');
+                            opt.value = role.id; // Use ID
+                            opt.text = role.name;
+                            // Compare with Model.role (which should be the ID)
+                            if (opt.value == '@Model.role') opt.selected = true;
+                            roleDropdown.appendChild(opt);
+                        });
+                    });
+            }
+        }
+
+        function confirmSave() {
+            if (confirm('Are you sure you want to save changes to this user?')) {
+                document.getElementById('userInfoForm').submit();
+            }
+        }
+
+        function confirmCancel() {
+            if (confirm('Discard all changes?')) {
+                window.location.reload();
+            }
+        }
+
+        function confirmDeactivate() {
+            if (confirm('Are you sure you want to deactivate this user? This action is irreversible!')) {
+                document.getElementById('deactivateForm').submit();
+            }
+        }
+    </script>
+}
+

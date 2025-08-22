@@ -1,0 +1,155 @@
+﻿@model StrongHelpOfficial.Models.AdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+}
+
+<div class="dashboard-content">
+    <h2 class="fw-bold mb-1">Welcome, Admin!</h2>
+    <p class="text-muted">
+        Manage users and system logs for the Stronghelp Portal
+    </p>
+
+    <div class="row mt-4">
+        <!-- Total Users Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm" style="background: #fff; position: relative;">
+                <div class="card-body position-relative">
+                    <span class="icon-top-right">
+                        <i class="bi bi-people"></i>
+                    </span>
+                    <h5 class="card-title fw-semibold">Total Users</h5>
+                    <div class="display-5 fw-bold mb-2">@Model.UserCount</div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-stronghelp me-2">Active: @Model.ActiveUserCount</span>
+                        <span class="badge bg-secondary">Inactive: @Model.InactiveUserCount</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- New Users Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm" style="background: #fff; position: relative;">
+                <div class="card-body position-relative">
+                    <span class="icon-top-right-new">
+                        <i class="bi bi-person-plus"></i>
+                    </span>
+                    <h5 class="card-title fw-semibold">New Users</h5>
+                    <div class="display-5 fw-bold mb-2">@Model.UserCountLast30Days</div>
+                    <div class="text-muted">Added in the last 30 days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions-label">Quick Actions</div>
+    <div class="quick-actions-row">
+        <a href="@Url.Action("Index", "AdminUsers")" class="quick-action-btn">
+            <span class="quick-action-icon"><i class="bi bi-person-plus"></i></span>
+            Add New User
+        </a>
+        <a href="@Url.Action("Index", "AdminLogs")" class="quick-action-btn">
+            <span class="quick-action-icon"><i class="bi bi-journal-text"></i></span>
+            View System Logs
+        </a>
+    </div>
+
+    <!-- Recently Added Users Box -->
+    <div class="recent-users-box">
+        <div class="recent-users-title">Recently Added Users</div>
+        <div class="recent-users-subtitle">New users added to the system in the last 30 days</div>
+        <div class="table-responsive mb-4">
+            <table class="table recent-users-table mb-0">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; Model.UserID != null && i < Model.UserID.Length; i++)
+                    {
+                        <tr>
+                            <td>@Model.UserID[i]</td>
+                            <td>@Model.UserName[i]</td>
+                            <td>@Model.RoleName[i]</td>
+                            <td>@Model.Department[i]</td>
+                            <td>
+                                <button class="btn-manage" onclick="location.href='@Url.Action("Index", "AdminManageUser", new { userId = @Model.UserID[i] })'">Manage</button>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.UserID == null || Model.UserID.Length == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center">No recent users found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3 text-center">
+            <a href="@Url.Action("Index", "AdminUsers")"
+               class="btn-viewalluser">
+                View All Users
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent User Logs Box -->
+    <div class="recent-users-box mt-4">
+        <div class="recent-users-title">Recent User Logs</div>
+        <div class="recent-users-subtitle">Latest system events and activities</div>
+        <div class="list-group mb-3">
+            @if (Model.RecentLogs != null && Model.RecentLogs.Any())
+            {
+                foreach (var log in Model.RecentLogs)
+                {
+                    var icon = log.EntityType switch
+                    {
+                        "User" => "bi-people",
+                        "Role" => "bi-person-gear",
+                        "Department" => "bi-building-fill",
+                        _ => "bi-info-circle"
+                    };
+                    var title = log.IsCreation
+                        ? $"New {log.EntityType.ToLower()} created"
+                        : $"{log.EntityType} modified";
+                    var daysAgo = (DateTime.Now - log.ActionDate).Days;
+                    var agoText = daysAgo == 0 ? "today" : $"{daysAgo} day{(daysAgo > 1 ? "s" : "")} ago";
+                    var desc = log.IsCreation
+                        ? $"{log.Name} was added to the system {agoText}"
+                        : $"{log.Name} was modified {agoText}";
+        <div class="list-group-item d-flex align-items-start">
+            <span class="me-3" style="font-size: 2rem;">
+                <i class="bi @icon"></i>
+            </span>
+            <div>
+                <div class="fw-semibold">@title</div>
+                <div class="text-muted small">@desc</div>
+            </div>
+        </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted">No recent logs found.</div>
+            }
+        </div>
+        <div class="mt-3 text-center">
+            <a href="@Url.Action("Index", "AdminLogs")"
+               class="btn-viewalluser">
+                View All Logs
+            </a>
+        </div>
+    </div>
+
+</div>

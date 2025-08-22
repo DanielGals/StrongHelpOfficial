@@ -1,0 +1,143 @@
+﻿@model StrongHelpOfficial.Models.AdminRADModificationViewModel
+@{
+    ViewData["Title"] = "Modify a Role/Department";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var isDepartment = Model.Context == "Department";
+    var context = isDepartment ? "Department" : "Role";
+    var managementTitle = $"{context} Management";
+    var subtitle = $"Modify this {context}";
+    var nameLabel = $"{context} Name";
+    var editButtonLabel = $"Edit this {context.ToLower()}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <style>
+        .centered-card-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+        .log-details-label {
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .top-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .deactivate-btn {
+            min-width: 120px;
+        }
+    </style>
+}
+
+<div class="container mt-4">
+    <div class="top-action-row">
+        <a asp-controller="AdminRAD"
+           asp-action="Index"
+           asp-route-tab="@(isDepartment ? "departments" : "roles")"
+           class="btn btn-secondary"
+           title="Back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        @if (Model.IsActive)
+        {
+            <form asp-action="Deactivate" method="post" style="margin: 0;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Context" value="@Model.Context" />
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger deactivate-btn"
+                        onclick="return confirm('Are you sure you want to deactivate this @context.ToLower()? This action is irreversible.');">
+                    Deactivate
+                </button>
+            </form>
+        }
+    </div>
+
+    <div class="centered-card-container">
+        <div class="card shadow-sm" style="max-width: 500px; width: 100%;">
+            <div class="card-body">
+                <h2 class="card-title">@managementTitle</h2>
+                <h5 class="card-subtitle mb-4 text-muted">@subtitle</h5>
+
+                @if (Model.ShowSuccess)
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        Changes saved successfully!
+                    </div>
+                }
+                @if (TempData["DeactivationSuccess"] != null)
+                {
+                    <div class="alert alert-success mt-3" role="alert">
+                        @TempData["DeactivationSuccess"]
+                    </div>
+                }
+
+                <form asp-action="Save" method="post" autocomplete="off">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Context" />
+                    <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ID</label>
+                        <input type="text" class="form-control" value="@Model.Id" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label for="Name" class="form-label">@nameLabel</label>
+                        @if (Model.EditMode)
+                        {
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" value="@Model.Name" readonly />
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <div>
+                            <span class="badge @(Model.IsActive ? "bg-stronghelp" : "bg-secondary")">
+                                @(Model.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="log-details-label">Log Details</div>
+                    <div class="mb-2 text-muted small">
+                        <div>Created at: @Model.CreatedAt.ToString("g")</div>
+                        <div>Created by: @Model.CreatedBy</div>
+                        <div>Last modified: @(Model.ModifiedAt?.ToString("g") ?? "-")</div>
+                        <div>Modified by: @(Model.ModifiedBy ?? "-")</div>
+                    </div>
+
+                    @if (Model.EditMode)
+                    {
+                        <button type="submit" class="btn btn-success mt-3"
+                                onclick="return confirm('Are you sure you want to save changes?');">
+                            Save Changes
+                        </button>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary mt-3"
+                           href="@Url.Action("Index", new { context = Model.Context, id = Model.Id, edit = true })">
+                            @editButtonLabel
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

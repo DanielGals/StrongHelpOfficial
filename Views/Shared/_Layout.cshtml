@@ -27,7 +27,7 @@
         bool isApproverRole = approverRoles.Contains(roleName);
     }
 
-    @if (string.IsNullOrEmpty(roleName) || !(roleName == "Employee" || roleName == "Benefits Assistant" || isApproverRole))
+    @if (string.IsNullOrEmpty(roleName) || !(roleName == "Employee" || roleName == "Benefits Assistant" || roleName == "Admin" || isApproverRole))
     {
         <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -132,6 +132,33 @@
                            href="@Url.Action("LoanInformation", "BenefitsAssistant", new { area = "" })">
                             <i class="bi bi-info-circle"></i>
                             <span>Loan Information</span>
+                        </a>
+                    }
+                    else if (roleName == "Admin")
+                    {
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminDashboard" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "AdminDashboard")">
+                            <i class="bi bi-speedometer2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminUsers" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "AdminUsers")">
+                            <i class="bi bi-people"></i>
+                            <span>Users</span>
+                        </a>
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminLogs" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "AdminLogs")">
+                            <i class="bi bi-journal-text"></i>
+                            <span>Logs</span>
+                        </a>
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminRAD" &&
+                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                           href="@Url.Action("Index", "AdminRAD")">
+                            <i class="bi bi-person-gear"></i>
+                            <span>Roles and Departments</span>
                         </a>
                     }
                     else

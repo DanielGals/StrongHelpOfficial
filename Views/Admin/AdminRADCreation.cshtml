@@ -1,0 +1,53 @@
+﻿@model AdminRADCreationViewModel
+
+@{
+    ViewData["Title"] = "Create a Role/Department";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var context = ViewBag.Context as string ?? "Role/Department";
+    var managementTitle = $"{context} Management";
+    var subtitle = $"Create a new {context}";
+    var nameLabel = $"{context} Name";
+    var isDepartment = context.ToLower() == "department";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+}
+
+<div class="container mt-4">
+    <a asp-controller="AdminRAD"
+       asp-action="Index"
+       asp-route-tab="@(isDepartment ? "departments" : "roles")"
+       class="btn btn-secondary mb-3"
+       title="Back">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">@managementTitle</h2>
+            <h5 class="card-subtitle mb-4 text-muted">@subtitle</h5>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success mt-3" role="alert">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            <form id="createForm" method="post" autocomplete="off">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">@nameLabel</label>
+                    <input asp-for="Name" class="form-control" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary" id="createBtn"
+                        onclick="return confirm('Are you sure you want to create this @context?');">
+                    Create
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
