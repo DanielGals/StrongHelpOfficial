@@ -108,6 +108,20 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
         }
 
         [HttpGet]
+        public JsonResult GetCurrentUser()
+        {
+            var email = HttpContext.Session.GetString("Email");
+            var firstName = HttpContext.Session.GetString("FirstName");
+            var lastName = HttpContext.Session.GetString("LastName");
+            
+            return Json(new
+            {
+                email = email ?? "",
+                name = $"{firstName} {lastName}".Trim()
+            });
+        }
+
+        [HttpGet]
         public async Task<JsonResult> GetNextPhaseOrder(int loanId)
         {
             var usedOrders = new List<int>();

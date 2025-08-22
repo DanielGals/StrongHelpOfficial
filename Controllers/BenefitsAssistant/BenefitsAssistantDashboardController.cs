@@ -91,7 +91,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
-                      AND la.ApplicationStatus IN ('Submitted', 'In Review')
+                      AND la.ApplicationStatus = 'Submitted'
                       AND la.IsActive = 1
                     ORDER BY la.DateSubmitted DESC
                 ", conn))
