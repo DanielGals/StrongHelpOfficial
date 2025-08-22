@@ -56,10 +56,10 @@
 <div>
     @if (activeTab == "roles")
     {
-        @await Html.PartialAsync("~/Views/Admin/AdminRoles.cshtml")
+        @await Html.PartialAsync("~/Views/Admin/AdminRoles.cshtml", Model)
     }
     else if (activeTab == "departments")
     {
-        @await Html.PartialAsync("~/Views/Admin/AdminDepartments.cshtml")
+        @await Html.PartialAsync("~/Views/Admin/AdminDepartments.cshtml", Model)
     }
 </div>

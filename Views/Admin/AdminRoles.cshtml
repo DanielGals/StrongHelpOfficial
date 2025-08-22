@@ -1,5 +1,56 @@
 ﻿@model StrongHelpOfficial.Models.AdminRADViewModel
 
-<div>
-    Roles tab
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-1">Role Management</h2>
+        <a href="#" class="btn btn-primary btn-lg">Create new role</a>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title">Existing roles</h3>
+            <p class="text-muted mb-4">Manage and edit existing roles</p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Role Name</th>
+                            <th scope="col">Date added</th>
+                            <th scope="col">Created by</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <tr>
+                                <td>@role.RoleName</td>
+                                <td>@role.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>@role.CreatedBy</td>
+                                <td>
+                                    @if (role.IsActive)
+                                    {
+                                        <span class="badge bg-stronghelp">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("ManageRole", "AdminRAD", new { id = role.RoleID })" class="btn btn-sm btn-primary">Manage</a>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Roles.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center">No roles found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>

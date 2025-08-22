@@ -1,5 +1,56 @@
 ﻿@model StrongHelpOfficial.Models.AdminRADViewModel
 
-<div>
-    Departments tab
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-1">Department Management</h2>
+        <a href="#" class="btn btn-primary btn-lg">Create new department</a>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title">Existing departments</h3>
+            <p class="text-muted mb-4">Manage and edit existing departments</p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Department Name</th>
+                            <th scope="col">Date added</th>
+                            <th scope="col">Created by</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dept in Model.Departments)
+                        {
+                            <tr>
+                                <td>@dept.DepartmentName</td>
+                                <td>@dept.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td>@dept.CreatedBy</td>
+                                <td>
+                                    @if (dept.IsActive)
+                                    {
+                                        <span class="badge bg-stronghelp">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("ManageDepartment", "AdminRAD", new { id = dept.DepartmentID })" class="btn btn-sm btn-primary">Manage</a>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Departments.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center">No departments found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
