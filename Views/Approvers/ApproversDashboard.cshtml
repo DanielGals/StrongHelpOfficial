@@ -8,6 +8,36 @@
     <link rel="stylesheet" href="~/css/LoanerDashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/BenefitsAssistantDashboard.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <style>
+        .dashboard-search-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .dashboard-search {
+            flex: 1;
+        }
+
+        .dashboard-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: #2563eb;
+            cursor: pointer;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .dashboard-filter-btn i {
+            font-size: 1.1rem;
+        }
+    </style>
 }
 
 <div class="dashboard-content">
@@ -55,20 +85,111 @@
         </div>
     </div>
 
-    <!-- Search -->
-    <div class="mb-4">
-        <div class="input-group">
-            <span class="input-group-text">
-                <i class="bi bi-search"></i>
-            </span>
-            <input type="text" class="form-control" id="applicationSearch"
-                placeholder="Search Applications by employee name or ID..." value="@Model.SearchQuery">
+    <!-- Search and Filters Row -->
+    <form id="filterForm" method="get" action="@Url.Action("Index", "ApproverDashboard")">
+        <div class="dashboard-search-filter-row">
+            <div class="dashboard-search">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="applicationSearch" name="searchQuery"
+                        placeholder="Search Applications by employee name or ID..." value="@Model.SearchQuery">
+                </div>
+            </div>
+            <button type="button" class="dashboard-filter-btn" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="bi bi-funnel"></i> Filters
+                @if (Model.MinAmount.HasValue || Model.MaxAmount.HasValue || Model.StartDate.HasValue ||
+                                Model.EndDate.HasValue)
+                {
+                    <span class="badge bg-primary ms-2">Active</span>
+                }
+            </button>
+        </div>
+    </form>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Applications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="filterModalForm" method="get" action="@Url.Action("Index", "ApproverDashboard")">
+                    <div class="modal-body">
+                        <input type="hidden" name="searchQuery" value="@Model.SearchQuery">
+                        <div class="row g-3">
+                            <!-- Amount Range -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Amount Range</h5>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label for="minAmount" class="form-label">Minimum (₱)</label>
+                                        <input type="number" class="form-control" id="minAmount" name="minAmount"
+                                            value="@(Model.MinAmount?.ToString() ?? "")" placeholder="Min amount">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="maxAmount" class="form-label">Maximum (₱)</label>
+                                        <input type="number" class="form-control" id="maxAmount" name="maxAmount"
+                                            value="@(Model.MaxAmount?.ToString() ?? "")" placeholder="Max amount">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Application Date</h5>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label for="startDate" class="form-label">From</label>
+                                        <input type="date" class="form-control" id="startDate" name="startDate"
+                                            value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="endDate" class="form-label">To</label>
+                                        <input type="date" class="form-control" id="endDate" name="endDate"
+                                            value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" id="clearFiltersBtn">Clear
+                            Filters</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- JavaScript for client-side search (SPA style) -->
+    <!-- JavaScript for client-side search (SPA style) and filter toggling -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Filter modal functionality
+            const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', function () {
+                    // Clear all filter inputs
+                    document.getElementById('minAmount').value = '';
+                    document.getElementById('maxAmount').value = '';
+                    document.getElementById('startDate').value = '';
+                    document.getElementById('endDate').value = '';
+                });
+            }
+
+            // Initialize Bootstrap tooltips if any are used
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            if (typeof bootstrap !== 'undefined') {
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+
             const searchInput = document.getElementById('applicationSearch');
             const tableRows = document.querySelectorAll('table tbody tr:not(.no-results)');
             let noResultsRow = document.querySelector('table tbody tr.no-results');

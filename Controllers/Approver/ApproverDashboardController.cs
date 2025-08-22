@@ -17,11 +17,22 @@ namespace StrongHelpOfficial.Controllers.Approver
             _configuration = configuration;
         }
 
-        public IActionResult Index(string searchQuery = "")
+        public IActionResult Index(
+            string searchQuery = "",
+            decimal? minAmount = null,
+            decimal? maxAmount = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
         {
             var email = HttpContext.Session.GetString("Email");
-            var model = new ApproverDashboardViewModel();
-            model.SearchQuery = searchQuery;
+            var model = new ApproverDashboardViewModel
+            {
+                SearchQuery = searchQuery,
+                MinAmount = minAmount,
+                MaxAmount = maxAmount,
+                StartDate = startDate,
+                EndDate = endDate
+            };
 
             string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
@@ -180,6 +191,28 @@ namespace StrongHelpOfficial.Controllers.Approver
                                OR la.Title LIKE @SearchQuery OR CAST(la.LoanID AS VARCHAR) = @SearchQueryExact)";
                 }
 
+                // Add amount range filter if provided
+                if (minAmount.HasValue)
+                {
+                    query += " AND la.LoanAmount >= @MinAmount";
+                }
+
+                if (maxAmount.HasValue)
+                {
+                    query += " AND la.LoanAmount <= @MaxAmount";
+                }
+
+                // Add date range filter if provided
+                if (startDate.HasValue)
+                {
+                    query += " AND CAST(la.DateSubmitted AS DATE) >= CAST(@StartDate AS DATE)";
+                }
+
+                if (endDate.HasValue)
+                {
+                    query += " AND CAST(la.DateSubmitted AS DATE) <= CAST(@EndDate AS DATE)";
+                }
+
                 query += " ORDER BY la.DateSubmitted DESC";
 
                 using (var cmd = new SqlCommand(query, conn))
@@ -190,6 +223,28 @@ namespace StrongHelpOfficial.Controllers.Approver
                     {
                         cmd.Parameters.AddWithValue("@SearchQuery", "%" + searchQuery + "%");
                         cmd.Parameters.AddWithValue("@SearchQueryExact", searchQuery);
+                    }
+
+                    // Add amount range parameters
+                    if (minAmount.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@MinAmount", minAmount.Value);
+                    }
+
+                    if (maxAmount.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@MaxAmount", maxAmount.Value);
+                    }
+
+                    // Add date range parameters
+                    if (startDate.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@StartDate", startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@EndDate", endDate.Value);
                     }
 
                     using (var reader = cmd.ExecuteReader())

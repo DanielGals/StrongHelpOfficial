@@ -18,13 +18,24 @@ namespace StrongHelpOfficial.Controllers.Approver
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index(string? tab, string? search, int page = 1)
+        public async Task<IActionResult> Index(
+            string? tab,
+            string? search,
+            int page = 1,
+            decimal? minAmount = null,
+            decimal? maxAmount = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
         {
             var model = new ApproverApplicationsViewModel
             {
                 SelectedTab = string.IsNullOrEmpty(tab) ? "In Review" : tab,
                 SearchTerm = search ?? string.Empty,
-                Applications = new List<LoanApplicationViewModel>()
+                Applications = new List<LoanApplicationViewModel>(),
+                MinAmount = minAmount,
+                MaxAmount = maxAmount,
+                StartDate = startDate,
+                EndDate = endDate
             };
 
             var email = HttpContext.Session.GetString("Email");
@@ -89,7 +100,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE la.IsActive = 1
                     AND u.IsActive = 1";
-                
+
                 // If a status filter is specified, add it to the query
                 if (!string.IsNullOrEmpty(statusFilter))
                 {
@@ -180,12 +191,34 @@ namespace StrongHelpOfficial.Controllers.Approver
                               OR la.Title LIKE @Search OR CAST(la.LoanID AS VARCHAR) = @SearchExact)";
                 }
 
+                // Add amount range filter if provided
+                if (minAmount.HasValue)
+                {
+                    query += " AND la.LoanAmount >= @MinAmount";
+                }
+
+                if (maxAmount.HasValue)
+                {
+                    query += " AND la.LoanAmount <= @MaxAmount";
+                }
+
+                // Add date range filter if provided
+                if (startDate.HasValue)
+                {
+                    query += " AND CAST(la.DateSubmitted AS DATE) >= CAST(@StartDate AS DATE)";
+                }
+
+                if (endDate.HasValue)
+                {
+                    query += " AND CAST(la.DateSubmitted AS DATE) <= CAST(@EndDate AS DATE)";
+                }
+
                 query += " ORDER BY la.DateSubmitted DESC";
 
                 using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", approverUserId);
-                    
+
                     if (!string.IsNullOrEmpty(statusFilter))
                         cmd.Parameters.AddWithValue("@StatusFilter", statusFilter);
 
@@ -193,6 +226,28 @@ namespace StrongHelpOfficial.Controllers.Approver
                     {
                         cmd.Parameters.AddWithValue("@Search", "%" + search + "%");
                         cmd.Parameters.AddWithValue("@SearchExact", search);
+                    }
+
+                    // Add amount range parameters
+                    if (minAmount.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@MinAmount", minAmount.Value);
+                    }
+
+                    if (maxAmount.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@MaxAmount", maxAmount.Value);
+                    }
+
+                    // Add date range parameters
+                    if (startDate.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@StartDate", startDate.Value);
+                    }
+
+                    if (endDate.HasValue)
+                    {
+                        cmd.Parameters.AddWithValue("@EndDate", endDate.Value);
                     }
 
                     using (var reader = await cmd.ExecuteReaderAsync())

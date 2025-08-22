@@ -15,6 +15,24 @@
             gap: 4px;
         }
 
+        .dashboard-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            color: #2563eb;
+            cursor: pointer;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .dashboard-filter-btn i {
+            font-size: 1.1rem;
+        }
+
         .page-item {
             display: inline-block;
         }
@@ -111,24 +129,112 @@
     </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <span class="input-group-text bg-white border-end-0">
-            <i class="bi bi-search"></i>
-        </span>
-        <input type="text" name="search" class="form-control border-start-0"
-            placeholder="Search Applications by employee name..." value="@Model.SearchTerm" />
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form method="get" class="flex-grow-1 me-2">
+        <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="hidden" name="tab" value="@Model.SelectedTab" />
+            <input type="text" name="search" class="form-control border-start-0"
+                placeholder="Search Applications by employee name..." value="@Model.SearchTerm" />
+            @if (Model.MinAmount.HasValue)
+            {
+                <input type="hidden" name="minAmount" value="@Model.MinAmount" />
+            }
+            @if (Model.MaxAmount.HasValue)
+            {
+                <input type="hidden" name="maxAmount" value="@Model.MaxAmount" />
+            }
+            @if (Model.StartDate.HasValue)
+            {
+                <input type="hidden" name="startDate" value="@Model.StartDate.Value.ToString("yyyy-MM-dd")" />
+            }
+            @if (Model.EndDate.HasValue)
+            {
+                <input type="hidden" name="endDate" value="@Model.EndDate.Value.ToString("yyyy-MM-dd")" />
+            }
+        </div>
+    </form>
+    <button type="button" class="dashboard-filter-btn" data-bs-toggle="modal" data-bs-target="#filterModal">
+        <i class="bi bi-funnel"></i> Filters
+        @if (Model.MinAmount.HasValue || Model.MaxAmount.HasValue || Model.StartDate.HasValue || Model.EndDate.HasValue)
+        {
+            <span class="badge bg-primary ms-2">Active</span>
+        }
+    </button>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter Applications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="filterModalForm" method="get">
+                <div class="modal-body">
+                    <input type="hidden" name="tab" value="@Model.SelectedTab" />
+                    <input type="hidden" name="search" value="@Model.SearchTerm" />
+                    <div class="row g-3">
+                        <!-- Amount Range -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Amount Range</h5>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="minAmount" class="form-label">Minimum (₱)</label>
+                                    <input type="number" class="form-control" id="minAmount" name="minAmount"
+                                        value="@(Model.MinAmount?.ToString() ?? "")" placeholder="Min amount">
+                                </div>
+                                <div class="col-6">
+                                    <label for="maxAmount" class="form-label">Maximum (₱)</label>
+                                    <input type="number" class="form-control" id="maxAmount" name="maxAmount"
+                                        value="@(Model.MaxAmount?.ToString() ?? "")" placeholder="Max amount">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Application Date</h5>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="startDate" class="form-label">From</label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate"
+                                        value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? "")">
+                                </div>
+                                <div class="col-6">
+                                    <label for="endDate" class="form-label">To</label>
+                                    <input type="date" class="form-control" id="endDate" name="endDate"
+                                        value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? "")">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="clearFiltersBtn">Clear Filters</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
     </div>
-</form>
+</div>
 
 <div class="loan-tabs mb-3">
     <div class="status-tab-group">
         <a class="status-tab @(Model.SelectedTab == "Pending Review" ? "active" : "")"
-            href="?tab=Pending Review">Pending Review</a>
-        <a class="status-tab @(Model.SelectedTab == "Approved" ? "active" : "")" href="?tab=Approved">Approved</a>
-        <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected">Rejected</a>
+            href="?tab=Pending Review@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Pending
+            Review</a>
+        <a class="status-tab @(Model.SelectedTab == "Approved" ? "active" : "")"
+            href="?tab=Approved@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Approved</a>
+        <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")"
+            href="?tab=Rejected@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Rejected</a>
         <a class="status-tab @(Model.SelectedTab == "All Applications" ? "active" : "")"
-            href="?tab=All Applications">All Applications</a>
+            href="?tab=All Applications@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">All
+            Applications</a>
     </div>
 </div>
 
@@ -245,18 +351,18 @@
                         <ul class="pagination mb-0">
                             <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
                                 <a class="page-link"
-                                    href="?page=@(Model.PageNumber - 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Previous</a>
+                                    href="?page=@(Model.PageNumber - 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Previous</a>
                             </li>
                             @for (int i = 1; i <= totalPages; i++)
                             {
                                 <li class="page-item @(Model.PageNumber == i ? "active" : "")">
                                     <a class="page-link"
-                                        href="?page=@i&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">@i</a>
+                                        href="?page=@i&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">@i</a>
                                 </li>
                             }
                             <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
                                 <a class="page-link"
-                                    href="?page=@(Model.PageNumber + 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Next</a>
+                                    href="?page=@(Model.PageNumber + 1)&tab=@Model.SelectedTab@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Next</a>
                             </li>
                         </ul>
                     </nav>
@@ -265,3 +371,30 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Filter modal functionality
+            const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', function () {
+                    // Clear all filter inputs
+                    document.getElementById('minAmount').value = '';
+                    document.getElementById('maxAmount').value = '';
+                    document.getElementById('startDate').value = '';
+                    document.getElementById('endDate').value = '';
+                });
+            }
+
+            // Initialize Bootstrap tooltips if any are used
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            if (typeof bootstrap !== 'undefined') {
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        });
+    </script>
+}

@@ -16,6 +16,13 @@ namespace StrongHelpOfficial.Models
         public string SearchQuery { get; set; } = string.Empty;
         public Dictionary<string, bool> Filters { get; set; } = new Dictionary<string, bool>();
         public string DepartmentName { get; set; } = string.Empty;
+
+        // Filter properties
+        public decimal? MinAmount { get; set; }
+        public decimal? MaxAmount { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public bool ShowFilters { get; set; } = false;
     }
 
     public class LoanApplicationViewModel
