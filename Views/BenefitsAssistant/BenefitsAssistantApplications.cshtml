@@ -138,6 +138,10 @@
                 {
                     <text>All Applications</text>
                 }
+                else if (Model.SelectedTab == "Submitted")
+                {
+                    <text>Pending Applications</text>
+                }
                 else
                 {
                     <text>@Model.SelectedTab Applications</text>
@@ -150,7 +154,7 @@
                 }
                 else if (Model.SelectedTab == "Submitted")
                 {
-                    <text>Applications that have been submitted and are awaiting review</text>
+                    <text>Loan Applications awaiting your approval</text>
                 }
                 else if (Model.SelectedTab == "Departments Approval")
                 {

@@ -64,13 +64,21 @@ window.handleRoleChange = async function () {
             usersData = await response.json();
 
             approverDropdown.innerHTML = '<option value="">Select an approver...</option>';
+            
+            // Get current user's email from session
+            const currentUserResponse = await fetch('/BenefitsAssistantApplicationDetails/GetCurrentUser');
+            const currentUser = await currentUserResponse.json();
+            const currentUserEmail = currentUser.email;
 
             usersData.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.userId;
-                option.textContent = user.name;
-                option.dataset.email = user.email;
-                approverDropdown.appendChild(option);
+                // Prevent self-approval by excluding current user
+                if (user.email !== currentUserEmail) {
+                    const option = document.createElement('option');
+                    option.value = user.userId;
+                    option.textContent = user.name;
+                    option.dataset.email = user.email;
+                    approverDropdown.appendChild(option);
+                }
             });
 
             approverDropdown.classList.remove('loading');
@@ -423,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Confirmation Modal: close on Escape
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && document.getElementById('confirmationModal').classList.contains('show')) {
+        if (e.key === 'Escape' && document.getElementById('confirmationModal')?.classList.contains('show')) {
             closeConfirmationModal();
         }
     });
@@ -581,15 +589,21 @@ async function loadRoles() {
 
         // Filter out unwanted roles
         const excludedRoles = ['Employee', 'Benefits Assistant', 'Admin'];
+        
+        // Get already selected role names from approversList
+        const selectedRoleNames = approversList.map(approver => approver.roleName);
 
         rolesData.forEach(role => {
             // Check if the role name contains any of the excluded terms
             const shouldExclude = excludedRoles.some(excludedRole =>
                 role.roleName.includes(excludedRole)
             );
+            
+            // Check if this role is already selected
+            const isAlreadySelected = selectedRoleNames.includes(role.roleName);
 
-            // Only add the role if it's not excluded
-            if (!shouldExclude) {
+            // Only add the role if it's not excluded and not already selected
+            if (!shouldExclude && !isAlreadySelected) {
                 const option = document.createElement('option');
                 option.value = role.roleId;
                 option.textContent = role.roleName;
@@ -612,17 +626,61 @@ function createApprovalCard(approverData) {
     card.dataset.order = approverData.order;
     card.dataset.roleName = approverData.roleName;
 
-    card.innerHTML = `
-        <div class="approval-card-title">${approverData.roleName}</div>
-        <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
-        <div class="approval-card-content">
-            <div><strong>User:</strong> ${approverData.userName}</div>
-            <div><strong>Order:</strong> ${approverData.order}</div>
-            <div><strong>Department:</strong> ${approverData.roleName}</div>
+    const attachedFilesHtml = `
+        <div class="mt-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="fw-bold" style="font-size:1.05em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#d63384" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:0.5em;">
+                        <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.828A2 2 0 0 0 19.414 7.414l-4.828-4.828A2 2 0 0 0 12.172 2H6zm6 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM6 4h6v4a4 4 0 0 0 4 4h4v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4z"/>
+                    </svg>
+                    Documents
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFilesToApprover('${approverData.userName}')" title="Add more files">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" style="margin-right:4px;">
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Add Files
+                </button>
+            </div>
+            ${approverData.attachedFiles && approverData.attachedFiles.length > 0 ? `
+                <div class="list-group list-group-flush">
+                    ${approverData.attachedFiles.map(fileName => `
+                        <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between" style="border-radius:6px; transition: background 0.2s;">
+                            <div class="d-flex align-items-center gap-2" style="cursor: pointer;" onclick="previewAttachedFile('${fileName}', '${approverData.userName}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#e63946" viewBox="0 0 24 24">
+                                    <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.828A2 2 0 0 0 19.414 7.414l-4.828-4.828A2 2 0 0 0 12.172 2H6zm6 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414z"/>
+                                </svg>
+                                <span class="text-primary text-break">${fileName}</span>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-danger remove-file-btn" onclick="removeAttachedFile('${fileName}', '${approverData.userName}')" title="Remove file">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : `
+                <div class="text-muted text-center py-2" style="font-size:0.9em;">
+                    No documents attached
+                </div>
+            `}
         </div>
-        <button type="button" class="btn btn-outline-danger btn-sm mt-2 remove-approver-btn">
-            Remove
-        </button>
+    `;
+
+    card.innerHTML = `
+        <div style="position:relative;">
+            <button type="button" class="remove-approver-btn" style="position:absolute;top:0;right:0;background:none;border:none;font-size:1.5rem;color:#dc3545;padding:4px 8px;cursor:pointer;" title="Remove approver">&times;</button>
+            <div class="approval-card-title">${approverData.roleName}</div>
+            <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
+            <div class="approval-card-content">
+                <div><strong>User:</strong> ${approverData.userName}</div>
+                <div><strong>Order:</strong> ${approverData.order}</div>
+                <div><strong>Department:</strong> ${approverData.roleName}</div>
+            </div>
+            ${attachedFilesHtml}
+        </div>
     `;
 
     // Attach remove event
@@ -650,13 +708,33 @@ function createApprovalCard(approverData) {
 }
 
 function openPdfPreview(url, title) {
-    document.getElementById('pdfPreviewFrame').src = url;
-    document.getElementById('pdfPreviewTitle').textContent = title || '';
-    document.getElementById('pdfPreviewModal').style.display = 'block';
-    setTimeout(() => {
-        document.getElementById('pdfPreviewModal').classList.add('show');
-    }, 10);
-    document.body.style.overflow = 'hidden';
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('docPreviewModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'docPreviewModal';
+        modal.setAttribute('tabindex', '-1');
+        modal.innerHTML = `
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="border-bottom:none;padding:1rem 1rem 0.5rem;">
+                        <h5 class="modal-title" id="docPreviewModalLabel" style="margin:0;"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="docPreviewBody" style="min-height:60vh;padding-top:0;"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    const content = `<iframe src="${url}" width="100%" height="500px" style="border:none;"></iframe>`;
+    document.getElementById('docPreviewModalLabel').textContent = title || '';
+    document.getElementById('docPreviewBody').innerHTML = content;
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
 }
 
 function closePdfPreview() {
@@ -685,3 +763,132 @@ function removeApprovalCard(cardElement, approverData) {
         loadOrderDropdown();
     }
 }
+
+window.previewAttachedFile = function(fileName, approverName) {
+    // Find the actual file object
+    const approver = approversList.find(a => a.userName === approverName);
+    const fileObject = approver?.attachedFileObjects?.find(f => f.name === fileName);
+    
+    if (fileObject) {
+        // Create object URL and show in modal like existing View buttons
+        const fileURL = URL.createObjectURL(fileObject);
+        const content = `<iframe src="${fileURL}" width="100%" height="500px" style="border:none;"></iframe>`;
+        
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('docPreviewModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.id = 'docPreviewModal';
+            modal.setAttribute('tabindex', '-1');
+            modal.innerHTML = `
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="docPreviewModalLabel">Document Preview</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="docPreviewBody" style="min-height:60vh;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        document.getElementById('docPreviewModalLabel').textContent = fileName;
+        document.getElementById('docPreviewBody').innerHTML = content;
+        
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+        
+        // Clean up URL when modal is hidden
+        modal.addEventListener('hidden.bs.modal', function() {
+            URL.revokeObjectURL(fileURL);
+        }, { once: true });
+    } else {
+        alert('File preview not available. The file may not be loaded yet.');
+    }
+};
+
+window.removeAttachedFile = function(fileName, approverName) {
+    if (confirm(`Remove ${fileName}?`)) {
+        // Find the approver in the list
+        const approver = approversList.find(a => a.userName === approverName);
+        if (approver) {
+            // Remove from attachedFiles array
+            approver.attachedFiles = approver.attachedFiles.filter(f => f !== fileName);
+            
+            // Remove from attachedFileObjects array
+            if (approver.attachedFileObjects) {
+                approver.attachedFileObjects = approver.attachedFileObjects.filter(f => f.name !== fileName);
+            }
+            
+            // Recreate the approval card to reflect changes
+            const cardElement = document.querySelector(`[data-user-name="${approverName}"]`);
+            if (cardElement) {
+                cardElement.remove();
+                createApprovalCard(approver);
+            }
+        }
+    }
+};
+
+
+
+
+
+window.addFilesToApprover = function(approverName) {
+    // Create a hidden file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf';
+    fileInput.multiple = true;
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        let validFiles = [];
+        
+        // Validate files
+        for (const file of files) {
+            if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
+                alert(`${file.name} is not a PDF file. Only PDF files are allowed.`);
+                return;
+            }
+            validFiles.push(file);
+        }
+        
+        if (validFiles.length > 0) {
+            // Find the approver in the list
+            const approver = approversList.find(a => a.userName === approverName);
+            if (approver) {
+                // Initialize arrays if they don't exist
+                if (!approver.attachedFiles) approver.attachedFiles = [];
+                if (!approver.attachedFileObjects) approver.attachedFileObjects = [];
+                
+                // Add new files
+                validFiles.forEach(file => {
+                    // Check for duplicates
+                    if (!approver.attachedFiles.includes(file.name)) {
+                        approver.attachedFiles.push(file.name);
+                        approver.attachedFileObjects.push(file);
+                    }
+                });
+                
+                // Recreate the approval card to show new files
+                const cardElement = document.querySelector(`[data-user-name="${approverName}"]`);
+                if (cardElement) {
+                    cardElement.remove();
+                    createApprovalCard(approver);
+                }
+            }
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    });
+    
+    // Add to DOM and trigger click
+    document.body.appendChild(fileInput);
+    fileInput.click();
+};
