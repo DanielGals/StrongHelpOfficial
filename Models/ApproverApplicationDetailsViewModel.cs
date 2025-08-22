@@ -1,12 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace StrongHelpOfficial.Models
+﻿namespace StrongHelpOfficial.Models
 {
-    public class ApproverApplicationDetailsViewModel : Controller
+    public class ApproverApplicationDetailsViewModel
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
     }
 }
