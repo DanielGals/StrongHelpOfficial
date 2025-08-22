@@ -3,7 +3,7 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold mb-1">Role Management</h2>
-        <a href="#" class="btn btn-primary btn-lg">Create new role</a>
+        <a asp-controller="AdminRADCreation" asp-action="Index" asp-route-context="Role" class="btn btn-primary btn-lg">Create new role</a>
     </div>
     <div class="card shadow-sm">
         <div class="card-body">
@@ -38,7 +38,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <a href="@Url.Action("ManageRole", "AdminRAD", new { id = role.RoleID })" class="btn btn-sm btn-primary">Manage</a>
+                                    <a href="@Url.Action("Index", "AdminRADModification", new { context = "Role", id = role.RoleID })" class="btn btn-sm btn-primary">Manage</a>
                                 </td>
                             </tr>
                         }
