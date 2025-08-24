@@ -111,22 +111,37 @@
     </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <span class="input-group-text bg-white border-end-0">
-            <i class="bi bi-search"></i>
-        </span>
-        <input type="text" name="search" class="form-control border-start-0" placeholder="Search Applications by employee name..." value="@Model.SearchTerm" />
+<form method="get" class="mb-4">
+    <div class="d-flex gap-2">
+        <div class="input-group shadow-sm flex-grow-1">
+            <span class="input-group-text bg-white border-end-0" style="border-color: #e0e6ed;">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="search" class="form-control border-start-0" 
+                   placeholder="Search by employee name..." 
+                   value="@Model.SearchTerm" 
+                   style="border-color: #e0e6ed; padding: 12px 16px; font-size: 0.95rem;" />
+            <input type="hidden" name="tab" value="@Model.SelectedTab" />
+            <button class="btn btn-primary" type="submit" style="padding: 12px 20px;">
+                <i class="bi bi-search me-1"></i> Search
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.SearchTerm))
+        {
+            <a href="?tab=@Model.SelectedTab" class="btn btn-outline-secondary" style="padding: 12px 20px; white-space: nowrap;">
+                <i class="bi bi-x-circle me-1"></i> Clear
+            </a>
+        }
     </div>
 </form>
 
 <div class="loan-tabs mb-3">
     <div class="status-tab-group">
-        <a class="status-tab @(Model.SelectedTab == "Submitted" ? "active" : "")" href="?tab=Submitted">Submitted</a>
-        <a class="status-tab @(Model.SelectedTab == "In Review" ? "active" : "")" href="?tab=In Review">In Review</a>
-        <a class="status-tab @(Model.SelectedTab == "Departments Approval" ? "active" : "")" href="?tab=Departments Approval">Departments Approval</a>
-        <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected">Rejected</a>
-        <a class="status-tab @(Model.SelectedTab == null ? "active" : "")" href="?tab=All Applications">All Applications</a>
+        <a class="status-tab @(Model.SelectedTab == "Submitted" ? "active" : "")" href="?tab=Submitted@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Submitted</a>
+        <a class="status-tab @(Model.SelectedTab == "In Review" ? "active" : "")" href="?tab=In Review@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">In Review</a>
+        <a class="status-tab @(Model.SelectedTab == "Departments Approval" ? "active" : "")" href="?tab=Departments Approval@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Departments Approval</a>
+        <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Rejected</a>
+        <a class="status-tab @(Model.SelectedTab == null ? "active" : "")" href="?tab=All Applications@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">All Applications</a>
     </div>
 </div>
 
@@ -174,12 +189,11 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Employee</th>
-                            <th>Loan Type</th>
-                            <th>Amount</th>
-                            <th>Date Applied</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th style="width: 30%;">Employee</th>
+                            <th style="width: 20%;">Amount</th>
+                            <th style="width: 25%;">Date Applied</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 10%;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -198,7 +212,6 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>@app.LoanType</td>
                                     <td>₱@app.Amount.ToString("N0")</td>
                                     <td>@app.DateApplied.ToString("MMMM d, yyyy")</td>
                                     <td>
@@ -220,7 +233,6 @@
                                     </td>
                                     <td>
                                         <a href="@Url.Action("Index", "BenefitsAssistantApplicationDetails", new { id = app.ApplicationId })" class="btn btn-primary-action">Review</a>
-
                                     </td>
                                 </tr>
                             }
@@ -228,7 +240,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="6">
+                                <td colspan="5">
                                     <div class="alert alert-info mb-0">
                                         No applications found.
                                     </div>

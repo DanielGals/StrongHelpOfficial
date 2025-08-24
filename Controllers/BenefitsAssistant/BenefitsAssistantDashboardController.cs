@@ -62,13 +62,19 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 // Get stats
                 using (var cmd = new SqlCommand(@"
                     SELECT 
-                        COUNT(*) AS TotalApplications,
-                        SUM(CASE WHEN ApplicationStatus IN ('Submitted', 'In Review') THEN 1 ELSE 0 END) AS PendingReview,
-                        SUM(CASE WHEN ApplicationStatus = 'Approved' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS ApprovedToday,
-                        SUM(CASE WHEN ApplicationStatus = 'Rejected' AND CAST(DateSubmitted AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS RejectedToday
-                    FROM LoanApplication
-                    WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
-                      AND IsActive = 1
+                        COUNT(DISTINCT la.LoanID) AS TotalApplications,
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Submitted' THEN la.LoanID END) AS PendingReview,
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Approved' AND lap_approved.ApprovedDate IS NOT NULL 
+                            AND CAST(lap_approved.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN la.LoanID END) AS ApprovedToday,
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Rejected' AND lap_rejected.ApprovedDate IS NOT NULL 
+                            AND CAST(lap_rejected.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN la.LoanID END) AS RejectedToday
+                    FROM LoanApplication la
+                    LEFT JOIN LoanApproval lap_approved ON la.LoanID = lap_approved.LoanID 
+                        AND lap_approved.Status = 'Approved' AND lap_approved.IsActive = 1
+                    LEFT JOIN LoanApproval lap_rejected ON la.LoanID = lap_rejected.LoanID 
+                        AND lap_rejected.Status = 'Rejected' AND lap_rejected.IsActive = 1
+                    WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
+                      AND la.IsActive = 1
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);

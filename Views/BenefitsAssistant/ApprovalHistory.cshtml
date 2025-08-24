@@ -70,13 +70,21 @@
 
 @if (ba != null)
 {
-    <div class="approval-history-item" style="border-left: 3px solid #17a2b8; padding-left: 1rem; margin-bottom: 2rem;">
-        <div class="loan-details-label" style="margin-bottom:0.1em; color: #17a2b8; font-weight: bold;">
-            @ba.RoleName Review
+    var baStatusColor = ba.Status switch
+    {
+        "Rejected" => "#dc3545",
+        _ => "#17a2b8"
+    };
+    
+    var baActionText = ba.Status == "Rejected" ? "Rejected" : "Reviewed";
+    
+    <div class="approval-history-item" style="border-left: 3px solid @baStatusColor; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: @baStatusColor; font-weight: bold;">
+            @ba.RoleName @baActionText
         </div>
         <div>
             <span>
-                Reviewed by @ba.UserName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+                @baActionText by @ba.UserName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
             </span>
             @if (!string.IsNullOrEmpty(ba.Description))
             {

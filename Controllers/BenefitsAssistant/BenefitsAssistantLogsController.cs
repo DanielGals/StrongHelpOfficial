@@ -54,7 +54,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SELECT 
                         la.LoanID,
                         CASE 
-                            WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
+                            WHEN la.ApplicationStatus = 'In Review' THEN ISNULL(la.DateAssigned, la.DateSubmitted)
                             WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
                                 ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
                             ELSE la.DateSubmitted
@@ -65,7 +65,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                             WHEN la.ApplicationStatus = 'Approved' THEN 'Approved bank salary loan application'
                             WHEN la.ApplicationStatus = 'Rejected' THEN 'Rejected loan application: ' + ISNULL(la.Remarks, '')
                             WHEN la.ApplicationStatus = 'In Review' THEN 'Application under review'
-                            WHEN la.ApplicationStatus = 'Submitted' THEN 'New application submitted'
                             ELSE ISNULL(la.Title, 'No title')
                         END AS Details,
                         ISNULL(NULLIF(LTRIM(RTRIM(la.Remarks)), ''), la.ApplicationStatus) AS Status,
@@ -195,7 +194,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                 using (var statusCommand = new SqlCommand(
                     @"SELECT DISTINCT ApplicationStatus FROM LoanApplication 
-                      WHERE BenefitsAssistantUserID = @UserId 
+                      WHERE BenefitsAssistantUserID = @UserId
                       AND ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
                       AND IsActive = 1
                       ORDER BY ApplicationStatus", connection))
