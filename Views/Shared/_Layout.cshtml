@@ -13,18 +13,23 @@
 <body>
     @{
         string[] approverRoles = new[] {
-    "Loans Division Approver",
-    "Specialized Accounting Approver",
-    "Compensation Management Approver",
-    "Benefits Services Officer",
-    "Benefit Management Department Head",
-    "Approving Officer",
-    "Final Disbursement Approver",
-    "Approver"
+        "Loans Division Approver",
+        "Specialized Accounting Approver",
+        "Compensation Management Approver",
+        "Benefits Services Officer",
+        "Benefit Management Department Head",
+        "Approving Officer",
+        "Final Disbursement Approver",
+        "Approver"
     };
 
         string roleName = Context.Session.GetString("RoleName") ?? "";
         bool isApproverRole = approverRoles.Contains(roleName);
+
+        // Check if user is deactivated (from session or a flag you set after login)
+        // You may set this session value in your AuthController after login:
+        // HttpContext.Session.SetString("IsDeactivated", "true");
+        bool isDeactivated = (Context.Session.GetString("IsDeactivated") == "true");
     }
 
     @if (string.IsNullOrEmpty(roleName) || !(roleName == "Employee" || roleName == "Benefits Assistant" || roleName == "Admin" || isApproverRole))
@@ -79,11 +84,13 @@
                     </div>
                 </div>
                 <nav class="sidebar-menu">
-                    @if (roleName == "Employee")
+                    @if (!isDeactivated)
                     {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "LoanerDashboard" &&
-                         ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })">
+                        if (roleName == "Employee")
+                        {
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "LoanerDashboard" &&
+                             ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
@@ -105,82 +112,83 @@
                             <i class="bi bi-clock-history"></i>
                             <span>Loan History</span>
                         </a>
-                    }
-                    else if (roleName == "Benefits Assistant")
-                    {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantDashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "BenefitsAssistantDashboard", new { area = "" })">
+                        }
+                        else if (roleName == "Benefits Assistant")
+                        {
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantDashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "BenefitsAssistantDashboard", new { area = "" })">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantApplications" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "BenefitsAssistantApplications", new { area = "" })">
+                               href="@Url.Action("Index", "BenefitsAssistantApplications", new { area = "" })">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantReports" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "BenefitsAssistantReports", new { area = "" })">
+                               href="@Url.Action("Index", "BenefitsAssistantReports", new { area = "" })">
                             <i class="bi bi-bar-chart"></i>
                             <span>Reports</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantLogs" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "BenefitsAssistantLogs", new { area = "" })">
+                               href="@Url.Action("Index", "BenefitsAssistantLogs", new { area = "" })">
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistant" && ViewContext.RouteData.Values["Action"]?.ToString() == "LoanInformation" ? "active" : "")"
-                           href="@Url.Action("LoanInformation", "BenefitsAssistant", new { area = "" })">
+                               href="@Url.Action("LoanInformation", "BenefitsAssistant", new { area = "" })">
                             <i class="bi bi-info-circle"></i>
                             <span>Loan Information</span>
                         </a>
-                    }
-                    else if (roleName == "Admin")
-                    {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminDashboard" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "AdminDashboard")">
+                        }
+                        else if (roleName == "Admin")
+                        {
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminDashboard" &&
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "AdminDashboard")">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminUsers" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "AdminUsers")">
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "AdminUsers")">
                             <i class="bi bi-people"></i>
                             <span>Users</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminLogs" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "AdminLogs")">
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "AdminLogs")">
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AdminRAD" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "AdminRAD")">
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "AdminRAD")">
                             <i class="bi bi-person-gear"></i>
                             <span>Roles and Departments</span>
                         </a>
-                    }
-                    else
-                    {
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverDashboard" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "ApproverDashboard")">
+                        }
+                        else
+                        {
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverDashboard" &&
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "ApproverDashboard")">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverApplications" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "ApproverApplications")">
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "ApproverApplications")">
                             <i class="bi bi-file-earmark-text"></i>
                             <span>Applications</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverLogs" &&
-                           ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
-                           href="@Url.Action("Index", "ApproverLogs")">
+                               ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+                               href="@Url.Action("Index", "ApproverLogs")">
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
+                        }
                     }
                     <div class="mt-auto pt-3">
                         <a class="nav-link" href="@Url.Action("Logout", "LoanerDashboard", new { area = "Loaner" })">

@@ -18,4 +18,9 @@ public class UserInfoViewModel
     public bool? EmailMatched { get; set; }
     public bool SQLConnectionSuccess { get; set; }
 
+    /// <summary>
+    /// Indicates if the user account is active (true), deactivated (false), or unknown (null).
+    /// </summary>
+    public bool? IsActive { get; set; }
+
 }
