@@ -30,7 +30,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             }
             else
             {
-                // Default documents if not in cache
                 model.RequiredDocuments = new List<string>
                 {
                     "Latest 2 months payslip",
@@ -44,22 +43,31 @@ namespace StrongHelpOfficial.Controllers.Loaner
             ViewData["RoleName"] = HttpContext.Session.GetString("RoleName");
             ViewData["Email"] = HttpContext.Session.GetString("Email");
 
-            // Calculate document count
             var userId = HttpContext.Session.GetInt32("UserID");
             int documentCount = 0;
+            bool hasExistingLoan = false;
+            int? existingLoanId = null;
+
             if (userId.HasValue)
             {
                 try
                 {
                     conn.Open();
-                    var cmdLoan = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID ORDER BY DateSubmitted DESC", conn);
-                    cmdLoan.Parameters.AddWithValue("@UserID", userId);
-                    var loanId = cmdLoan.ExecuteScalar();
+                    // Check for existing loan
+                    var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID", conn);
+                    cmdCheck.Parameters.AddWithValue("@UserID", userId);
+                    var loanIdObj = cmdCheck.ExecuteScalar();
+                    if (loanIdObj != null)
+                    {
+                        hasExistingLoan = true;
+                        existingLoanId = Convert.ToInt32(loanIdObj);
+                    }
 
-                    if (loanId != null)
+                    // Calculate document count (optional, keep as is)
+                    if (existingLoanId.HasValue)
                     {
                         var cmdCount = new SqlCommand("SELECT COUNT(*) FROM LoanDocument WHERE LoanID = @LoanID AND IsActive = 1", conn);
-                        cmdCount.Parameters.AddWithValue("@LoanID", loanId);
+                        cmdCount.Parameters.AddWithValue("@LoanID", existingLoanId.Value);
                         documentCount = (int)cmdCount.ExecuteScalar();
                     }
                 }
@@ -69,6 +77,8 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 }
             }
             ViewData["DocumentCount"] = documentCount;
+            ViewData["HasExistingLoan"] = hasExistingLoan;
+            ViewData["ExistingLoanId"] = existingLoanId;
 
             return View("~/Views/Loaner/ApplyForLoan.cshtml", model);
         }
@@ -76,6 +86,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
         public IActionResult submissionResult(ApplyForLoanViewModel model)
         {
             TempData["submitResult"] = "Loan request submitted successfully!";
+            TempData["LoanJustSubmitted"] = true;
             return RedirectToAction("Index", "ApplyForLoan");
         }
 
@@ -127,6 +138,12 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         // Insert each document (add IsActive and audit fields)
                         foreach (var file in files)
                         {
+                            if (file.ContentType != "application/pdf" && !file.FileName.ToLower().EndsWith(".pdf"))
+                            {
+                                TempData["failedSubmitResult"] = "Only PDF files are allowed for upload.";
+                                return RedirectToAction("Index", "ApplyForLoan");
+                            }
+
                             byte[] fileBytes;
                             using (var memoryStream = new MemoryStream())
                             {
