@@ -22,7 +22,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
         public IActionResult Index()
         {
             var model = new ApplyForLoanViewModel();
-            model.BenefitsAssistantUserID = 2; //Default Benefits Assistant ID
 
             // Get required documents from memory cache
             if (_memoryCache.TryGetValue(RequiredDocumentsCacheKey, out List<string> documents))
@@ -104,16 +103,14 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                         // Insert LoanApplication (add ComakerUserID and audit fields if needed)
                         using (var cmd = new SqlCommand(
-                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, BenefitsAssistantUserID, DateAssigned, IsActive, CreatedAt, CreatedBy) " +
-                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, @BenefitsAssistantUserID, @DateAssigned, 1, @CreatedAt, @CreatedBy)", conn))
+                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, IsActive, CreatedAt, CreatedBy) " +
+                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, 1, @CreatedAt, @CreatedBy)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
                             cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
                             cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan");
-                            cmd.Parameters.AddWithValue("@BenefitsAssistantUserID", 2);
-                            cmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                             cmd.Parameters.AddWithValue("@CreatedBy", userId.ToString());
                             await cmd.ExecuteNonQueryAsync();

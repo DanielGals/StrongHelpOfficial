@@ -20,9 +20,14 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
         public async Task<IActionResult> Index(string? tab, string? search, int page = 1)
         {
+            // Default to "Submitted" only if no tab is specified AND no search is performed
+            string selectedTab = string.IsNullOrEmpty(tab) ? 
+                (string.IsNullOrEmpty(search) ? "Submitted" : null) : 
+                (tab == "All Applications" ? null : tab);
+                
             var model = new BenefitsAssistantApplicationsViewModel
             {
-                SelectedTab = string.IsNullOrEmpty(tab) ? "Submitted" : (tab == "All Applications" ? null : tab),
+                SelectedTab = selectedTab,
                 SearchTerm = search,
                 Applications = new List<BenefitsApplicationViewModel>()
             };
@@ -51,28 +56,27 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 }
 
                 string? statusFilter = null;
-                if (string.IsNullOrEmpty(tab))
+                if (!string.IsNullOrEmpty(selectedTab))
                 {
-                    statusFilter = "Submitted";
-                }
-                else if (tab != "All Applications")
-                {
-                    if (tab == "Departments Approval")
+                    if (selectedTab == "Departments Approval")
                         statusFilter = "Approved";
-                    else if (tab == "In Review")
+                    else if (selectedTab == "In Review")
                         statusFilter = "In Review";
-                    else if (tab == "Submitted")
+                    else if (selectedTab == "Submitted")
                         statusFilter = "Submitted";
-                    else if (tab == "Rejected")
+                    else if (selectedTab == "Rejected")
                         statusFilter = "Rejected";
                     else
-                        statusFilter = tab;
+                        statusFilter = selectedTab;
                 }
 
                 var sql = @"
-                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
+                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           COALESCE(MAX(lap_ba.ApprovedDate), la.DateSubmitted) AS SortDate
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
+                    LEFT JOIN LoanApproval lap_ba ON la.LoanID = lap_ba.LoanID 
+                        AND lap_ba.UserID = @UserId AND lap_ba.IsActive = 1
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)";
 
                 if (!string.IsNullOrEmpty(statusFilter))
@@ -85,7 +89,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     sql += " AND (u.FirstName LIKE @Search OR u.LastName LIKE @Search)";
                 }
 
-                sql += " ORDER BY la.DateSubmitted DESC";
+                sql += " GROUP BY la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus ORDER BY SortDate DESC";
 
                 using (var cmd = new SqlCommand(sql, conn))
                 {

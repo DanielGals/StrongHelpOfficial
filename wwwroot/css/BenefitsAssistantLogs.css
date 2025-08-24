@@ -185,6 +185,11 @@
         color: #000;
     }
 
+    .action-badge.submitted {
+        background-color: #3949ab;
+        color: white;
+    }
+
 /* Search styling */
 .search-row {
     display: flex;

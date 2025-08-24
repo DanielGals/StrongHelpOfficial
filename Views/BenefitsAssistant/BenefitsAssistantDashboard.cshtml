@@ -57,18 +57,36 @@
 
     <div class="benefits-content-grid">
         <div class="pending-applications-section">
-            <h2>Pending Applications</h2>
-            <p class="text-muted">Loan Applications awaiting your approval</p>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2>Pending Applications</h2>
+                    <p class="text-muted mb-0">Loan Applications awaiting your approval</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="input-group" style="width: 300px;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Search employees..." id="dashboardSearch" />
+                    </div>
+                    <select class="form-select" style="width: 150px;" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="In Review">In Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Employee</th>
-                            <th>Loan Type</th>
-                            <th>Amount</th>
-                            <th>Date Applied</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th style="width: 30%;">Employee</th>
+                            <th style="width: 20%;">Amount</th>
+                            <th style="width: 25%;">Date Applied</th>
+                            <th style="width: 15%;">Status</th>
+                            <th style="width: 10%;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,7 +105,6 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>@app.LoanType</td>
                                     <td>₱@app.Amount.ToString("N0")</td>
                                     <td>@app.DateApplied.ToString("MMMM d, yyyy")</td>
                                     <td>
@@ -114,7 +131,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="6" class="text-center">No pending applications</td>
+                                <td colspan="5" class="text-center">No pending applications</td>
                             </tr>
                         }
                     </tbody>
@@ -129,3 +146,32 @@
         </div>
     </div>
 </div>
+
+<script>
+// Simple client-side filtering for dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('dashboardSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        
+        tableRows.forEach(row => {
+            if (row.cells.length === 1) return; // Skip "no applications" row
+            
+            const employeeName = row.cells[0].textContent.toLowerCase();
+            const status = row.cells[3].textContent.trim();
+            
+            const matchesSearch = employeeName.includes(searchTerm);
+            const matchesStatus = !statusValue || status === statusValue;
+            
+            row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+    }
+    
+    searchInput.addEventListener('input', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+});
+</script>

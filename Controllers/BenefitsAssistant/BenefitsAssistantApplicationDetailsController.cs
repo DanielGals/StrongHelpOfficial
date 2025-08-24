@@ -441,10 +441,11 @@ using (var cmd = new SqlCommand(@"
 
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0
+                    SET Remarks = @Remarks, ApplicationStatus = @Status, BenefitsAssistantUserID = @BenefitsAssistantUserID
                     WHERE LoanID = @LoanID", conn);
                 cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");
+                cmdUpdateApp.Parameters.AddWithValue("@BenefitsAssistantUserID", userId ?? 0);
                 cmdUpdateApp.Parameters.AddWithValue("@LoanID", id);
 
                 await cmdUpdateApp.ExecuteNonQueryAsync();
