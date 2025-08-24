@@ -3,13 +3,219 @@
 @{
     ViewData["Title"] = "System Administrator";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    int start = (Model.CurrentPage - 1) * Model.PageSize + 1;
+    int end = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalLogs);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <style>
+        .logs-table-box {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
+            margin-top: 2rem;
+        }
+        .logs-header-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .filter-btn {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .filter-btn:hover {
+            background: #0056b3;
+        }
+        .modal-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 2rem 1.5rem;
+            min-width: 240px;
+            max-width: 320px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+        }
+        .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        /* Fixed table layout for columns */
+        .logs-table-fixed {
+            table-layout: fixed;
+            width: 100%;
+        }
+        .logs-table-fixed th,
+        .logs-table-fixed td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .logs-table-fixed th:nth-child(1),
+        .logs-table-fixed td:nth-child(1) {
+            width: 120px;
+        }
+        .logs-table-fixed th:nth-child(2),
+        .logs-table-fixed td:nth-child(2) {
+            width: 120px;
+        }
+        .logs-table-fixed th:nth-child(3),
+        .logs-table-fixed td:nth-child(3) {
+            width: 220px;
+        }
+        .logs-table-fixed th:nth-child(4),
+        .logs-table-fixed td:nth-child(4) {
+            width: 320px;
+        }
+    </style>
 }
 
 <h2 class="fw-bold mb-1">System Logs</h2>
 <p class="text-muted">
     View basic system activity logs
 </p>
+
+<div class="logs-table-box">
+    <div class="logs-header-row">
+        <button class="filter-btn" type="button" onclick="showFilterModal()">Filter by Date</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle mb-0 logs-table-fixed">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Subject</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs != null && Model.Logs.Any())
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        var timestamp = log.ModifiedDate ?? log.CreatedDate;
+                        var subject = log.Name ?? "";
+                        var type = log.EntityType ?? "";
+                        var message = log.IsCreation
+                            ? $"New {log.EntityType?.ToLower() ?? "entity"} created"
+                            : $"{log.EntityType ?? "Entity"} modified";
+                        <tr>
+                            <td>@(timestamp?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>@type</td>
+                            <td>@subject</td>
+                            <td>@message</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No logs found for the selected period.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Table Footer: Showing count and Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+            <span>
+                Showing @start - @end of @Model.TotalLogs logs
+            </span>
+        </div>
+        <nav>
+            <ul class="pagination mb-0">
+                @{
+                    int totalPages = Model.TotalPages;
+                    int currentPage = Model.CurrentPage;
+                    int maxPagesToShow = 5;
+                    int startPage = Math.Max(1, currentPage - 2);
+                    int endPage = Math.Min(totalPages, startPage + maxPagesToShow - 1);
+                    if (endPage - startPage < maxPagesToShow - 1)
+                    {
+                        startPage = Math.Max(1, endPage - maxPagesToShow + 1);
+                    }
+                    string fromDate = Model.FromDate?.ToString("yyyy-MM-dd") ?? "";
+                    string toDate = Model.ToDate?.ToString("yyyy-MM-dd") ?? "";
+                }
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, fromDate, toDate })" aria-label="Previous">
+                        <span aria-hidden="true">&laquo; Previous</span>
+                    </a>
+                </li>
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, fromDate, toDate })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, fromDate, toDate })" aria-label="Next">
+                        <span aria-hidden="true">Next &raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div id="filterModal" class="modal-bg" style="display:none;">
+    <div class="modal-content">
+        <h5 class="mb-3">Filter Logs by Date</h5>
+        <form method="get" id="filterForm">
+            <div class="mb-3">
+                <label for="fromDate" class="form-label">From</label>
+                <input type="date" class="form-control" id="fromDate" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd") ?? "")" />
+            </div>
+            <div class="mb-3">
+                <label for="toDate" class="form-label">To</label>
+                <input type="date" class="form-control" id="toDate" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd") ?? "")" />
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideFilterModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showFilterModal() {
+            document.getElementById('filterModal').style.display = 'flex';
+        }
+        function hideFilterModal() {
+            document.getElementById('filterModal').style.display = 'none';
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = document.getElementById('filterModal');
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target === modal) hideFilterModal();
+                });
+            }
+        });
+    </script>
+}
