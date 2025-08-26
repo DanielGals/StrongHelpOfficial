@@ -45,6 +45,8 @@
 
     // Function to check if all checklist checkboxes are checked
     function updateRejectButtonState() {
+        if (!checklistItemsContainer || !forwardBtn) return;
+        
         const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
         if (checkboxes.length === 0) {
             forwardBtn.disabled = true;
@@ -54,165 +56,195 @@
     }
 
     // Listen for changes on checklist checkboxes
-    checklistItemsContainer.addEventListener('change', function (e) {
-        if (e.target && e.target.type === 'checkbox') {
-            updateRejectButtonState();
-        }
-    });
+    if (checklistItemsContainer) {
+        checklistItemsContainer.addEventListener('change', function (e) {
+            if (e.target && e.target.type === 'checkbox') {
+                updateRejectButtonState();
+            }
+        });
 
-    // Remove checklist item logic
-    checklistItemsContainer.addEventListener('click', function (e) {
-        if (e.target.closest('.checklist-remove-btn')) {
-            const btn = e.target.closest('.checklist-remove-btn');
-            btn.parentElement.parentElement.remove();
-            updateRejectButtonState();
-        }
-    });
+        // Remove checklist item logic
+        checklistItemsContainer.addEventListener('click', function (e) {
+            if (e.target.closest('.checklist-remove-btn')) {
+                const btn = e.target.closest('.checklist-remove-btn');
+                btn.parentElement.parentElement.remove();
+                updateRejectButtonState();
+            }
+        });
+    }
 
     // Confirm add checklist item
-    document.getElementById('confirmAddChecklistBtn').addEventListener('click', function () {
-        if (!conditionTextInput) {
-            conditionTextInput = document.getElementById('conditionTextInput');
-        }
-        const text = conditionTextInput.value.trim();
-        if (text.length > 0) {
-            const id = 'checklist_' + Date.now();
-            const div = document.createElement('div');
-            div.className = 'form-check mb-2';
-            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="${id}">
-                                    <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-            checklistItemsContainer.appendChild(div);
-            addChecklistItemModal.hide();
-            updateRejectButtonState();
-        } else {
-            conditionTextInput.focus();
-        }
-    });
-
-    document.getElementById('fillPreexistingChecklistBtn').addEventListener('click', function () {
-        if (!conditionTextInput) {
-            conditionTextInput = document.getElementById('conditionTextInput');
-        }
-        for (let i = 0; i < 3; i++) {
-            const id = 'checklist_' + Date.now();
-            const div = document.createElement('div');
-            div.className = 'form-check mb-2';
-            if (i === 0) {
-                div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_1">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_1">No existing active loans</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-                checklistItemsContainer.appendChild(div);
+    const confirmAddChecklistBtnElement = document.getElementById('confirmAddChecklistBtn');
+    if (confirmAddChecklistBtnElement) {
+        confirmAddChecklistBtnElement.addEventListener('click', function () {
+            if (!conditionTextInput) {
+                conditionTextInput = document.getElementById('conditionTextInput');
             }
-            else if (i === 1) {
+            if (!conditionTextInput || !checklistItemsContainer) return;
+            
+            const text = conditionTextInput.value.trim();
+            if (text.length > 0) {
+                const id = 'checklist_' + Date.now();
+                const div = document.createElement('div');
+                div.className = 'form-check mb-2';
                 div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_2">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_2">Not a co-maker for another active loan</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <input class="form-check-input" type="checkbox" id="${id}">
+                                        <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>
+                                </div>`;
                 checklistItemsContainer.appendChild(div);
+                if (addChecklistItemModal) {
+                    addChecklistItemModal.hide();
+                }
+                updateRejectButtonState();
+            } else {
+                conditionTextInput.focus();
             }
-            else if (i === 2) {
-                div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_3">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_3">No derogatory legal records (civil/criminal cases)</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-                checklistItemsContainer.appendChild(div);
-            }
-        }
-
-        addChecklistItemModal.hide();
-        updateRejectButtonState();
-    });
+        });
+    }
 
     // Initial state
     updateRejectButtonState();
+
+    // Pre-populate checklist with default items (similar to BenefitsAssistant)
+    if (checklistItemsContainer) {
+        const checklistItems = [
+            'No existing active loans',
+            'Not a co-maker for another active loan',
+            'No derogatory legal records (civil/criminal cases)'
+        ];
+
+        checklistItems.forEach((item, index) => {
+            const id = 'checklist_' + Date.now() + '_' + index;
+            const div = document.createElement('div');
+            div.className = 'form-check mb-2';
+            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <input class="form-check-input" type="checkbox" id="${id}">
+                                <label class="form-check-label checklist-item ms-2" for="${id}">${item}</label>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                            </button>
+                        </div>`;
+            checklistItemsContainer.appendChild(div);
+        });
+        
+        // Update button state after adding default items
+        updateRejectButtonState();
+    }
+
+    // Forward Application button logic
+    if (forwardBtn) {
+        forwardBtn.addEventListener('click', function () {
+            if (!this.disabled) {
+                const loanIdField = document.getElementById('loanIdField');
+                const forwardUrlField = document.getElementById('forwardUrlField');
+                if (!loanIdField || !forwardUrlField) return;
+                
+                const loanId = loanIdField.value;
+                const forwardUrl = forwardUrlField.value;
+                
+                // Create a simple forward request - you may want to customize this
+                const forwardRequest = {
+                    LoanId: parseInt(loanId),
+                    Title: "Application Review Completed",
+                    Description: "Validation checklist completed - forwarding for next approval phase",
+                    Approvers: [] // Add approvers if needed
+                };
+
+                fetch(forwardUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: JSON.stringify(forwardRequest)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error forwarding application: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error forwarding application');
+                });
+            }
+        });
+    }
 
     // Reject Application button logic
     const rejectBtn = document.getElementById('rejectApplicationBtn');
     const rejectCommentContainer = document.getElementById('rejectCommentContainer');
     const confirmRejectBtn = document.getElementById('confirmRejectBtn');
     const rejectCommentBox = document.getElementById('rejectCommentBox');
-    const rejectConfirmModal = new bootstrap.Modal(document.getElementById('rejectConfirmModal'));
+    const rejectConfirmModalElement = document.getElementById('rejectConfirmModal');
     const rejectCommentPreview = document.getElementById('rejectCommentPreview');
 
-    rejectBtn.addEventListener('click', function () {
-        rejectCommentContainer.style.display = 'block';
-        rejectCommentBox.focus();
-    });
+    if (rejectBtn && rejectCommentContainer && confirmRejectBtn && rejectCommentBox && rejectConfirmModalElement && rejectCommentPreview) {
+        const rejectConfirmModal = new bootstrap.Modal(rejectConfirmModalElement);
 
-    confirmRejectBtn.addEventListener('click', function () {
-        const comment = rejectCommentBox.value.trim();
-        rejectCommentPreview.textContent = comment.length > 0 ? comment : "(No comment provided)";
-        rejectConfirmModal.show();
-    });
+        rejectBtn.addEventListener('click', function () {
+            rejectCommentContainer.style.display = 'block';
+            rejectCommentBox.focus();
+        });
 
-    // Reject action handler
-    document.getElementById('finalRejectBtn').addEventListener('click', function () {
-        const loanId = document.getElementById('loanIdField').value;
-        const remarks = document.getElementById('rejectCommentBox').value.trim();
-        const rejectUrl = document.getElementById('rejectUrlField').value;
+        confirmRejectBtn.addEventListener('click', function () {
+            const comment = rejectCommentBox.value.trim();
+            rejectCommentPreview.textContent = comment.length > 0 ? comment : "(No comment provided)";
+            rejectConfirmModal.show();
+        });
 
-        fetch(rejectUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            },
-            body: `id=${encodeURIComponent(loanId)}&remarks=${encodeURIComponent(remarks)}`
-        })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    location.reload();
-                }
+        // Reject action handler
+        const finalRejectBtn = document.getElementById('finalRejectBtn');
+        if (finalRejectBtn) {
+            finalRejectBtn.addEventListener('click', function () {
+                const loanIdField = document.getElementById('loanIdField');
+                const rejectUrlField = document.getElementById('rejectUrlField');
+                
+                if (!loanIdField || !rejectUrlField) return;
+                
+                const loanId = loanIdField.value;
+                const remarks = rejectCommentBox.value.trim();
+                const rejectUrl = rejectUrlField.value;
+
+                fetch(rejectUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: `id=${encodeURIComponent(loanId)}&remarks=${encodeURIComponent(remarks)}`
+                })
+                    .then(response => {
+                        if (response.redirected) {
+                            window.location.href = response.url;
+                        } else {
+                            location.reload();
+                        }
+                    });
+                rejectConfirmModal.hide();
             });
-        rejectConfirmModal.hide();
-    });
+        }
+    }
 });

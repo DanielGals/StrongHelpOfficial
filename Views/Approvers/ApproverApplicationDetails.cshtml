@@ -22,48 +22,62 @@
 
 @await Html.PartialAsync("_LoanApplicationTabs")
 
-<div class="row mb-3">
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Employee Name</div>
-        <div>@Model.EmployeeName</div>
+<div class="row">
+    <div class="col-md-8">
+        <div class="row mb-3">
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Employee Name</div>
+                <div>@Model.EmployeeName</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Amount Applied For</div>
+                <div>₱@Model.LoanAmount.ToString("N0")</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Department</div>
+                <div>@Model.Department</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="loan-details-label">Payroll Account Number</div>
+                <div>@Model.PayrollAccountNumber</div>
+            </div>
+        </div>
+        <hr />
+
+        <h5 class="fw-bold mb-3">Documents Submitted</h5>
+        @if (Model.Documents != null && Model.LoanerDocuments.Any())
+        {
+            foreach (var doc in Model.LoanerDocuments)
+            {
+                <div class="loan-details-document">
+                    <div>
+                        <div class="doc-title">@doc.Name</div>
+                        <div class="doc-type">@doc.Type</div>
+                    </div>
+                    <button type="button" class="btn btn-light doc-view-btn"
+                        data-doc-url="@Url.Action("Preview", "Document", new { area = "Loaner", id = doc.LoanDocumentID })"
+                        data-doc-type="@doc.Type" data-doc-name="@doc.Name">
+                        View
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">No documents submitted.</div>
+        }
     </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Amount Applied For</div>
-        <div>₱@Model.LoanAmount.ToString("N0")</div>
-    </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Department</div>
-        <div>@Model.Department</div>
-    </div>
-    <div class="col-md-6 mb-2">
-        <div class="loan-details-label">Payroll Account Number</div>
-        <div>@Model.PayrollAccountNumber</div>
+
+    <div class="col-md-4">
+        @await Html.PartialAsync("_ApplicationDecisionAndChecklist")
     </div>
 </div>
-<hr />
 
-<h5 class="fw-bold mb-3">Documents Submitted</h5>
-@if (Model.Documents != null && Model.LoanerDocuments.Any())
-{
-    foreach (var doc in Model.LoanerDocuments)
-    {
-        <div class="loan-details-document">
-            <div>
-                <div class="doc-title">@doc.Name</div>
-                <div class="doc-type">@doc.Type</div>
-            </div>
-            <button type="button" class="btn btn-light doc-view-btn"
-                data-doc-url="@Url.Action("Preview", "Document", new { area = "Loaner", id = doc.LoanDocumentID })"
-                data-doc-type="@doc.Type" data-doc-name="@doc.Name">
-                View
-            </button>
-        </div>
-    }
-}
-else
-{
-    <div class="alert alert-info">No documents submitted.</div>
-}
+<!-- Hidden fields for JavaScript -->
+<input type="hidden" id="loanIdField" value="@Model.LoanID" />
+<input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "ApproverApplicationDetails")" />
+<input type="hidden" id="forwardUrlField" value="@Url.Action("ForwardApplication", "ApproverApplicationDetails")" />
+@Html.AntiForgeryToken()
 
 <!-- Modal for document preview -->
 <div class="modal fade" id="docPreviewModal" tabindex="-1" aria-labelledby="docPreviewModalLabel" aria-hidden="true">
