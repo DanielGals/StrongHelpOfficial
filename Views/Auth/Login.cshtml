@@ -29,6 +29,13 @@
     <div class="card-body">
         @if (Model.IsAuthenticated)
         {
+            @if (Model.EmailExists == true && Model.EmailMatched == true && Model.IsActive == false)
+            {
+                <div class="alert alert-danger">
+                    Your account is <strong>deactivated</strong>. You are authenticated, but you cannot proceed to use the application.<br />
+                    Please contact your administrator for assistance.
+                </div>
+            }
             <div class="row mb-3">
                 <div class="col-md-3 font-weight-bold">Authentication Status:</div>
                 <div class="col-md-9">
@@ -56,7 +63,7 @@
             <div class="row mb-3">
                 <div class="col-md-3 font-weight-bold">SQL Email:</div>
                 <div class="col-md-9">
-                    @if (Model.EmailExists && !string.IsNullOrEmpty(Model.SQLEmail))
+                    @if (Model.EmailExists == true && !string.IsNullOrEmpty(Model.SQLEmail))
                     {
                         @Model.SQLEmail
                     }
@@ -89,7 +96,7 @@
     </div>
 </div>
 
-@if (Model.IsAuthenticated)
+@if (Model.IsAuthenticated && !(Model.EmailExists == true && Model.EmailMatched == true && Model.IsActive == false))
 {
     <div class="row">
         <div class="col-md-6">
@@ -98,7 +105,7 @@
                     <h5>Roles (Groups)</h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.Roles.Any())
+                    @if (Model.Roles != null && Model.Roles.Any())
                     {
                         <ul class="list-group">
                             @foreach (var role in Model.Roles)
@@ -120,7 +127,7 @@
                     <h5>All Users in StrongHelp.local</h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.AllUsers.Any())
+                    @if (Model.AllUsers != null && Model.AllUsers.Any())
                     {
                         <ul class="list-group">
                             @foreach (var user in Model.AllUsers)
@@ -138,5 +145,12 @@
                 </div>
             </div>
         </div>
+    </div>
+}
+
+@if (ViewBag.DeactivatedMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.DeactivatedMessage
     </div>
 }

@@ -18,7 +18,7 @@ public class AuthController : Controller
         _configuration = configuration;
     }
 
-    public IActionResult Login()
+    public IActionResult Login(string? deactivated = null)
     {
         var userModel = new UserInfoViewModel
         {
@@ -46,7 +46,7 @@ public class AuthController : Controller
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
-        // Check if Email exists in the SQL database table [User]
+        // Check if Email exists in the SQL database table [User] and get IsActive
         if (!string.IsNullOrEmpty(userModel.Email))
         {
             try
@@ -55,9 +55,9 @@ public class AuthController : Controller
                 {
                     sqlConnection.Open();
 
-                    // Updated query to join User and Role tables
+                    // Updated query to join User and Role tables and get IsActive
                     var query = @"
-                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email 
+                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email, u.IsActive
                     FROM [User] u
                     INNER JOIN [Role] r ON u.RoleID = r.RoleID
                     WHERE u.Email = @Email";
@@ -77,6 +77,8 @@ public class AuthController : Controller
                                 int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
                                 string roleName = reader["RoleName"] as string ?? string.Empty;
                                 int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
+                                bool isActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"]);
+                                userModel.IsActive = isActive;
 
                                 // Store SQL data in session using role name instead of role id.
                                 HttpContext.Session.SetInt32("UserID", userId);
@@ -89,6 +91,7 @@ public class AuthController : Controller
                                 userModel.EmailExists = false;
                                 userModel.SQLEmail = null;
                                 userModel.EmailMatched = false;
+                                userModel.IsActive = null;
                             }
                         }
                     }
@@ -100,9 +103,18 @@ public class AuthController : Controller
             }
         }
 
+        // If user is deactivated, do not authenticate, show login page with deactivated message
+        if (userModel.EmailExists == true && userModel.EmailMatched == true && userModel.IsActive == false)
+        {
+            userModel.IsAuthenticated = false;
+            ViewBag.DeactivatedMessage = "Your account is deactivated. You cannot proceed to use the application. Please contact your administrator for assistance.";
+            HttpContext.Session.SetString("IsDeactivated", "true");
+            return View(userModel);
+        }
+
         // If the user is authenticated and the email matches SQL, redirect based on RoleName.
-        if (userModel.IsAuthenticated && userModel.EmailExists && userModel.EmailMatched == true &&
-            !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")))
+        if (userModel.IsAuthenticated && userModel.EmailExists == true && userModel.EmailMatched == true &&
+            !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")) && userModel.IsActive == true)
         {
             string roleName = HttpContext.Session.GetString("RoleName")!;
             if (roleName == "Employee") // Employee goes to Loaner Dashboard.
@@ -121,15 +133,15 @@ public class AuthController : Controller
             {
                 // Check if the role is one of the approver roles
                 string[] approverRoles = new[] {
-                "Loans Division Approver",
-                "Specialized Accounting Approver",
-                "Compensation Management Approver",
-                "Benefits Services Officer",
-                "Benefit Management Department Head",
-                "Approving Officer",
-                "Final Disbursement Approver",
-                "Approver"
-            };
+                    "Loans Division Approver",
+                    "Specialized Accounting Approver",
+                    "Compensation Management Approver",
+                    "Benefits Services Officer",
+                    "Benefit Management Department Head",
+                    "Approving Officer",
+                    "Final Disbursement Approver",
+                    "Approver"
+                };
 
                 if (approverRoles.Contains(roleName))
                 {
@@ -146,6 +158,7 @@ public class AuthController : Controller
         // Otherwise, display the login view.
         return View(userModel);
     }
+
     private string GetDomainFromUsername(string username)
     {
         if (string.IsNullOrEmpty(username))

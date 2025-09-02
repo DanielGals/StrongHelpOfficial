@@ -1,0 +1,145 @@
+@model StrongHelpOfficial.Models.AdminAddUserViewModel
+
+@{
+    ViewData["Title"] = "Add New User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AdminDashboard.css" asp-append-version="true" />
+    <style>
+        .add-user-box {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 2rem 2.5rem 1.5rem 2.5rem;
+            margin-top: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .form-label { font-weight: 500; }
+        .modal-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 2rem 1.5rem;
+            min-width: 240px;
+            max-width: 340px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            text-align: center;
+        }
+        .modal-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+    </style>
+}
+
+<div class="add-user-box">
+    <h2 class="mb-3">Add New User</h2>
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success text-center">@Model.SuccessMessage</div>
+    }
+    <form id="addUserForm" method="post" autocomplete="off">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+        <div class="mb-3">
+            <label asp-for="FirstName" class="form-label"></label>
+            <input asp-for="FirstName" class="form-control" required />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="LastName" class="form-label"></label>
+            <input asp-for="LastName" class="form-control" required />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" required />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ContactNum" class="form-label"></label>
+            <input asp-for="ContactNum" class="form-control" required pattern="\d*" maxlength="20" />
+            <span asp-validation-for="ContactNum" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="RoleId" class="form-label"></label>
+            <select asp-for="RoleId" class="form-select" required>
+                <option value="">-- Select Role --</option>
+                @foreach (var role in Model.Roles)
+                {
+                    <option value="@role.Id">@role.Name</option>
+                }
+            </select>
+            <span asp-validation-for="RoleId" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DepartmentId" class="form-label"></label>
+            <select asp-for="DepartmentId" class="form-select" required>
+                <option value="">-- Select Department --</option>
+                @foreach (var dept in Model.Departments)
+                {
+                    <option value="@dept.Id">@dept.Name</option>
+                }
+            </select>
+            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DateHired" class="form-label"></label>
+            <input asp-for="DateHired" class="form-control" type="date" required />
+            <span asp-validation-for="DateHired" class="text-danger"></span>
+        </div>
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-primary" onclick="showConfirmModal()">Confirm User</button>
+        </div>
+    </form>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-bg" style="display:none;">
+    <div class="modal-content">
+        <h5 class="mb-3 text-danger">Please check all information before submitting.</h5>
+        <div>Are you sure all details are correct?</div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="hideConfirmModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="submitAddUserForm()">Submit</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function showConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function hideConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        function submitAddUserForm() {
+            hideConfirmModal();
+            document.getElementById('addUserForm').submit();
+        }
+        // Only allow numbers in contact number field
+        document.addEventListener('DOMContentLoaded', function () {
+            var contactInput = document.getElementById('ContactNum');
+            if (contactInput) {
+                contactInput.addEventListener('input', function (e) {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+    </script>
+}
