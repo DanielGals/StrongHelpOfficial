@@ -1,0 +1,116 @@
+﻿@model ApproverApplicationDetailsViewModel
+@{
+    ViewData["Title"] = "Approval History";
+    ViewBag.IdParamName = "id";
+    ViewBag.LoanID = Model.LoanID;
+    ViewBag.Status = Model.ApplicationStatus;
+    ViewBag.TabArea = "";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ApproverApprovalHistory.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ApproverApplicationDetails.css" asp-append-version="true" />
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Approval History</h2>
+        <div class="text-muted mb-2" style="font-size:1em;">Complete approval history for this application</div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_LoanApplicationTabs")
+
+<div class="row">
+    <div class="col-12">
+        @{
+            var ba = Model.Approvers.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
+            var others = Model.Approvers
+                .Where(a => !a.RoleName.Contains("Benefits Assistant"))
+                .OrderBy(a => a.ApprovedDate ?? DateTime.MaxValue)
+                .ToList();
+        }
+
+        @foreach (var approval in others)
+        {
+            var statusColor = approval.Status switch
+            {
+                "Approved" => "#28a745", // Green
+                "Rejected" => "#dc3545", // Red
+                "Reviewed" => "#17a2b8", // Blue
+                "Pending" or "Under Review" => "#ffc107", // Yellow
+                _ => "#f7c948"
+            };
+
+            var isReviewing = approval.Status == "Pending" || approval.Status == "Under Review";
+            var displayText = isReviewing
+                ? $"Currently reviewing by {approval.UserName} on {DateTime.Now:yyyy-MM-dd}"
+                : $"{approval.Status} by {approval.UserName} on {(approval.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))}";
+
+            <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+                    @approval.RoleName Approval
+                </div>
+                <div>
+                    <span>
+                        @displayText
+                    </span>
+                    @if (!string.IsNullOrEmpty(approval.Description))
+                    {
+                        <div class="approval-comments mt-2">
+                            <i class="bi bi-chat-left-text"></i> @approval.Description
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (ba != null)
+        {
+            <div class="approval-history-item" style="border-left: 3px solid #17a2b8; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: #17a2b8; font-weight: bold;">
+                    @ba.RoleName Review
+                </div>
+                <div>
+                    <span>
+                        Reviewed by @ba.UserName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+                    </span>
+                    @if (!string.IsNullOrEmpty(ba.Description))
+                    {
+                        <div class="approval-comments mt-2">
+                            <i class="bi bi-chat-left-text"></i> @ba.Description
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Application Submitted (always last) -->
+        <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
+            <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
+            <div>
+                <span>
+                    Submitted by @Model.EmployeeName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden fields for JavaScript -->
+<input type="hidden" id="loanIdField" value="@Model.LoanID" />
+<input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "ApproverApplicationDetails")" />
+<input type="hidden" id="forwardUrlField" value="@Url.Action("ForwardApplication", "ApproverApplicationDetails")" />
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // No Application Decision functionality needed on Approval History page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Approval History page loaded - no Application Decision functionality');
+        });
+    </script>
+}
