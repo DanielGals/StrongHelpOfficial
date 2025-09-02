@@ -220,15 +220,16 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                     
                     using (var cmd = new SqlCommand(
-                        @"INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, IsActive, CreatedAt)
+                        @"INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, IsActive, CreatedAt, CreatedBy)
       OUTPUT INSERTED.LoanApprovalID
-      VALUES (@LoanID, @UserID, @PhaseOrder, 'Pending', @Description, 1, @CreatedAt)", conn))
+      VALUES (@LoanID, @UserID, @PhaseOrder, 'Pending', @Description, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         cmd.Parameters.AddWithValue("@UserID", request.UserId);
                         cmd.Parameters.AddWithValue("@PhaseOrder", request.PhaseOrder);
                         cmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
                         cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@CreatedBy", HttpContext.Session.GetInt32("UserID")?.ToString() ?? "");
 
                         newLoanApprovalId = (int)await cmd.ExecuteScalarAsync();
                     }
@@ -451,13 +452,14 @@ using (var cmd = new SqlCommand(@"
                 await cmdUpdateApp.ExecuteNonQueryAsync();
 
                 var cmdInsertApproval = new SqlCommand(@"
-                    INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt)
-                    VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt)", conn);
+                    INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt, CreatedBy)
+                    VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn);
                 cmdInsertApproval.Parameters.AddWithValue("@LoanID", id);
                 cmdInsertApproval.Parameters.AddWithValue("@UserID", userId ?? 0);
                 cmdInsertApproval.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdInsertApproval.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                 cmdInsertApproval.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                cmdInsertApproval.Parameters.AddWithValue("@CreatedBy", userId?.ToString() ?? "");
 
                 await cmdInsertApproval.ExecuteNonQueryAsync();
             }
@@ -542,6 +544,12 @@ using (var cmd = new SqlCommand(@"
                     await conn.OpenAsync();
 
                     var benefitsAssistantUserId = HttpContext.Session.GetInt32("UserID");
+                    
+                    // Debug: Check if UserID is null
+                    if (benefitsAssistantUserId == null)
+                    {
+                        return Json(new { success = false, message = "User session expired. Please login again." });
+                    }
 
                     using (var updateCmd = new SqlCommand(@"
                 UPDATE LoanApplication 
@@ -550,7 +558,9 @@ using (var cmd = new SqlCommand(@"
                     Title = @Title, 
                     Description = @Description,
                     BenefitsAssistantUserID = @BenefitsAssistantUserID,
-                    DateAssigned = @DateAssigned
+                    DateAssigned = @DateAssigned,
+                    ModifiedAt = @ModifiedAt,
+                    ModifiedBy = @ModifiedBy
                 WHERE LoanID = @LoanID", conn))
                     {
                         updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Review");
@@ -560,19 +570,22 @@ using (var cmd = new SqlCommand(@"
                         updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         updateCmd.Parameters.AddWithValue("@BenefitsAssistantUserID", benefitsAssistantUserId);
                         updateCmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
+                        updateCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                        updateCmd.Parameters.AddWithValue("@ModifiedBy", benefitsAssistantUserId.ToString());
 
                         await updateCmd.ExecuteNonQueryAsync();
                     }
 
                     using (var baCmd = new SqlCommand(@"
-                INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt)
-                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt)", conn))
+                INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
+                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         baCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         baCmd.Parameters.AddWithValue("@UserID", benefitsAssistantUserId);
                         baCmd.Parameters.AddWithValue("@Comment", request.Description ?? "Application reviewed and forwarded");
                         baCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                        baCmd.Parameters.AddWithValue("@CreatedBy", benefitsAssistantUserId.ToString());
 
                         await baCmd.ExecuteNonQueryAsync();
                     }
@@ -609,14 +622,15 @@ using (var cmd = new SqlCommand(@"
 
                         int newLoanApprovalId;
                         using (var cmd = new SqlCommand(@"
-                    INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, IsActive, CreatedAt)
+                    INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, IsActive, CreatedAt, CreatedBy)
                     OUTPUT INSERTED.LoanApprovalID
-                    VALUES (@LoanID, @UserID, @Order, 'Pending', 1, @CreatedAt)", conn))
+                    VALUES (@LoanID, @UserID, @Order, 'Pending', 1, @CreatedAt, @CreatedBy)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                             cmd.Parameters.AddWithValue("@UserID", approver.UserId);
                             cmd.Parameters.AddWithValue("@Order", approver.Order);
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@CreatedBy", benefitsAssistantUserId.ToString());
 
                             newLoanApprovalId = (int)await cmd.ExecuteScalarAsync();
                         }
@@ -663,14 +677,15 @@ using (var cmd = new SqlCommand(@"
 
                 // Only one of loanId or loanApprovalId should be set
                 using (var cmd = new SqlCommand(@"
-                    INSERT INTO LoanDocument (LoanID, LoanApprovalID, FileContent, LoanDocumentName, IsActive, CreatedAt)
-                    VALUES (@LoanID, @LoanApprovalID, @FileContent, @LoanDocumentName, 1, @CreatedAt)", conn))
+                    INSERT INTO LoanDocument (LoanID, LoanApprovalID, FileContent, LoanDocumentName, IsActive, CreatedAt, CreatedBy)
+                    VALUES (@LoanID, @LoanApprovalID, @FileContent, @LoanDocumentName, 1, @CreatedAt, @CreatedBy)", conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", (object?)loanId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@LoanApprovalID", (object?)loanApprovalId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@FileContent", fileBytes);
                     cmd.Parameters.AddWithValue("@LoanDocumentName", file.FileName);
                     cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@CreatedBy", HttpContext.Session.GetInt32("UserID")?.ToString() ?? "");
                     await cmd.ExecuteNonQueryAsync();
                 }
             }

@@ -54,38 +54,28 @@ namespace StrongHelpOfficial.Controllers.Approver
                     SELECT 
                         lap.LoanApprovalID as LogID,
                         lap.ApprovedDate AS Timestamp,
-                        CASE 
-                            WHEN lap.IsApproved = 1 THEN 'Approved'
-                            WHEN lap.IsApproved = 0 THEN 'Rejected'
-                            ELSE 'In Review'
-                        END AS Action,
+                        lap.Status AS Action,
                         'LOAN-' + RIGHT('0000' + CAST(la.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
                         CASE 
-                            WHEN lap.IsApproved = 1 THEN 'Approved loan application'
-                            WHEN lap.IsApproved = 0 THEN 'Rejected loan application: ' + ISNULL(lap.Remarks, '')
-                            ELSE 'Application under review'
+                            WHEN lap.Status = 'Approved' THEN 'Approved loan application'
+                            WHEN lap.Status = 'Rejected' THEN 'Rejected loan application: ' + ISNULL(lap.Comment, '')
                         END AS Details,
-                        CASE 
-                            WHEN lap.IsApproved = 1 THEN 'Approved'
-                            WHEN lap.IsApproved = 0 THEN 'Rejected'
-                            ELSE 'In Review'
-                        END AS Status,
+                        lap.Status AS Status,
                         ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
                     FROM LoanApproval lap
                     INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE lap.ApproverUserID = @UserId
+                    WHERE lap.UserID = @UserId
                     AND lap.IsActive = 1
+                    AND lap.Status IN ('Approved', 'Rejected')
                 ";
 
                 if (!string.IsNullOrEmpty(filterBy))
                 {
                     if (filterBy == "Approved")
-                        query += " AND lap.IsApproved = 1";
+                        query += " AND lap.Status = 'Approved'";
                     else if (filterBy == "Rejected")
-                        query += " AND lap.IsApproved = 0";
-                    else if (filterBy == "In Review")
-                        query += " AND lap.IsApproved IS NULL";
+                        query += " AND lap.Status = 'Rejected'";
                 }
 
                 if (filterDate.HasValue)
@@ -141,18 +131,17 @@ namespace StrongHelpOfficial.Controllers.Approver
                 string countQuery = @"
                     SELECT COUNT(*) 
                     FROM LoanApproval lap
-                    WHERE lap.ApproverUserID = @UserId
+                    WHERE lap.UserID = @UserId
                     AND lap.IsActive = 1
+                    AND lap.Status IN ('Approved', 'Rejected')
                 ";
 
                 if (!string.IsNullOrEmpty(filterBy))
                 {
                     if (filterBy == "Approved")
-                        countQuery += " AND lap.IsApproved = 1";
+                        countQuery += " AND lap.Status = 'Approved'";
                     else if (filterBy == "Rejected")
-                        countQuery += " AND lap.IsApproved = 0";
-                    else if (filterBy == "In Review")
-                        countQuery += " AND lap.IsApproved IS NULL";
+                        countQuery += " AND lap.Status = 'Rejected'";
                 }
 
                 if (filterDate.HasValue)
@@ -181,7 +170,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     model.TotalPages = Math.Max(1, (int)Math.Ceiling((double)model.TotalItems / model.PageSize));
                 }
 
-                model.AvailableActions = new List<string> { "In Review", "Approved", "Rejected" };
+                model.AvailableActions = new List<string> { "Approved", "Rejected" };
             }
 
             return View("~/Views/Approvers/ApproversLogs.cshtml", model);
