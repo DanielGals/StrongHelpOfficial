@@ -34,7 +34,7 @@
     // Checklist add item modal logic
     const addItemBtn = document.getElementById('addItemBtn');
     const checklistItemsContainer = document.getElementById('checklistItemsContainer');
-    const forwardBtn = document.getElementById('forwardApplicationBtn');
+    const approveBtn = document.getElementById('approveApplicationBtn');
 
     let addChecklistItemModal = null;
     let confirmAddChecklistBtn = null;
@@ -74,10 +74,10 @@
 
     // Function to check if all checklist checkboxes are checked
     function updateRejectButtonState() {
-        if (!checklistItemsContainer || !forwardBtn) {
+        if (!checklistItemsContainer || !approveBtn) {
             console.log('Missing elements for button state update:', {
                 checklistContainer: !!checklistItemsContainer,
-                forwardBtn: !!forwardBtn
+                approveBtn: !!approveBtn
             });
             return;
         }
@@ -86,14 +86,14 @@
         console.log('Found checkboxes:', checkboxes.length);
         
         if (checkboxes.length === 0) {
-            forwardBtn.disabled = true;
-            console.log('No checkboxes found, forward button disabled');
+            approveBtn.disabled = true;
+            console.log('No checkboxes found, approve button disabled');
             return;
         }
         
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        forwardBtn.disabled = !allChecked;
-        console.log('All checkboxes checked:', allChecked, 'Forward button disabled:', forwardBtn.disabled);
+        approveBtn.disabled = !allChecked;
+        console.log('All checkboxes checked:', allChecked, 'Approve button disabled:', approveBtn.disabled);
     }
 
     // Listen for changes on checklist checkboxes
@@ -216,44 +216,54 @@
         console.log('Checklist Items Container not found - this is expected if Application Status is not "Submitted"');
     }
 
-    // Forward Application button logic
-    if (forwardBtn) {
-        forwardBtn.addEventListener('click', function () {
+    // Approve Application button logic
+    if (approveBtn) {
+        approveBtn.addEventListener('click', function () {
             if (!this.disabled) {
                 const loanIdField = document.getElementById('loanIdField');
-                const forwardUrlField = document.getElementById('forwardUrlField');
-                if (!loanIdField || !forwardUrlField) return;
+                const approveUrlField = document.getElementById('approveUrlField');
+                if (!loanIdField || !approveUrlField) return;
                 
                 const loanId = loanIdField.value;
-                const forwardUrl = forwardUrlField.value;
+                const approveUrl = approveUrlField.value;
                 
-                // Create a simple forward request - you may want to customize this
-                const forwardRequest = {
+                // Create an approval request
+                const approveRequest = {
                     LoanId: parseInt(loanId),
-                    Title: "Application Review Completed",
-                    Description: "Validation checklist completed - forwarding for next approval phase",
-                    Approvers: [] // Add approvers if needed
+                    Title: "Application Approved",
+                    Description: "Validation checklist completed - application approved by approver"
                 };
 
-                fetch(forwardUrl, {
+                // Disable button during request
+                this.disabled = true;
+                this.textContent = 'Processing...';
+
+                fetch(approveUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                     },
-                    body: JSON.stringify(forwardRequest)
+                    body: JSON.stringify(approveRequest)
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        alert('Application approved successfully!');
                         location.reload();
                     } else {
-                        alert('Error forwarding application: ' + (data.message || 'Unknown error'));
+                        alert('Error approving application: ' + (data.message || 'Unknown error'));
+                        // Re-enable button on error
+                        this.disabled = false;
+                        this.textContent = 'Approve Application';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error forwarding application');
+                    alert('Error approving application');
+                    // Re-enable button on error
+                    this.disabled = false;
+                    this.textContent = 'Approve Application';
                 });
             }
         });

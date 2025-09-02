@@ -50,17 +50,23 @@
         public string Description { get; set; } = string.Empty;
     }
 
-    public class ApproverForwardApplicationRequest
+    public class ApproverApproveApplicationRequest
     {
         public int LoanId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public List<ApproverForwardApproverDto> Approvers { get; set; } = new();
     }
 
     public class ApproverForwardApproverDto
     {
         public int UserId { get; set; }
         public int Order { get; set; }
+    }
+
+    public class ApproverForwardApplicationRequest
+    {
+        public int LoanId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }
