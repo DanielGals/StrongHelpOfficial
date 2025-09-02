@@ -1,0 +1,306 @@
+﻿@model StrongHelpOfficial.Models.ApproverReportsViewModel
+@{
+    ViewData["Title"] = "Reports & Analytics";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BenefitsAssistantDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/LoanerDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BenefitsAssistantLogs.css" asp-append-version="true" />
+
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+            text-align: center;
+        }
+
+        /* Toast positioning */
+        .custom-toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1040;
+        }
+
+        @@media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<div class="loan-history-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold mb-1">Reports & Analytics</h2>
+            <p class="text-muted">View summary statistics for loan application approvals</p>
+        </div>
+        <button type="button" class="filter-date-btn"
+                data-bs-toggle="modal" data-bs-target="#dateFilterModal">
+            <i class="bi bi-calendar"></i>
+            Filter by Date
+        </button>
+
+        <div class="modal fade" id="dateFilterModal" tabindex="-1" aria-labelledby="dateFilterModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="get" id="dateFilterForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="dateFilterModalLabel">Filter by Date</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body d-flex flex-column gap-3">
+                            <div>
+                                <label class="form-label small">Start Date:</label>
+                                <input type="date" name="startDate" class="form-control"
+                                       value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div>
+                                <label class="form-label small">End Date:</label>
+                                <input type="date" name="endDate" class="form-control"
+                                       value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Apply Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for validation feedback -->
+<div class="custom-toast-container">
+    <div class="toast align-items-center" id="validationToast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Filter Results</strong>
+            <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="validationToastMessage">
+            <!-- Message will be set by JS -->
+        </div>
+    </div>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info">@TempData["Message"]</div>
+}
+
+<!-- Statistics Cards -->
+<div class="stats-grid mb-4">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-clipboard-data"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Total Applications</h3>
+            <p class="stat-number">@Model.TotalApplications</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-check2-square"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Approved / Rejected</h3>
+            <p class="stat-number">
+                <span style="color: #28a745;">@Model.ApprovedCount</span>
+                <span style="color: #888;">/</span>
+                <span style="color: #dc3545;">@Model.RejectedCount</span>
+            </p>
+            <small>
+                <span style="color: #28a745;">Approved</span> /
+                <span style="color: #dc3545;">Rejected</span>
+            </small>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-percent"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Approval Rate</h3>
+            <p class="stat-number">@Model.ApprovalRate.ToString("F1")%</p>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3 class="chart-title">Application Status Distribution</h3>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <h3 class="chart-title">Application Trends</h3>
+        <div class="chart-container">
+            <canvas id="trendsChart"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Application Status Pie Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            const statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Approved', 'Rejected', 'In Review'],
+                    datasets: [{
+                        data: [
+        @Model.ApprovedCount,
+        @Model.RejectedCount,
+        @Model.InReviewCount
+                        ],
+                        backgroundColor: [
+                            '#28a745', // Green for Approved
+                            '#dc3545', // Red for Rejected
+                            '#17a2b8'  // Blue for In Review
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Application Trends Bar Chart
+            const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+            const trendsChart = new Chart(trendsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Total Applications', 'Approved', 'Rejected'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+        @Model.TotalApplications,
+        @Model.ApprovedCount,
+        @Model.RejectedCount
+                        ],
+                        backgroundColor: [
+                            '#6f42c1', // Purple for Total
+                            '#28a745', // Green for Approved
+                            '#dc3545'  // Red for Rejected
+                        ],
+                        borderColor: [
+                            '#5a32a3',
+                            '#1e7e34',
+                            '#c82333'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Date validation for the filter form
+            const form = document.getElementById('dateFilterForm');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    const startDateInput = form.querySelector('input[name="startDate"]');
+                    const endDateInput = form.querySelector('input[name="endDate"]');
+                    const startDate = new Date(startDateInput.value);
+                    const endDate = new Date(endDateInput.value);
+
+                    let message = '';
+                    if (!startDateInput.value || !endDateInput.value) {
+                        message = 'Please select a date before applying the filter.';
+                    } else if (startDate > endDate) {
+                        message = 'Start date cannot be after end date.';
+                    }
+
+                    if (message) {
+                        e.preventDefault();
+                        document.getElementById('validationToastMessage').textContent = message;
+                        var toastEl = document.getElementById('validationToast');
+                        var toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+                        toast.show();
+                    }
+                });
+            }
+        });
+    </script>
+}
