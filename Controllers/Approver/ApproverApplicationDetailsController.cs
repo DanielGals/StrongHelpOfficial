@@ -220,17 +220,18 @@ namespace StrongHelpOfficial.Controllers.Approver
 
 
                     using (var cmd = new SqlCommand(
-                        @"INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, IsActive, CreatedAt)
+                        @"INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, IsActive, CreatedAt, CreatedBy)
       OUTPUT INSERTED.LoanApprovalID
-      VALUES (@LoanID, @UserID, @PhaseOrder, 'Pending', @Description, 1, @CreatedAt)", conn))
+      VALUES (@LoanID, @UserID, @PhaseOrder, 'Pending', @Description, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         cmd.Parameters.AddWithValue("@UserID", request.UserId);
                         cmd.Parameters.AddWithValue("@PhaseOrder", request.PhaseOrder);
                         cmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
                         cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@CreatedBy", HttpContext.Session.GetInt32("UserID")?.ToString() ?? "");
 
-                        newLoanApprovalId = (int)await cmd.ExecuteScalarAsync();
+                        newLoanApprovalId = (int)(await cmd.ExecuteScalarAsync() ?? 0);
                     }
                 }
 
@@ -435,26 +436,68 @@ namespace StrongHelpOfficial.Controllers.Approver
             {
                 await conn.OpenAsync();
 
+                // Immediately reject the entire LoanApplication when any single approver rejects it
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0
+                    SET Remarks = @Remarks, ApplicationStatus = @Status, ModifiedAt = @ModifiedAt, ModifiedBy = @ModifiedBy
                     WHERE LoanID = @LoanID", conn);
                 cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");
                 cmdUpdateApp.Parameters.AddWithValue("@LoanID", id);
+                cmdUpdateApp.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                cmdUpdateApp.Parameters.AddWithValue("@ModifiedBy", userId?.ToString() ?? "");
 
                 await cmdUpdateApp.ExecuteNonQueryAsync();
 
-                var cmdInsertApproval = new SqlCommand(@"
-                    INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt)
-                    VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt)", conn);
-                cmdInsertApproval.Parameters.AddWithValue("@LoanID", id);
-                cmdInsertApproval.Parameters.AddWithValue("@UserID", userId ?? 0);
-                cmdInsertApproval.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
-                cmdInsertApproval.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
-                cmdInsertApproval.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                // Insert or update the LoanApproval record for this approver
+                // Check if there's an existing LoanApproval record for this approver and loan
+                using (var checkCmd = new SqlCommand(@"
+                    SELECT LoanApprovalID 
+                    FROM LoanApproval 
+                    WHERE LoanID = @LoanID AND UserID = @UserID AND IsActive = 1", conn))
+                {
+                    checkCmd.Parameters.AddWithValue("@LoanID", id);
+                    checkCmd.Parameters.AddWithValue("@UserID", userId);
 
-                await cmdInsertApproval.ExecuteNonQueryAsync();
+                    var existingLoanApprovalId = await checkCmd.ExecuteScalarAsync();
+
+                    if (existingLoanApprovalId != null)
+                    {
+                        // Update existing LoanApproval record to "Rejected"
+                        using (var updateApprovalCmd = new SqlCommand(@"
+                            UPDATE LoanApproval 
+                            SET Status = 'Rejected', 
+                                Comment = @Remarks, 
+                                ApprovedDate = @ApprovedDate,
+                                ModifiedAt = @ModifiedAt,
+                                ModifiedBy = @ModifiedBy
+                            WHERE LoanApprovalID = @LoanApprovalID", conn))
+                        {
+                            updateApprovalCmd.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
+                            updateApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
+                            updateApprovalCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                            updateApprovalCmd.Parameters.AddWithValue("@ModifiedBy", userId?.ToString() ?? "");
+                            updateApprovalCmd.Parameters.AddWithValue("@LoanApprovalID", existingLoanApprovalId);
+
+                            await updateApprovalCmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                    else
+                    {
+                        // Create new LoanApproval record for the rejection
+                        var cmdInsertApproval = new SqlCommand(@"
+                            INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt, CreatedBy)
+                            VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn);
+                        cmdInsertApproval.Parameters.AddWithValue("@LoanID", id);
+                        cmdInsertApproval.Parameters.AddWithValue("@UserID", userId ?? 0);
+                        cmdInsertApproval.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
+                        cmdInsertApproval.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
+                        cmdInsertApproval.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                        cmdInsertApproval.Parameters.AddWithValue("@CreatedBy", userId?.ToString() ?? "");
+
+                        await cmdInsertApproval.ExecuteNonQueryAsync();
+                    }
+                }
             }
 
             return RedirectToAction("Index", new { id });
@@ -528,7 +571,7 @@ namespace StrongHelpOfficial.Controllers.Approver
         }
 
         [HttpPost]
-        public async Task<JsonResult> ForwardApplication([FromBody] ApproverForwardApplicationRequest request)
+        public async Task<JsonResult> ApproveApplication([FromBody] ApproverForwardApplicationRequest request)
         {
             try
             {
@@ -538,95 +581,109 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                     var approverUserId = HttpContext.Session.GetInt32("UserID");
 
-                    using (var updateCmd = new SqlCommand(@"
-                UPDATE LoanApplication 
-                SET ApplicationStatus = @ApplicationStatus, 
-                    Remarks = @Remarks, 
-                    Title = @Title, 
-                    Description = @Description,
-                    DateAssigned = @DateAssigned
-                WHERE LoanID = @LoanID", conn))
+                    // Check if this is the final approval in the sequence FIRST
+                    bool isLastApproval = false;
+                    using (var checkLastCmd = new SqlCommand(@"
+                        SELECT COUNT(*) 
+                        FROM LoanApproval 
+                        WHERE LoanID = @LoanID 
+                        AND IsActive = 1 
+                        AND (Status IS NULL OR Status = 'Pending')
+                        AND UserID != @UserID", conn))
                     {
-                        updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Review");
-                        updateCmd.Parameters.AddWithValue("@Remarks", "Waiting for approvers");
-                        updateCmd.Parameters.AddWithValue("@Title", request.Title ?? string.Empty);
-                        updateCmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
-                        updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-                        updateCmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
+                        checkLastCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                        checkLastCmd.Parameters.AddWithValue("@UserID", approverUserId);
 
-                        await updateCmd.ExecuteNonQueryAsync();
+                        var pendingCount = (int)(await checkLastCmd.ExecuteScalarAsync() ?? 0);
+                        isLastApproval = pendingCount == 0;
                     }
 
-                    using (var baCmd = new SqlCommand(@"
-                INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt)
-                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt)", conn))
+                    // Check if there's an existing LoanApproval record for this approver and loan
+                    using (var checkCmd = new SqlCommand(@"
+                        SELECT LoanApprovalID 
+                        FROM LoanApproval 
+                        WHERE LoanID = @LoanID AND UserID = @UserID AND IsActive = 1", conn))
                     {
-                        baCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-                        baCmd.Parameters.AddWithValue("@UserID", approverUserId);
-                        baCmd.Parameters.AddWithValue("@Comment", request.Description ?? "Application reviewed and forwarded");
-                        baCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
-                        baCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                        checkCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                        checkCmd.Parameters.AddWithValue("@UserID", approverUserId);
 
-                        await baCmd.ExecuteNonQueryAsync();
-                    }
+                        var existingLoanApprovalId = await checkCmd.ExecuteScalarAsync();
 
-                    // --- THIS IS THE IMPORTANT PART ---
-                    var newApproverIds = new List<object>();
-                    foreach (var approver in request.Approvers)
-                    {
-                        using (var checkCmd = new SqlCommand("SELECT COUNT(*) FROM [User] WHERE UserID = @UserID AND IsActive = 1", conn))
+                        if (existingLoanApprovalId != null)
                         {
-                            checkCmd.Parameters.AddWithValue("@UserID", approver.UserId);
-                            var userExists = (int)await checkCmd.ExecuteScalarAsync() > 0;
-
-                            if (!userExists)
+                            // Update existing LoanApproval record to "Approved"
+                            // No comment for approvals, only for rejections
+                            using (var updateApprovalCmd = new SqlCommand(@"
+                                UPDATE LoanApproval 
+                                SET Status = 'Approved', 
+                                    Comment = NULL, 
+                                    ApprovedDate = @ApprovedDate,
+                                    ModifiedAt = @ModifiedAt,
+                                    ModifiedBy = @ModifiedBy
+                                WHERE LoanApprovalID = @LoanApprovalID", conn))
                             {
-                                return Json(new { success = false, message = $"User with ID {approver.UserId} not found in the system." });
+                                updateApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
+                                updateApprovalCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                                updateApprovalCmd.Parameters.AddWithValue("@ModifiedBy", approverUserId?.ToString() ?? "");
+                                updateApprovalCmd.Parameters.AddWithValue("@LoanApprovalID", existingLoanApprovalId);
+
+                                await updateApprovalCmd.ExecuteNonQueryAsync();
                             }
                         }
-
-                        using (var dupCmd = new SqlCommand(@"
-                    SELECT COUNT(*) FROM LoanApproval
-                    WHERE LoanID = @LoanID AND UserID = @UserID AND [Order] = @Order AND IsActive = 1", conn))
+                        else
                         {
-                            dupCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-                            dupCmd.Parameters.AddWithValue("@UserID", approver.UserId);
-                            dupCmd.Parameters.AddWithValue("@Order", approver.Order);
-
-                            var alreadyExists = (int)await dupCmd.ExecuteScalarAsync() > 0;
-                            if (alreadyExists)
+                            // Create new LoanApproval record if it doesn't exist
+                            // No comment for approvals, only for rejections
+                            using (var insertApprovalCmd = new SqlCommand(@"
+                                INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
+                                VALUES (@LoanID, @UserID, 0, 'Approved', NULL, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                             {
-                                return Json(new { success = false, message = $"Approver {approver.UserId} with order {approver.Order} is already assigned." });
+                                insertApprovalCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                                insertApprovalCmd.Parameters.AddWithValue("@UserID", approverUserId);
+                                insertApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
+                                insertApprovalCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                                insertApprovalCmd.Parameters.AddWithValue("@CreatedBy", approverUserId?.ToString() ?? "");
+
+                                await insertApprovalCmd.ExecuteNonQueryAsync();
                             }
                         }
-
-                        int newLoanApprovalId;
-                        using (var cmd = new SqlCommand(@"
-                    INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, IsActive, CreatedAt)
-                    OUTPUT INSERTED.LoanApprovalID
-                    VALUES (@LoanID, @UserID, @Order, 'Pending', 1, @CreatedAt)", conn))
-                        {
-                            cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-                            cmd.Parameters.AddWithValue("@UserID", approver.UserId);
-                            cmd.Parameters.AddWithValue("@Order", approver.Order);
-                            cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
-
-                            newLoanApprovalId = (int)await cmd.ExecuteScalarAsync();
-                        }
-
-                        newApproverIds.Add(new { userId = approver.UserId, order = approver.Order, loanApprovalId = newLoanApprovalId });
                     }
 
-                    // --- RETURN THE MAPPING TO THE CLIENT ---
-                    return Json(new { success = true, approverIds = newApproverIds });
+                    // Only update LoanApplication status if this is the final approval
+                    if (isLastApproval)
+                    {
+                        using (var updateCmd = new SqlCommand(@"
+                    UPDATE LoanApplication 
+                    SET ApplicationStatus = @ApplicationStatus, 
+                        Remarks = @Remarks, 
+                        DateAssigned = @DateAssigned,
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy
+                    WHERE LoanID = @LoanID", conn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@ApplicationStatus", "Approved");
+                            updateCmd.Parameters.AddWithValue("@Remarks", "Application fully approved by all approvers");
+                            updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                            updateCmd.Parameters.AddWithValue("@DateAssigned", DateTime.Now);
+                            updateCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                            updateCmd.Parameters.AddWithValue("@ModifiedBy", approverUserId?.ToString() ?? "");
+
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+
+                        return Json(new { success = true, message = "Application fully approved! All approvers have completed their review.", isLastApproval = true });
+                    }
+                    else
+                    {
+                        return Json(new { success = true, message = "Your approval has been recorded successfully! Waiting for other approvers.", isLastApproval = false });
+                    }
                 }
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error forwarding application: " + ex.Message });
+                return Json(new { success = false, message = "Error approving application: " + ex.Message });
             }
         }
-
         [HttpPost]
         public async Task<IActionResult> UploadApproverDocuments(int? loanId, int? loanApprovalId, List<IFormFile> pdfFiles)
         {
@@ -656,14 +713,15 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 // Only one of loanId or loanApprovalId should be set
                 using (var cmd = new SqlCommand(@"
-                    INSERT INTO LoanDocument (LoanID, LoanApprovalID, FileContent, LoanDocumentName, IsActive, CreatedAt)
-                    VALUES (@LoanID, @LoanApprovalID, @FileContent, @LoanDocumentName, 1, @CreatedAt)", conn))
+                    INSERT INTO LoanDocument (LoanID, LoanApprovalID, FileContent, LoanDocumentName, IsActive, CreatedAt, CreatedBy)
+                    VALUES (@LoanID, @LoanApprovalID, @FileContent, @LoanDocumentName, 1, @CreatedAt, @CreatedBy)", conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", (object?)loanId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@LoanApprovalID", (object?)loanApprovalId ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@FileContent", fileBytes);
                     cmd.Parameters.AddWithValue("@LoanDocumentName", file.FileName);
                     cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@CreatedBy", HttpContext.Session.GetInt32("UserID")?.ToString() ?? "");
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
@@ -681,6 +739,42 @@ namespace StrongHelpOfficial.Controllers.Approver
             cmd.Parameters.AddWithValue("@LoanApprovalID", loanApprovalId);
             var result = cmd.ExecuteScalar();
             return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> CheckIfFinalApprover(int loanId)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+                {
+                    await conn.OpenAsync();
+
+                    var approverUserId = HttpContext.Session.GetInt32("UserID");
+
+                    // Check if this would be the final approval
+                    using (var checkCmd = new SqlCommand(@"
+                        SELECT COUNT(*) 
+                        FROM LoanApproval 
+                        WHERE LoanID = @LoanID 
+                        AND IsActive = 1 
+                        AND (Status IS NULL OR Status = 'Pending')
+                        AND UserID != @UserID", conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@LoanID", loanId);
+                        checkCmd.Parameters.AddWithValue("@UserID", approverUserId);
+
+                        var pendingCount = (int)(await checkCmd.ExecuteScalarAsync() ?? 0);
+                        bool isFinalApprover = pendingCount == 0;
+
+                        return Json(new { success = true, isFinalApprover = isFinalApprover });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error checking approval status: " + ex.Message });
+            }
         }
     }
 }

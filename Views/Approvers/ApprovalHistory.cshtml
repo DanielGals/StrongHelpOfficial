@@ -102,7 +102,7 @@
 <!-- Hidden fields for JavaScript -->
 <input type="hidden" id="loanIdField" value="@Model.LoanID" />
 <input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "ApproverApplicationDetails")" />
-<input type="hidden" id="forwardUrlField" value="@Url.Action("ForwardApplication", "ApproverApplicationDetails")" />
+<input type="hidden" id="approveUrlField" value="@Url.Action("ApproveApplication", "ApproverApplicationDetails")" />
 @Html.AntiForgeryToken()
 
 @section Scripts {
