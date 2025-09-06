@@ -3,8 +3,7 @@
     ViewData["Title"] = "Apply For Loan";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var userId = ViewData["UserID"];
-    var roleName = ViewData["RoleName"];
-    var email = ViewData["Email"];
+    var roleName = ViewData["Email"];
     var documentCount = ViewData["DocumentCount"];
     var hasExistingLoan = ViewData["HasExistingLoan"] as bool? ?? false;
     var existingLoanId = ViewData["ExistingLoanId"] as int?;
@@ -39,39 +38,22 @@ else if (hasExistingLoan && existingLoanId != null)
     return;
 }
 
+@if (TempData["failedSubmitResult"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["failedSubmitResult"]
+    </div>
+}
+
 @section Styles {
     <link rel="stylesheet" href="~/css/LoanerDashboard.css" asp-append-version="true" />
 }
 <h2>Employee Salary Loan</h2>
 <p class="text-muted mb-4">Hello @roleName! Upload required documents and add a co-maker to submit your loan application</p>
 
-<!-- button and highlights-->
-<div class="container">
-    <div class="custom-row">
-        <div class="col-6">
-            <a href="" id="btn1" class="btn custom-highlight w-100">Documents</a>
-        </div>
-        <div class="col-6">
-            <a href="" id="btn2" class="btn custom-outline w-100">Co-Maker</a>
-        </div>
-    </div>
-</div>
-<br />
 <div class="afl-content">
     <div class="row">
         <div class="col-md-8 mb-3">
-            @if (TempData["submitResult"] != null)
-            {
-                <div class="alert alert-success" role="alert">
-                    @TempData["submitResult"]
-                </div>
-            }
-            @if (TempData["failedSubmitResult"] != null)
-            {
-                <div class="alert alert-danger" role="alert">
-                    @TempData["failedSubmitResult"]
-                </div>
-            }
             <form asp-controller="ApplyForLoan" asp-action="UploadDocuments" method="post" enctype="multipart/form-data">
                 <label for="loanAmount" class="form-label fw-bold mb-1">Loan Amount</label>
                 <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount">
@@ -101,19 +83,19 @@ else if (hasExistingLoan && existingLoanId != null)
                         <script>
                             let allFiles = [];
                             document.getElementById('files').addEventListener('change', function (event) {
-                            const newFiles = Array.from(event.target.files);
-                            let invalid = false;
-                            for (const file of newFiles) {
-                                if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
-                                    invalid = true;
-                                    break;
+                                const newFiles = Array.from(event.target.files);
+                                let invalid = false;
+                                for (const file of newFiles) {
+                                    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
+                                        invalid = true;
+                                        break;
+                                    }
                                 }
-                            }
-                            if (invalid) {
-                                alert("Please upload only PDF files.");
-                                event.target.value = ""; // Clear the input
-                                return;
-                            }
+                                if (invalid) {
+                                    alert("Please upload only PDF files.");
+                                    event.target.value = ""; // Clear the input
+                                    return;
+                                }
                                 for (const file of newFiles) {
                                     if (!allFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) {
                                         allFiles.push(file);
@@ -146,6 +128,8 @@ else if (hasExistingLoan && existingLoanId != null)
                                     docItem.appendChild(deleteBtn);
                                     submittedDocs.appendChild(docItem);
                                 });
+                                // Update document count display
+                                document.getElementById('documentCountDisplay').textContent = `${allFiles.length}/3 submitted`;
                             }
                             function updateFileInput() {
                                 const fileInput = document.getElementById('files');
@@ -157,6 +141,27 @@ else if (hasExistingLoan && existingLoanId != null)
                     </div>
                     <div id="submittedDocs" class="border rounded p-3">
                         <strong class="d-block mb-2">Submitted Documents:</strong>
+                    </div>
+                    <br />
+                    <!-- Co-maker selection area moved inside upload-container -->
+                    <div class="co-maker-section mb-3">
+                        <h5 class="fw-bold mb-2">Select Co-maker</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="coMakerSearchInput" placeholder="Search by name...">
+                            <button type="button" class="btn btn-primary" id="coMakerSearchBtn">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                        <div id="coMakerTableContainer"></div>
+                        <div class="d-grid mt-2" id="showMoreContainer" style="display:none;">
+                            <button type="button" class="btn btn-outline-secondary" id="showMoreBtn">Show More</button>
+                        </div>
+                        <div id="coMakerChosenArea" style="display:none;" class="mt-3">
+                            <div class="alert alert-success text-center">
+                                <span id="coMakerAddedText"></span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="coMakerUserId" name="CoMakerUserId" value="" />
                     </div>
                 </div>
                 <input class="btn btn-primary w-100" type="submit">
@@ -190,13 +195,122 @@ else if (hasExistingLoan && existingLoanId != null)
     <div class="submissions-box mb-3">
         <div class="info-item">
             <i class="bi bi-file-earmark-text fs-4 text-secondary"></i>
-            <span class="info-text1">Documents: @documentCount/3 submitted</span>
+            <span class="info-text1" id="documentCountDisplay">0/3 submitted</span>
         </div>
         <div class="info-item">
             <i class="bi bi-people-fill fs-4 text-secondary"></i>
             <span class="info-text">Co-Maker: Required</span>
+            <!-- Removed Add a Co-maker button -->
         </div>
     </div>
+
+    <!-- Show More Modal -->
+    <div class="modal fade" id="showMoreModal" tabindex="-1" aria-labelledby="showMoreModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showMoreModalLabel">All Matching Co-makers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height:500px;overflow-y:auto;" id="showMoreModalBody">
+                    <!-- Table will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let coMakerResults = [];
+        let selectedCoMaker = null;
+
+        // Always hide Show More on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('showMoreContainer').style.display = 'none';
+            // Initialize document count display
+            document.getElementById('documentCountDisplay').textContent = `${allFiles.length}/3 submitted`;
+        });
+
+        document.getElementById('coMakerSearchBtn').addEventListener('click', async function () {
+            const searchText = document.getElementById('coMakerSearchInput').value.trim();
+            if (!searchText) {
+                coMakerResults = [];
+                renderCoMakerTable([], false);
+                document.getElementById('showMoreContainer').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Loaner/ApplyForLoan/SearchCoMaker?query=${encodeURIComponent(searchText)}`);
+                if (!response.ok) throw new Error('Search endpoint not found');
+                coMakerResults = await response.json();
+                renderCoMakerTable(coMakerResults.slice(0, 5), false);
+
+                // Only show if there are more than 5 results AND a search was performed
+                if (searchText && coMakerResults.length > 5) {
+                    document.getElementById('showMoreContainer').style.display = '';
+                } else {
+                    document.getElementById('showMoreContainer').style.display = 'none';
+                }
+            } catch (err) {
+                alert('Error searching for co-maker: ' + err.message);
+                coMakerResults = [];
+                renderCoMakerTable([], false);
+                document.getElementById('showMoreContainer').style.display = 'none';
+            }
+        });
+
+        function renderCoMakerTable(data, isShowMore) {
+            let html = `<table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            if (data.length === 0) {
+                html += `<tr><td colspan="3" class="text-center">No matching users found.</td></tr>`;
+            } else {
+                data.forEach(user => {
+                    html += `<tr>
+                        <td>${user.name}</td>
+                        <td>${user.department}</td>
+                        <td>
+                            <button type="button" class="btn btn-success btn-sm" onclick="addCoMaker('${user.userId}', '${user.name}');${isShowMore ? "bootstrap.Modal.getInstance(document.getElementById('showMoreModal')).hide();" : ""}">Add as co-maker</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+            if (isShowMore) {
+                document.getElementById('showMoreModalBody').innerHTML = html;
+            } else {
+                document.getElementById('coMakerTableContainer').innerHTML = html;
+            }
+        }
+
+        window.addCoMaker = function (userId, name) {
+            selectedCoMaker = { userId, name };
+            document.getElementById('coMakerUserId').value = userId;
+            document.getElementById('coMakerTableContainer').innerHTML = '';
+            document.getElementById('coMakerChosenArea').style.display = '';
+            document.getElementById('coMakerAddedText').textContent = `${name} is added as co-maker!`;
+            document.getElementById('showMoreContainer').style.display = 'none';
+        };
+
+        document.getElementById('changeCoMakerBtn').addEventListener('click', function () {
+            document.getElementById('coMakerChosenArea').style.display = 'none';
+            document.getElementById('coMakerUserId').value = '';
+            selectedCoMaker = null;
+        });
+
+        document.getElementById('showMoreBtn').addEventListener('click', function () {
+            renderCoMakerTable(coMakerResults, true);
+            const modal = new bootstrap.Modal(document.getElementById('showMoreModal'));
+            modal.show();
+        });
+    </script>
 </div>
 
 <script>

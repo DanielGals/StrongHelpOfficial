@@ -23,6 +23,7 @@ namespace StrongHelpOfficial.Models
         public string? Remarks { get; set; } = string.Empty;
         public string? Title { get; set; }
         public string? Description { get; set; }
+        public int? CoMakerUserId { get; set; }
 
         // Add property for required documents
         public List<string> RequiredDocuments { get; set; } = new List<string>();
