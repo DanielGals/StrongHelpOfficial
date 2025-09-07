@@ -88,9 +88,16 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 // Get application statistics based on approver role using simpler query
                 using (var cmd = new SqlCommand(@"
-                    -- Get total applications
+                    -- Get total applications assigned to this approver
                     SELECT 
-                        (SELECT COUNT(*) FROM LoanApplication WHERE IsActive = 1) AS TotalApplications,
+                        (
+                            SELECT COUNT(DISTINCT la.LoanID)
+                            FROM LoanApplication la
+                            INNER JOIN LoanApproval lap ON la.LoanID = lap.LoanID
+                            WHERE la.IsActive = 1
+                            AND lap.UserID = @UserId
+                            AND lap.IsActive = 1
+                        ) AS TotalApplications,
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
@@ -98,7 +105,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
                             AND la.IsActive = 1
                             AND current_lap.UserID = @UserId
-                            AND current_lap.Status IS NULL
+                            AND (current_lap.Status IS NULL OR current_lap.Status = 'Pending')
                             AND current_lap.IsActive = 1
                             AND NOT EXISTS (
                                 SELECT 1
