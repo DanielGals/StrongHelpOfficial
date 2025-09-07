@@ -88,20 +88,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                 string? statusFilter = null;
                 if (model.SelectedTab == "Pending Review")
                     statusFilter = "In Review";
-                else if (model.SelectedTab == "Approved")
-                    statusFilter = "Approved";
-                else if (model.SelectedTab == "Rejected")
-                    statusFilter = "Rejected";
+                // Remove status filtering for Approved and Rejected tabs since we'll filter by approver actions
                 // All Applications has no status filter
 
                 var query = @"
-                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
+                    SELECT la.LoanID, u.UserID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           COALESCE(myApproval.Status, 'Pending') as MyApprovalStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
+                    LEFT JOIN LoanApproval myApproval ON la.LoanID = myApproval.LoanID 
+                                                      AND myApproval.UserID = @UserId 
+                                                      AND myApproval.IsActive = 1
                     WHERE la.IsActive = 1
                     AND u.IsActive = 1";
 
-                // If a status filter is specified, add it to the query
+                // Only apply status filter for Pending Review
                 if (!string.IsNullOrEmpty(statusFilter))
                 {
                     query += " AND la.ApplicationStatus = @StatusFilter";
@@ -259,6 +260,32 @@ namespace StrongHelpOfficial.Controllers.Approver
                             var initials = (firstName.Length > 0 ? firstName[0].ToString() : "") +
                                           (lastName.Length > 0 ? lastName[0].ToString() : "");
 
+                            // Determine the status to display based on the selected tab
+                            string displayStatus;
+                            if (model.SelectedTab == "Approved" || model.SelectedTab == "Rejected")
+                            {
+                                // For Approved/Rejected tabs, show the approver's specific action
+                                displayStatus = reader["MyApprovalStatus"].ToString() ?? "Pending";
+                            }
+                            else if (model.SelectedTab == "All Applications")
+                            {
+                                // For All Applications, show approver's action if they've acted, otherwise overall status
+                                var myApprovalStatus = reader["MyApprovalStatus"].ToString() ?? "Pending";
+                                if (myApprovalStatus == "Approved" || myApprovalStatus == "Rejected")
+                                {
+                                    displayStatus = myApprovalStatus;
+                                }
+                                else
+                                {
+                                    displayStatus = reader["ApplicationStatus"].ToString() ?? "";
+                                }
+                            }
+                            else
+                            {
+                                // For other tabs, show the overall application status
+                                displayStatus = reader["ApplicationStatus"].ToString() ?? "";
+                            }
+
                             model.Applications.Add(new LoanApplicationViewModel
                             {
                                 ApplicationId = Convert.ToInt32(reader["LoanID"]),
@@ -267,7 +294,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 LoanType = reader["Title"].ToString() ?? "",
                                 Amount = Convert.ToDecimal(reader["LoanAmount"]),
                                 DateApplied = Convert.ToDateTime(reader["DateSubmitted"]),
-                                Status = reader["ApplicationStatus"].ToString() ?? ""
+                                Status = displayStatus
                             });
                         }
                     }
