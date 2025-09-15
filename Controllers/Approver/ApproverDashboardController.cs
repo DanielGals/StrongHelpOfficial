@@ -88,13 +88,18 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 // Get application statistics based on approver role
                 using (var cmd = new SqlCommand(@"
-
+                        SELECT 
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                             AND la.IsActive = 1
-
+                            AND EXISTS (
+                                SELECT 1 FROM LoanApproval currentApproval
+                                WHERE currentApproval.LoanID = la.LoanID
+                                AND currentApproval.UserID = @UserId
+                                AND currentApproval.IsActive = 1
+                                AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
                             )
                         ) AS PendingReview,
                         -- In Progress: Applications this approver has approved but others still need to review
