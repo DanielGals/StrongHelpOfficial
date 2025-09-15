@@ -1,0 +1,6 @@
+.dashboard-content .card {
+    min-height: 200px; /* Adjust as needed for your content */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
