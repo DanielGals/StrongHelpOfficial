@@ -88,34 +88,13 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 // Get application statistics based on approver role
                 using (var cmd = new SqlCommand(@"
-                    SELECT
-                        -- Pending: Applications this approver needs to review (including In Progress that are ready for them)
+
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                             AND la.IsActive = 1
-                            AND EXISTS (
-                                SELECT 1 
-                                FROM LoanApproval currentApproval
-                                WHERE currentApproval.LoanID = la.LoanID
-                                AND currentApproval.IsActive = 1
-                                AND currentApproval.UserID = @UserId
-                                AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
-                            )
-                            -- For In Progress applications, ensure all previous approvers have approved
-                            AND (
-                                la.ApplicationStatus != 'In Progress'
-                                OR NOT EXISTS (
-                                    SELECT 1 FROM LoanApproval prevApproval
-                                    INNER JOIN LoanApproval myApproval ON prevApproval.LoanID = myApproval.LoanID
-                                    WHERE prevApproval.LoanID = la.LoanID
-                                    AND myApproval.UserID = @UserId
-                                    AND prevApproval.[Order] < myApproval.[Order]
-                                    AND prevApproval.IsActive = 1
-                                    AND myApproval.IsActive = 1
-                                    AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
-                                )
+
                             )
                         ) AS PendingReview,
                         -- In Progress: Applications this approver has approved but others still need to review

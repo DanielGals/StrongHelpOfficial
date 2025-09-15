@@ -92,7 +92,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
         public IActionResult failedSubmissionResult(ApplyForLoanViewModel model)
         {
-            TempData["failedSubmitResult"] = "Your loan must at least have an amount, a co-maker, and 3 required documents";
+            TempData["failedSubmitResult"] = "Your loan must at least have an amount and 3 required documents";
             return RedirectToAction("Index", "ApplyForLoan");
         }
 
@@ -102,10 +102,9 @@ namespace StrongHelpOfficial.Controllers.Loaner
             var files = model.Files;
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             var loanAmount = model.LoanAmount;
-            var coMakerUserId = model.CoMakerUserId;
 
-            // Make co-maker mandatory
-            if (files != null && loanAmount != null && coMakerUserId != null)
+            // Co-maker logic removed
+            if (files != null && loanAmount != null)
             {
                 if (files.Count >= 3 && loanAmount != 0)
                 {
@@ -115,17 +114,16 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
                         using (var cmd = new SqlCommand(
-                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, IsActive, CreatedAt, CreatedBy, ComakerUserID) " +
-                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, 1, @CreatedAt, @CreatedBy, @ComakerUserID)", conn))
+                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, IsActive, CreatedAt, CreatedBy) " +
+                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, 1, @CreatedAt, @CreatedBy)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
-                            cmd.Parameters.AddWithValue("@ApplicationStatus", "Drafted"); // <-- Change here
+                            cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
                             cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan");
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                             cmd.Parameters.AddWithValue("@CreatedBy", userId.ToString());
-                            cmd.Parameters.AddWithValue("@ComakerUserID", coMakerUserId);
                             await cmd.ExecuteNonQueryAsync();
                         }
 
@@ -181,48 +179,6 @@ namespace StrongHelpOfficial.Controllers.Loaner
             }
 
             return RedirectToAction("Index", "ApplyForLoan");
-        }
-
-        [HttpGet]
-        public async Task<JsonResult> SearchCoMaker(string query)
-        {
-            var results = new List<object>();
-            if (string.IsNullOrWhiteSpace(query))
-                return Json(results);
-
-            using var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection"));
-            await conn.OpenAsync();
-
-            using var cmd = new SqlCommand(@"
-                SELECT TOP 20 u.UserID, u.FirstName, u.LastName, d.DepartmentName
-                FROM [User] u
-                LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
-                WHERE u.IsActive = 1
-                  AND (u.FirstName + ' ' + u.LastName LIKE @Query OR u.FirstName LIKE @Query OR u.LastName LIKE @Query)
-                  AND u.UserID <> @CurrentUserId
-                  AND u.UserID NOT IN (
-                        SELECT UserID FROM LoanApplication WHERE ApplicationStatus = 'Approved'
-                        UNION
-                        SELECT ComakerUserID FROM LoanApplication WHERE ApplicationStatus = 'Approved' AND ComakerUserID IS NOT NULL
-                  )
-                ORDER BY u.FirstName, u.LastName", conn);
-
-            var currentUserId = HttpContext.Session.GetInt32("UserID") ?? 0;
-            cmd.Parameters.AddWithValue("@Query", "%" + query + "%");
-            cmd.Parameters.AddWithValue("@CurrentUserId", currentUserId);
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                results.Add(new
-                {
-                    userId = reader.GetInt32(reader.GetOrdinal("UserID")),
-                    name = $"{reader.GetString(reader.GetOrdinal("FirstName"))} {reader.GetString(reader.GetOrdinal("LastName"))}",
-                    department = reader["DepartmentName"]?.ToString() ?? "N/A"
-                });
-            }
-
-            return Json(results);
         }
     }
 }
