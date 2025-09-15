@@ -86,12 +86,11 @@ namespace StrongHelpOfficial.Controllers.Approver
                     model.SelectedTab = tab;
 
                 string? statusFilter = null;
-                if (model.SelectedTab == "Pending Review")
-                    statusFilter = "In Review";
-                else if (model.SelectedTab == "Approved")
+                if (model.SelectedTab == "Approved")
                     statusFilter = "Approved";
                 else if (model.SelectedTab == "Rejected")
                     statusFilter = "Rejected";
+                // Pending Review and In Progress handle status in their specific logic
                 // All Applications has no status filter
 
                 var query = @"
@@ -109,40 +108,34 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 if (model.SelectedTab == "Pending Review")
                 {
-                    // For Pending Review applications, use the same approach as in ApproverDashboard
+                    // Show applications where this user still needs to approve
                     query += @"
+                    AND la.ApplicationStatus IN ('Submitted', 'In Review')
                     AND EXISTS (
-                        -- Check if it's this approver's turn based on the approval order
-                        SELECT 1 
-                        FROM LoanApproval currentApproval
+                        SELECT 1 FROM LoanApproval currentApproval
                         WHERE currentApproval.LoanID = la.LoanID
-                        AND currentApproval.IsActive = 1
-                        AND currentApproval.[Order] = (
-                            -- Get the current order in the approval process
-                            SELECT MIN(nextApproval.[Order])
-                            FROM LoanApproval nextApproval
-                            WHERE nextApproval.LoanID = la.LoanID
-                            AND nextApproval.IsActive = 1
-                            AND (nextApproval.Status IS NULL OR nextApproval.Status = 'Pending')
-                        )
                         AND currentApproval.UserID = @UserId
-                    )
-                    -- Ensure all previous approvals in the sequence are completed
-                    AND NOT EXISTS (
-                        SELECT 1 
-                        FROM LoanApproval prevApproval
-                        INNER JOIN LoanApproval currentApproval ON currentApproval.LoanID = prevApproval.LoanID
-                        WHERE prevApproval.LoanID = la.LoanID
-                        AND prevApproval.IsActive = 1
                         AND currentApproval.IsActive = 1
-                        AND prevApproval.[Order] < (
-                            SELECT MIN(myApproval.[Order])
-                            FROM LoanApproval myApproval
-                            WHERE myApproval.LoanID = la.LoanID
-                            AND myApproval.IsActive = 1
-                            AND myApproval.UserID = @UserId
-                        )
-                        AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                        AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
+                    )";
+                }
+                else if (model.SelectedTab == "In Progress")
+                {
+                    // Show applications this approver has approved but others still need to review
+                    query += @"
+                    AND la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
+                    AND EXISTS (
+                        SELECT 1 FROM LoanApproval my_approval
+                        WHERE my_approval.LoanID = la.LoanID
+                        AND my_approval.UserID = @UserId
+                        AND my_approval.Status = 'Approved'
+                        AND my_approval.IsActive = 1
+                    )
+                    AND EXISTS (
+                        SELECT 1 FROM LoanApproval pending_approval
+                        WHERE pending_approval.LoanID = la.LoanID
+                        AND pending_approval.IsActive = 1
+                        AND (pending_approval.Status IS NULL OR pending_approval.Status = 'Pending')
                     )";
                 }
                 else if (model.SelectedTab == "Approved")

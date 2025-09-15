@@ -64,15 +64,10 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SELECT 
                         COUNT(DISTINCT la.LoanID) AS TotalApplications,
                         COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Submitted' THEN la.LoanID END) AS PendingReview,
-                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Approved' AND lap_approved.ApprovedDate IS NOT NULL 
-                            AND CAST(lap_approved.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN la.LoanID END) AS ApprovedToday,
-                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Rejected' AND lap_rejected.ApprovedDate IS NOT NULL 
-                            AND CAST(lap_rejected.ApprovedDate AS DATE) = CAST(GETDATE() AS DATE) THEN la.LoanID END) AS RejectedToday
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus IN ('In Review', 'Pending', 'In Progress') THEN la.LoanID END) AS InProgress,
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Approved' THEN la.LoanID END) AS TotalApproved,
+                        COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Rejected' THEN la.LoanID END) AS TotalRejected
                     FROM LoanApplication la
-                    LEFT JOIN LoanApproval lap_approved ON la.LoanID = lap_approved.LoanID 
-                        AND lap_approved.Status = 'Approved' AND lap_approved.IsActive = 1
-                    LEFT JOIN LoanApproval lap_rejected ON la.LoanID = lap_rejected.LoanID 
-                        AND lap_rejected.Status = 'Rejected' AND lap_rejected.IsActive = 1
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                       AND la.IsActive = 1
                 ", conn))
@@ -84,8 +79,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         {
                             model.TotalApplications = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
                             model.PendingReview = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
-                            model.ApprovedToday = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
-                            model.RejectedToday = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+                            model.InProgress = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                            model.TotalApproved = reader.IsDBNull(3) ? 0 : reader.GetInt32(3);
+                            model.TotalRejected = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
                         }
                     }
                 }

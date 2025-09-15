@@ -228,6 +228,8 @@
         <a class="status-tab @(Model.SelectedTab == "Pending Review" ? "active" : "")"
             href="?tab=Pending Review@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Pending
             Review</a>
+        <a class="status-tab @(Model.SelectedTab == "In Progress" ? "active" : "")"
+            href="?tab=In Progress@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">In Progress</a>
         <a class="status-tab @(Model.SelectedTab == "Approved" ? "active" : "")"
             href="?tab=Approved@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")@(Model.MinAmount.HasValue ? $"&minAmount={Model.MinAmount}" : "")@(Model.MaxAmount.HasValue ? $"&maxAmount={Model.MaxAmount}" : "")@(Model.StartDate.HasValue ? $"&startDate={Model.StartDate:yyyy-MM-dd}" : "")@(Model.EndDate.HasValue ? $"&endDate={Model.EndDate:yyyy-MM-dd}" : "")">Approved</a>
         <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")"
@@ -255,6 +257,10 @@
                 @if (Model.SelectedTab == "Pending Review")
                 {
                     <text>Applications awaiting your review and approval</text>
+                }
+                else if (Model.SelectedTab == "In Progress")
+                {
+                    <text>Applications you have reviewed but are still pending other approvers</text>
                 }
                 else if (Model.SelectedTab == "Approved")
                 {
@@ -307,6 +313,7 @@
                                             {
                                                 "Submitted" => "status-badge status-submitted",
                                                 "In Review" => "status-badge status-inreview",
+                                                "In Progress" => "status-badge status-inreview",
                                                 "Approved" => "status-badge status-approved",
                                                 "Rejected" => "status-badge status-rejected",
                                                 _ => "status-badge status-submitted"

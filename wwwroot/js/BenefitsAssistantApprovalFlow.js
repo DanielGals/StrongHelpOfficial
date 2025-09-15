@@ -1,4 +1,4 @@
-﻿// --- GLOBAL SHARED VARIABLES ---
+// --- GLOBAL SHARED VARIABLES ---
 let approversList = [];
 let rolesData = [];
 let usersData = [];
@@ -11,6 +11,12 @@ window.openModal = async function () {
     const modal = document.getElementById('approverModal');
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
+
+    // Hide approver and email fields initially
+    const approverGroup = document.getElementById('approverDropdownGroup');
+    const emailGroup = document.getElementById('emailField').closest('.form-group');
+    approverGroup.style.display = 'none';
+    emailGroup.style.display = 'none';
 
     setTimeout(() => {
         modal.classList.add('show');
@@ -31,12 +37,16 @@ window.closeModal = function () {
     }, 300);
 
     document.getElementById('roleSelect').value = '';
-    document.getElementById('approverSelect').value = '';
+    document.getElementById('approverInput').value = '';
+    document.getElementById('selectedApproverUserId').value = '';
     document.getElementById('emailField').value = '';
     document.getElementById('descriptionField').value = '';
 
     const approverGroup = document.getElementById('approverDropdownGroup');
+    const emailGroup = document.getElementById('emailField').closest('.form-group');
     approverGroup.classList.remove('show');
+    approverGroup.style.display = 'none';
+    emailGroup.style.display = 'none';
 };
 
 window.setUploadTarget = function ({ loanId = '', loanApprovalId = '' }) {
@@ -46,78 +56,110 @@ window.setUploadTarget = function ({ loanId = '', loanApprovalId = '' }) {
 
 window.handleRoleChange = async function () {
     const roleId = document.getElementById('roleSelect').value;
-    const approverDropdown = document.getElementById('approverSelect');
     const approverGroup = document.getElementById('approverDropdownGroup');
+    const approverInput = document.getElementById('approverInput');
+    const approverList = document.getElementById('approverList');
     const emailField = document.getElementById('emailField');
+    const emailGroup = emailField.closest('.form-group');
 
     if (roleId) {
         try {
             approverGroup.style.display = 'block';
+            emailGroup.style.display = 'block';
             setTimeout(() => {
                 approverGroup.classList.add('show');
             }, 10);
 
-            approverDropdown.classList.add('loading');
-            approverDropdown.innerHTML = '<option value="">Loading...</option>';
-
             const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}`);
             usersData = await response.json();
-
-            approverDropdown.innerHTML = '<option value="">Select an approver...</option>';
             
             // Get current user's email from session
             const currentUserResponse = await fetch('/BenefitsAssistantApplicationDetails/GetCurrentUser');
             const currentUser = await currentUserResponse.json();
             const currentUserEmail = currentUser.email;
 
+            // Filter out current user
+            usersData = usersData.filter(user => user.email !== currentUserEmail);
+
+            // Populate datalist
+            approverList.innerHTML = '';
             usersData.forEach(user => {
-                // Prevent self-approval by excluding current user
-                if (user.email !== currentUserEmail) {
-                    const option = document.createElement('option');
-                    option.value = user.userId;
-                    option.textContent = user.name;
-                    option.dataset.email = user.email;
-                    approverDropdown.appendChild(option);
-                }
+                const option = document.createElement('option');
+                option.value = user.name;
+                option.dataset.userId = user.userId;
+                option.dataset.email = user.email;
+                approverList.appendChild(option);
             });
 
-            approverDropdown.classList.remove('loading');
+            approverInput.value = '';
             emailField.value = '';
+            document.getElementById('selectedApproverUserId').value = '';
         } catch (error) {
             console.error('Error loading users:', error);
             alert('Error loading users. Please try again.');
-            approverDropdown.classList.remove('loading');
         }
     } else {
         approverGroup.classList.remove('show');
-        approverDropdown.innerHTML = '<option value="">Select an approver...</option>';
+        emailGroup.style.display = 'none';
+        approverInput.value = '';
         emailField.value = '';
+        document.getElementById('selectedApproverUserId').value = '';
     }
 };
 
-window.handleApproverChange = function () {
-    const approverSelect = document.getElementById('approverSelect');
+window.handleApproverInput = function () {
+    const approverInput = document.getElementById('approverInput');
     const emailField = document.getElementById('emailField');
-    const selectedOption = approverSelect.options[approverSelect.selectedIndex];
-
-    if (selectedOption.dataset.email) {
-        emailField.value = selectedOption.dataset.email;
+    const approverList = document.getElementById('approverList');
+    const selectedApproverUserId = document.getElementById('selectedApproverUserId');
+    
+    const inputValue = approverInput.value;
+    
+    // Find matching option in datalist
+    const matchingOption = Array.from(approverList.options).find(option => option.value === inputValue);
+    
+    if (matchingOption) {
+        emailField.value = matchingOption.dataset.email;
+        selectedApproverUserId.value = matchingOption.dataset.userId;
     } else {
-        emailField.value = '';
+        // Allow manual typing - don't clear email if user is typing custom name
+        selectedApproverUserId.value = '';
     }
 };
+
+
 
 window.saveApprover = async function () {
     const roleId = document.getElementById('roleSelect').value;
-    const userId = document.getElementById('approverSelect').value;
-    const email = document.getElementById('emailField').value;
+    const approverName = document.getElementById('approverInput').value.trim();
+    const userId = document.getElementById('selectedApproverUserId').value;
+    const email = document.getElementById('emailField').value.trim();
     const description = document.getElementById('descriptionField').value;
     const phaseOrder = document.getElementById('phaseOrderField').value;
 
-    if (!roleId || !userId || !email || !phaseOrder) {
+    if (!roleId || !approverName || !email || !phaseOrder) {
         alert('Please fill in all required fields');
         return;
     }
+
+    // Validate if approver exists in database (check both name and email)
+    try {
+        const response = await fetch(`/BenefitsAssistantApplicationDetails/ValidateApprover?name=${encodeURIComponent(approverName)}&email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        if (!result.exists) {
+            alert('The specified approver does not exist in the system. Please select an approver from the dropdown or contact your administrator to add this user.');
+            return;
+        }
+    } catch (error) {
+        console.error('Error validating approver:', error);
+        alert('Error validating approver. Please try again.');
+        return;
+    }
+
+    // Use userId if selected from list, otherwise create custom ID
+    const finalUserId = userId || 'custom_' + Date.now();
+    const finalUserName = approverName;
 
     // Get current order information from server
     try {
@@ -146,9 +188,9 @@ window.saveApprover = async function () {
 
         // --- Store both file names and File objects ---
         const approverData = {
-            userId: parseInt(userId),
+            userId: userId ? parseInt(userId) : finalUserId,
             roleName: rolesData.find(r => r.roleId == roleId)?.roleName || '',
-            userName: usersData.find(u => u.userId == userId)?.name || '',
+            userName: finalUserName,
             email: email,
             order: parseInt(phaseOrder),
             description: description,
@@ -378,6 +420,28 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && document.getElementById('approverModal').classList.contains('show')) {
             closeModal();
+        }
+    });
+
+    // Close approver dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        const approverContainer = document.querySelector('.approver-input-container');
+        const dropdown = document.getElementById('approverDropdown');
+        if (approverContainer && !approverContainer.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Handle keyboard navigation in approver input
+    document.getElementById('approverInput').addEventListener('keydown', function (e) {
+        const dropdown = document.getElementById('approverDropdown');
+        const items = dropdown.querySelectorAll('.dropdown-item');
+        
+        if (e.key === 'ArrowDown' && items.length > 0) {
+            e.preventDefault();
+            items[0].focus();
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
         }
     });
 
@@ -676,7 +740,7 @@ function createApprovalCard(approverData) {
             <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
             <div class="approval-card-content">
                 <div><strong>User:</strong> ${approverData.userName}</div>
-                <div><strong>Order:</strong> ${approverData.order}</div>
+                <div><strong>Approver Order:</strong> ${approverData.order}</div>
                 <div><strong>Department:</strong> ${approverData.roleName}</div>
             </div>
             ${attachedFilesHtml}

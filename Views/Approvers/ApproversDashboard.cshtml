@@ -49,11 +49,11 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="bi bi-clipboard-data"></i>
+                <i class="bi bi-clock"></i>
             </div>
             <div class="stat-content">
-                <h3>Total Applications</h3>
-                <p class="stat-number">@Model.TotalApplications</p>
+                <h3>Pending</h3>
+                <p class="stat-number">@Model.PendingReview</p>
             </div>
         </div>
         <div class="stat-card">
@@ -61,8 +61,8 @@
                 <i class="bi bi-hourglass-split"></i>
             </div>
             <div class="stat-content">
-                <h3>Pending Approval</h3>
-                <p class="stat-number">@Model.PendingReview</p>
+                <h3>In Progress</h3>
+                <p class="stat-number">@Model.InProgress</p>
             </div>
         </div>
         <div class="stat-card">
@@ -70,17 +70,8 @@
                 <i class="bi bi-check-circle"></i>
             </div>
             <div class="stat-content">
-                <h3>Approved Today</h3>
-                <p class="stat-number">@Model.ApprovedToday</p>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i class="bi bi-x-circle"></i>
-            </div>
-            <div class="stat-content">
-                <h3>Rejected Today</h3>
-                <p class="stat-number">@Model.RejectedToday</p>
+                <h3>Completed</h3>
+                <p class="stat-number">@Model.Completed</p>
             </div>
         </div>
     </div>
@@ -94,7 +85,7 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" class="form-control" id="applicationSearch" name="searchQuery"
-                        placeholder="Search Applications by employee name or ID..." value="@Model.SearchQuery">
+                        placeholder="Search Applications by employee name..." value="@Model.SearchQuery">
                 </div>
             </div>
             <button type="button" class="dashboard-filter-btn" data-bs-toggle="modal" data-bs-target="#filterModal">
@@ -301,6 +292,7 @@
                                             {
                                                 "Submitted" => "status-badge status-submitted",
                                                 "In Review" => "status-badge status-inreview",
+                                                "In Progress" => "status-badge status-inreview",
                                                 "Approved" => "status-badge status-approved",
                                                 "Rejected" => "status-badge status-rejected",
                                                 _ => "status-badge status-submitted"

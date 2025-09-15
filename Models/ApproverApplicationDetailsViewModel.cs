@@ -15,6 +15,7 @@
         public DateTime? ApprovedDate { get; set; } // Nullable DateTime property
         public List<ApproverDocumentViewModel> LoanerDocuments { get; set; } = new List<ApproverDocumentViewModel>();
         public List<ApproverDocumentViewModel> ApproverDocuments { get; set; } = new List<ApproverDocumentViewModel>();
+        public bool CurrentUserHasApproved { get; set; } = false;
     }
 
     public class ApproverDocumentViewModel

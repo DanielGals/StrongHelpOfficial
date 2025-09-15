@@ -81,7 +81,14 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {
-                    sql += " AND la.ApplicationStatus = @Tab";
+                    if (statusFilter == "In Review")
+                    {
+                        sql += " AND la.ApplicationStatus IN ('In Review', 'In Progress')";
+                    }
+                    else
+                    {
+                        sql += " AND la.ApplicationStatus = @Tab";
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(search))
