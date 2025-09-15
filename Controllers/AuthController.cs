@@ -42,7 +42,7 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "axelsacdal@gmail.com"; // Hardcoded email for testing
+        userModel.Email = "juan.delacruz@example.com"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
@@ -121,15 +121,15 @@ public class AuthController : Controller
             {
                 return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
             }
-            else if (roleName == "Benefits Assistant") // Benefits Assistant.
+            else if (roleName == "Benefits Assistant") // Benefits Assistant goes to selection page.
             {
-                return RedirectToAction("Index", "BenefitsAssistantDashboard", new { area = "" });
+                return RedirectToAction("Selection", "Auth");
             }
             else if (roleName == "Admin")
             {
                 return RedirectToAction("Index", "AdminDashboard", new { area = "Admin" });
             }
-            else // All other roles go to Approver Dashboard.
+            else // All other roles go to selection page if they are approvers.
             {
                 // Check if the role is one of the approver roles
                 string[] approverRoles = new[] {
@@ -145,7 +145,7 @@ public class AuthController : Controller
 
                 if (approverRoles.Contains(roleName))
                 {
-                    return RedirectToAction("Index", "ApproverDashboard");
+                    return RedirectToAction("Selection", "Auth");
                 }
                 else
                 {
@@ -157,6 +157,24 @@ public class AuthController : Controller
 
         // Otherwise, display the login view.
         return View(userModel);
+    }
+
+    public IActionResult Selection()
+    {
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")))
+        {
+            return RedirectToAction("Login");
+        }
+        return View();
+    }
+
+    public IActionResult SwitchToEmployee()
+    {
+        if (string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")))
+        {
+            return RedirectToAction("Login");
+        }
+        return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
     }
 
     private string GetDomainFromUsername(string username)

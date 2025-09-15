@@ -86,7 +86,7 @@
                 <nav class="sidebar-menu">
                     @if (!isDeactivated)
                     {
-                        if (roleName == "Employee")
+                        if (roleName == "Employee" || ((isApproverRole || roleName == "Benefits Assistant") && ViewContext.RouteData.Values["area"]?.ToString() == "Loaner"))
                         {
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "LoanerDashboard" &&
                              ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
@@ -113,7 +113,7 @@
                             <span>Loan History</span>
                         </a>
                         }
-                        else if (roleName == "Benefits Assistant")
+                        else if (roleName == "Benefits Assistant" && ViewContext.RouteData.Values["area"]?.ToString() != "Loaner")
                         {
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistantDashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
                                href="@Url.Action("Index", "BenefitsAssistantDashboard", new { area = "" })">
@@ -168,7 +168,7 @@
                             <span>Roles and Departments</span>
                         </a>
                         }
-                        else
+                        else if (ViewContext.RouteData.Values["area"]?.ToString() != "Loaner")
                         {
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "ApproverDashboard" &&
                                ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"

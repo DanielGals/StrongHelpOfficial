@@ -1,0 +1,127 @@
+body {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.portal-selection-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.welcome-text {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.welcome-text h1 {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+}
+
+.portal-selection-title {
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 60px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.portal-cards-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.portal-card {
+    flex: 1;
+    padding: 30px 25px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.portal-card:hover {
+    transform: translateY(-5px);
+}
+
+.portal-icon {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.borrower-icon {
+    background-color: #d7e5ff;
+    color: #0044ff;
+}
+
+.approver-icon {
+    background-color: #d7f8ee;
+    color: #008066;
+}
+
+.portal-icon i {
+    font-size: 36px;
+}
+
+.portal-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.portal-description {
+    color: #6c757d;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.portal-button {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.borrower-button {
+    background-color: #27279c;
+}
+
+.borrower-button:hover {
+    background-color: #1e1e80;
+    color: white;
+}
+
+.approver-button {
+    background-color: #08664e;
+}
+
+.approver-button:hover {
+    background-color: #065541;
+    color: white;
+}

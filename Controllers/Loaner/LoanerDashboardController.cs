@@ -17,7 +17,14 @@ namespace StrongHelpOfficial.Controllers.Loaner
         public IActionResult Index()
         {
             var roleName = HttpContext.Session.GetString("RoleName");
-            if (string.IsNullOrEmpty(roleName) || !(new[] { "Employee", "Benefits Assistant", "Approver" }.Contains(roleName)))
+            string[] allowedRoles = new[] {
+                "Employee", "Benefits Assistant", "Approver",
+                "Loans Division Approver", "Specialized Accounting Approver",
+                "Compensation Management Approver", "Benefits Services Officer",
+                "Benefit Management Department Head", "Approving Officer",
+                "Final Disbursement Approver"
+            };
+            if (string.IsNullOrEmpty(roleName) || !allowedRoles.Contains(roleName))
             {
                 return RedirectToAction("Index", "Home");
             }
