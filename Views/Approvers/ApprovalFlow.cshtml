@@ -137,37 +137,38 @@
             </div>
         }
 
-        <!-- Approval Actions -->
+        
+    </div>
+    <!-- Approval Actions: right side -->
+    <div class="col-md-4">
         @if (Model.ApplicationStatus == "In Review")
         {
-            <hr />
-            <div class="row">
-                <div class="col-md-8">
-                    <h5 class="fw-bold mb-3">Application Decision</h5>
-                    <div class="alert alert-yellow">
-                        <div class="icon">⚠️</div>
-                        <div>
-                            <strong>Review Required</strong><br />
-                            Please review all documents and provide your decision on this loan application.
+            <div class="sticky-top" style="top: 80px;">
+                <div class="card shadow-sm" style="border-radius: 10px;">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">Application Decision</h5>
+                        <div class="alert alert-yellow">
+                            <div class="icon">⚠️</div>
+                            <div>
+                                <strong>Review Required</strong><br />
+                                Please review all documents and provide your decision on this loan application.
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="action-buttons">
-                        <button type="button" class="btn btn-success btn-burger" id="approveApplicationBtn">
-                            Approve Application
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-burger" id="rejectApplicationBtn">
-                            Reject Application
-                        </button>
-                    </div>
-
-                    <!-- Reject comment section (initially hidden) -->
-                    <div id="rejectCommentContainer" style="display:none;" class="mt-3">
-                        <label for="rejectCommentBox" class="form-label">Reason for rejection:</label>
-                        <textarea class="form-control" id="rejectCommentBox" rows="3"
-                        placeholder="Please provide a reason for rejecting this application..."></textarea>
-                        <button type="button" class="btn btn-danger mt-2" id="confirmRejectBtn">Confirm Rejection</button>
+                        <div class="action-buttons mb-3">
+                            <button type="button" class="btn btn-success btn-burger w-100 mb-2" id="approveApplicationBtn">
+                                Approve Application
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-burger w-100" id="rejectApplicationBtn">
+                                Reject Application
+                            </button>
+                        </div>
+                        <!-- Reject comment section (initially hidden) -->
+                        <div id="rejectCommentContainer" style="display:none;" class="mt-3">
+                            <label for="rejectCommentBox" class="form-label">Reason for rejection:</label>
+                            <textarea class="form-control" id="rejectCommentBox" rows="3"
+                                      placeholder="Please provide a reason for rejecting this application..."></textarea>
+                            <button type="button" class="btn btn-danger mt-2 w-100" id="confirmRejectBtn">Confirm Rejection</button>
+                        </div>
                     </div>
                 </div>
             </div>

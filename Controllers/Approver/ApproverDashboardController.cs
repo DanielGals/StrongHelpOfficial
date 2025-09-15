@@ -89,11 +89,11 @@ namespace StrongHelpOfficial.Controllers.Approver
                 // Get application statistics based on approver role
                 using (var cmd = new SqlCommand(@"
                     SELECT
-                        -- Simplified Pending: Just count applications this approver needs to review
+                        -- Pending: Applications this approver needs to review (including In Progress that are ready for them)
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
-                            WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
+                            WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                             AND la.IsActive = 1
                             AND EXISTS (
                                 SELECT 1 
@@ -102,6 +102,20 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 AND currentApproval.IsActive = 1
                                 AND currentApproval.UserID = @UserId
                                 AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
+                            )
+                            -- For In Progress applications, ensure all previous approvers have approved
+                            AND (
+                                la.ApplicationStatus != 'In Progress'
+                                OR NOT EXISTS (
+                                    SELECT 1 FROM LoanApproval prevApproval
+                                    INNER JOIN LoanApproval myApproval ON prevApproval.LoanID = myApproval.LoanID
+                                    WHERE prevApproval.LoanID = la.LoanID
+                                    AND myApproval.UserID = @UserId
+                                    AND prevApproval.[Order] < myApproval.[Order]
+                                    AND prevApproval.IsActive = 1
+                                    AND myApproval.IsActive = 1
+                                    AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                                )
                             )
                         ) AS PendingReview,
                         -- In Progress: Applications this approver has approved but others still need to review
@@ -161,7 +175,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     SELECT la.LoanID, u.FirstName, u.LastName, la.Title, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.ApplicationStatus IN ('Submitted', 'In Review')
+                    WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                     AND la.IsActive = 1
                     AND u.IsActive = 1
                     AND EXISTS (
@@ -170,6 +184,20 @@ namespace StrongHelpOfficial.Controllers.Approver
                         AND currentApproval.UserID = @UserId
                         AND currentApproval.IsActive = 1
                         AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
+                    )
+                    -- For In Progress applications, ensure all previous approvers have approved
+                    AND (
+                        la.ApplicationStatus != 'In Progress'
+                        OR NOT EXISTS (
+                            SELECT 1 FROM LoanApproval prevApproval
+                            INNER JOIN LoanApproval myApproval ON prevApproval.LoanID = myApproval.LoanID
+                            WHERE prevApproval.LoanID = la.LoanID
+                            AND myApproval.UserID = @UserId
+                            AND prevApproval.[Order] < myApproval.[Order]
+                            AND prevApproval.IsActive = 1
+                            AND myApproval.IsActive = 1
+                            AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                        )
                     )";
 
                 // Add search filter if provided
@@ -244,6 +272,15 @@ namespace StrongHelpOfficial.Controllers.Approver
                             var initials = (empFirstName.Length > 0 ? empFirstName[0].ToString() : "") +
                                           (empLastName.Length > 0 ? empLastName[0].ToString() : "");
 
+                            var dbStatus = reader["ApplicationStatus"].ToString() ?? "";
+                            var displayStatus = dbStatus;
+                            
+                            // Show 'In Review' if it's In Progress but ready for current user
+                            if (dbStatus == "In Progress")
+                            {
+                                displayStatus = "In Review";
+                            }
+                            
                             pendingApps.Add(new LoanApplicationViewModel
                             {
                                 ApplicationId = Convert.ToInt32(reader["LoanID"]),
@@ -252,7 +289,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 LoanType = reader["Title"].ToString() ?? "",
                                 Amount = Convert.ToDecimal(reader["LoanAmount"]),
                                 DateApplied = Convert.ToDateTime(reader["DateSubmitted"]),
-                                Status = reader["ApplicationStatus"].ToString() ?? ""
+                                Status = displayStatus
                             });
                         }
                     }

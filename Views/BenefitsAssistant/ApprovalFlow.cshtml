@@ -191,7 +191,7 @@
                 <input type="file" class="form-control" id="pdfFileInput" accept=".pdf" multiple />
                 <div id="pdfFileError" class="text-danger mt-1" style="display:none;"></div>
                 <ul id="selected-files-list"></ul>
-                <small class="form-text text-muted">Only PDF files are allowed. You can select multiple files.</small>
+                <small class="form-text text-muted">Only PDF files are allowed. You can select multiple files.<br />(eg. Loan contract, terms and conditions, etc.)</small>
             </div>
         </div>
         <div class="modal-footer-custom">
@@ -426,9 +426,9 @@
 
             if (checklistItemsContainer) {
                 const checklistItems = [
-                    'No existing active loans',
-                    'Not a co-maker for another active loan',
-                    'No derogatory legal records (civil/criminal cases)'
+                    'Completed requirements',
+                    'No derogatory legal records (civil/criminal cases)',
+                    'Eligible co-maker'
                 ];
 
                 checklistItems.forEach((item, index) => {

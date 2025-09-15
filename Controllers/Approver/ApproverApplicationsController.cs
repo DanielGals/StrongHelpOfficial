@@ -108,15 +108,29 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                 if (model.SelectedTab == "Pending Review")
                 {
-                    // Show applications where this user still needs to approve
+                    // Show applications where this user still needs to approve (including In Progress ready for them)
                     query += @"
-                    AND la.ApplicationStatus IN ('Submitted', 'In Review')
+                    AND la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                     AND EXISTS (
                         SELECT 1 FROM LoanApproval currentApproval
                         WHERE currentApproval.LoanID = la.LoanID
                         AND currentApproval.UserID = @UserId
                         AND currentApproval.IsActive = 1
                         AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
+                    )
+                    -- For In Progress applications, ensure all previous approvers have approved
+                    AND (
+                        la.ApplicationStatus != 'In Progress'
+                        OR NOT EXISTS (
+                            SELECT 1 FROM LoanApproval prevApproval
+                            INNER JOIN LoanApproval myApproval ON prevApproval.LoanID = myApproval.LoanID
+                            WHERE prevApproval.LoanID = la.LoanID
+                            AND myApproval.UserID = @UserId
+                            AND prevApproval.[Order] < myApproval.[Order]
+                            AND prevApproval.IsActive = 1
+                            AND myApproval.IsActive = 1
+                            AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                        )
                     )";
                 }
                 else if (model.SelectedTab == "In Progress")
@@ -252,6 +266,45 @@ namespace StrongHelpOfficial.Controllers.Approver
                             var initials = (firstName.Length > 0 ? firstName[0].ToString() : "") +
                                           (lastName.Length > 0 ? lastName[0].ToString() : "");
 
+                            var dbStatus = reader["ApplicationStatus"].ToString() ?? "";
+                            var displayStatus = dbStatus;
+                            var loanId = Convert.ToInt32(reader["LoanID"]);
+                            
+                            // Show 'In Review' if it's In Progress and ready for current user approval
+                            if (dbStatus == "In Progress")
+                            {
+                                // Check if current user is next to approve this application
+                                using (var checkConn = new SqlConnection(connectionString))
+                                {
+                                    checkConn.Open();
+                                    using (var checkCmd = new SqlCommand(@"
+                                        SELECT COUNT(*) FROM LoanApproval currentApproval
+                                        WHERE currentApproval.LoanID = @LoanID
+                                        AND currentApproval.UserID = @UserId
+                                        AND currentApproval.IsActive = 1
+                                        AND (currentApproval.Status IS NULL OR currentApproval.Status = 'Pending')
+                                        AND NOT EXISTS (
+                                            SELECT 1 FROM LoanApproval prevApproval
+                                            INNER JOIN LoanApproval myApproval ON prevApproval.LoanID = myApproval.LoanID
+                                            WHERE prevApproval.LoanID = @LoanID
+                                            AND myApproval.UserID = @UserId
+                                            AND prevApproval.[Order] < myApproval.[Order]
+                                            AND prevApproval.IsActive = 1
+                                            AND myApproval.IsActive = 1
+                                            AND (prevApproval.Status IS NULL OR prevApproval.Status = 'Pending')
+                                        )", checkConn))
+                                    {
+                                        checkCmd.Parameters.AddWithValue("@LoanID", loanId);
+                                        checkCmd.Parameters.AddWithValue("@UserId", approverUserId);
+                                        var isReadyForUser = (int)(checkCmd.ExecuteScalar() ?? 0) > 0;
+                                        if (isReadyForUser)
+                                        {
+                                            displayStatus = "In Review";
+                                        }
+                                    }
+                                }
+                            }
+                            
                             model.Applications.Add(new LoanApplicationViewModel
                             {
                                 ApplicationId = Convert.ToInt32(reader["LoanID"]),
@@ -260,7 +313,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 LoanType = reader["Title"].ToString() ?? "",
                                 Amount = Convert.ToDecimal(reader["LoanAmount"]),
                                 DateApplied = Convert.ToDateTime(reader["DateSubmitted"]),
-                                Status = reader["ApplicationStatus"].ToString() ?? ""
+                                Status = displayStatus
                             });
                         }
                     }

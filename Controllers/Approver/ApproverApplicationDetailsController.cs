@@ -430,6 +430,26 @@ namespace StrongHelpOfficial.Controllers.Approver
                 {
                     model.CurrentUserHasApproved = model.Approvers.Any(a => 
                         a.UserId == currentUserId.Value && a.Status == "Approved");
+                    
+                    // Check if it's the current user's turn to approve (status should be "In Review")
+                    if (model.ApplicationStatus == "In Progress" && !model.CurrentUserHasApproved)
+                    {
+                        var currentUserApprover = model.Approvers.FirstOrDefault(a => a.UserId == currentUserId.Value);
+                        if (currentUserApprover != null && currentUserApprover.Status == "Pending")
+                        {
+                            // Check if all previous approvers have approved
+                            var previousApprovers = model.Approvers
+                                .Where(a => a.Order < currentUserApprover.Order && !a.RoleName.Contains("Benefits Assistant"))
+                                .ToList();
+                            
+                            bool allPreviousApproved = previousApprovers.All(a => a.Status == "Approved");
+                            
+                            if (allPreviousApproved)
+                            {
+                                model.ApplicationStatus = "In Review";
+                            }
+                        }
+                    }
                 }
 
                 return model;
