@@ -355,6 +355,23 @@ footer {
 .dashboard-content {
     padding: 2.5rem 2.5rem 2.5rem 2.5rem;
 }
+    .dashboard-content .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-content .col-md-6 {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dashboard-content .card {
+        flex: 1 1 100%;
+        min-height: 200px; /* Adjust as needed for your content */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
 
 .card.shadow-sm {
     padding: 1.5rem 1.5rem 1.5rem 1.5rem;
