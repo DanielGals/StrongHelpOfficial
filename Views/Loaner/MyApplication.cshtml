@@ -40,7 +40,6 @@
                             @{
                                 string statusClass = app.ApplicationStatus switch
                                 {
-                                    "Drafted" => "status-badge status-drafted",
                                     "Submitted" => "status-badge status-submitted",
                                     "In Review" => "status-badge status-inreview",
                                     "Approved" => "status-badge status-approved",
@@ -90,7 +89,6 @@
     {
         return status switch
         {
-            "Drafted" => 5, // or any value you prefer
             "Submitted" => 20,
             "In Review" => 60,
             "Approved" => 100,
