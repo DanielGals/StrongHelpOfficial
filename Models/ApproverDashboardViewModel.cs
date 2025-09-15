@@ -8,10 +8,10 @@ namespace StrongHelpOfficial.Models
         public string UserName { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public int RoleID { get; set; }
-        public int TotalApplications { get; set; }
+
         public int PendingReview { get; set; }
-        public int ApprovedToday { get; set; }
-        public int RejectedToday { get; set; }
+        public int InProgress { get; set; }
+        public int Completed { get; set; }
         public List<LoanApplicationViewModel> PendingApplications { get; set; } = new();
         public string SearchQuery { get; set; } = string.Empty;
         public Dictionary<string, bool> Filters { get; set; } = new Dictionary<string, bool>();

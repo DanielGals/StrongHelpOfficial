@@ -424,6 +424,34 @@ namespace StrongHelpOfficial.Controllers.Approver
                 newApprovers.AddRange(others);
                 model.Approvers = newApprovers;
 
+                // Check if current user has already approved this application
+                var currentUserId = HttpContext.Session.GetInt32("UserID");
+                if (currentUserId.HasValue)
+                {
+                    model.CurrentUserHasApproved = model.Approvers.Any(a => 
+                        a.UserId == currentUserId.Value && a.Status == "Approved");
+                    
+                    // Check if it's the current user's turn to approve (status should be "In Review")
+                    if (model.ApplicationStatus == "In Progress" && !model.CurrentUserHasApproved)
+                    {
+                        var currentUserApprover = model.Approvers.FirstOrDefault(a => a.UserId == currentUserId.Value);
+                        if (currentUserApprover != null && currentUserApprover.Status == "Pending")
+                        {
+                            // Check if all previous approvers have approved
+                            var previousApprovers = model.Approvers
+                                .Where(a => a.Order < currentUserApprover.Order && !a.RoleName.Contains("Benefits Assistant"))
+                                .ToList();
+                            
+                            bool allPreviousApproved = previousApprovers.All(a => a.Status == "Approved");
+                            
+                            if (allPreviousApproved)
+                            {
+                                model.ApplicationStatus = "In Review";
+                            }
+                        }
+                    }
+                }
+
                 return model;
             }
         }
@@ -649,7 +677,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                         }
                     }
 
-                    // Only update LoanApplication status if this is the final approval
+                    // Update LoanApplication status based on approval state
                     if (isLastApproval)
                     {
                         using (var updateCmd = new SqlCommand(@"
@@ -675,6 +703,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                     }
                     else
                     {
+                        // Update status to 'In Progress' since there are still pending approvers
+                        using (var updateCmd = new SqlCommand(@"
+                    UPDATE LoanApplication 
+                    SET ApplicationStatus = 'In Progress',
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy
+                    WHERE LoanID = @LoanID", conn))
+                        {
+                            updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                            updateCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                            updateCmd.Parameters.AddWithValue("@ModifiedBy", approverUserId?.ToString() ?? "");
+
+                            await updateCmd.ExecuteNonQueryAsync();
+                        }
+
                         return Json(new { success = true, message = "Your approval has been recorded successfully! Waiting for other approvers.", isLastApproval = false });
                     }
                 }

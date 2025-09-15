@@ -8,8 +8,9 @@ namespace StrongHelpOfficial.Models
         public string UserName { get; set; } = string.Empty;
         public int TotalApplications { get; set; }
         public int PendingReview { get; set; }
-        public int ApprovedToday { get; set; }
-        public int RejectedToday { get; set; }
+        public int InProgress { get; set; }
+        public int TotalApproved { get; set; }
+        public int TotalRejected { get; set; }
         public List<PendingApplicationViewModel> PendingApplications { get; set; } = new();
     }
 

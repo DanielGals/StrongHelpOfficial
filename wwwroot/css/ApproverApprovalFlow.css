@@ -141,6 +141,11 @@
     .status-dot svg {
         width: 14px;
         height: 14px;
+        stroke-width: 2.2;
+        stroke: #fff;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 
     .status-dot.approved {
@@ -152,19 +157,19 @@
     }
 
     .status-dot.pending {
-        background: #e9ecef;
+        background: #ffc107;
     }
 
     .status-dot.approved svg {
-        fill: white;
+        stroke: #fff;
     }
 
     .status-dot.rejected svg {
-        fill: white;
+        stroke: #fff;
     }
 
     .status-dot.pending svg {
-        fill: #6c757d;
+        stroke: #856404;
     }
 
 .alert-yellow {

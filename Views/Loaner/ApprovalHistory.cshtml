@@ -46,7 +46,7 @@
         };
 
         <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
-            <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+            <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
                 @approval.RoleName Approval
             </div>
             <div>
@@ -69,7 +69,7 @@
     };
 
     <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
-        <div class="loan-details-label" style="margin-bottom:0.1em; color: @statusColor; font-weight: bold;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
             @ba.RoleName Review
         </div>
         <div>
@@ -82,7 +82,7 @@
 
 <!-- Application Submission (always last) -->
 <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
-    <div class="loan-details-label" style="margin-bottom:0.1em;">Application Submitted</div>
+    <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">Application Submitted</div>
     <div>
         <span>
             Submitted by @Model.EmployeeName on @Model.DateSubmitted.ToString("yyyy-MM-dd")

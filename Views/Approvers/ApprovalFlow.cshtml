@@ -1,4 +1,4 @@
-﻿@model ApproverApplicationDetailsViewModel
+@model ApproverApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Approval Flow";
     ViewBag.IdParamName = "id";
@@ -92,7 +92,7 @@
                         <div><strong>User:</strong> <span style="color:#218838">@approver.UserName</span></div>
                         @if (!isBenefitsAssistant)
                         {
-                            <div><strong>Order:</strong> <span style="color:#218838">@approver.Order</span></div>
+                            <div><strong>Approver Order:</strong> <span style="color:#218838">@approver.Order</span></div>
                         }
                         <div><strong>Department:</strong> <span style="color:#218838">@(isBenefitsAssistant ? "Benefits Assistant" : approver.RoleName)</span></div>
                     </div>
@@ -136,6 +136,7 @@
                 No approvers have been assigned to this application yet.
             </div>
         }
+
         
     </div>
     <!-- Approval Actions: right side -->

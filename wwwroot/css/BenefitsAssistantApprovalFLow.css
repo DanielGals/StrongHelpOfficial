@@ -522,4 +522,20 @@
     }
 }
 
+.form-group {
+    position: relative;
+}
 
+
+/* Hide datalist dropdown arrow */
+#approverInput::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
+
+#approverInput::-webkit-list-button {
+    display: none !important;
+}
+
+#approverInput::-webkit-inner-spin-button {
+    display: none !important;
+}

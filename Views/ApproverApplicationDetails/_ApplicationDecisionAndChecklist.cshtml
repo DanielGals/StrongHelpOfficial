@@ -1,7 +1,7 @@
 @model ApproverApplicationDetailsViewModel
 
 <!-- Application Decision -->
-@if (Model.ApplicationStatus == "In Review")
+@if (Model.ApplicationStatus == "In Review" && !Model.CurrentUserHasApproved)
 {
     <div class="card shadow-sm mb-4">
         <div class="card-body">

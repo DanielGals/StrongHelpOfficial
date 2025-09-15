@@ -220,12 +220,17 @@
                                             string statusClass = normalizedStatus switch
                                             {
                                                 "Submitted" => "status-badge status-submitted",
-                                                "Pending Review" or "In Review" => "status-badge status-inreview",
+                                                "Pending Review" or "In Review" or "In Progress" => "status-badge status-inreview",
                                                 "Approved" => "status-badge status-approved",
                                                 "Rejected" => "status-badge status-rejected",
                                                 _ => "status-badge status-submitted"
                                             };
-                                            string displayStatus = normalizedStatus == "Pending Review" ? "In Review" : normalizedStatus;
+                                            string displayStatus = normalizedStatus switch
+                                            {
+                                                "Pending Review" => "In Review",
+                                                "In Progress" => "In Review",
+                                                _ => normalizedStatus
+                                            };
                                         }
                                         <span class="@statusClass">
                                             @displayStatus

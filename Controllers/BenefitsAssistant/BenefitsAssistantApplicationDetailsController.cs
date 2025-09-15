@@ -122,6 +122,30 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
         }
 
         [HttpGet]
+        public async Task<JsonResult> ValidateApprover(string name, string email)
+        {
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
+            {
+                return Json(new { exists = false });
+            }
+
+            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+            {
+                await conn.OpenAsync();
+                using (var cmd = new SqlCommand(@"
+                    SELECT COUNT(*) 
+                    FROM [User] 
+                    WHERE CONCAT(FirstName, ' ', LastName) = @Name AND Email = @Email AND IsActive = 1", conn))
+                {
+                    cmd.Parameters.AddWithValue("@Name", name.Trim());
+                    cmd.Parameters.AddWithValue("@Email", email.Trim());
+                    var count = (int)await cmd.ExecuteScalarAsync();
+                    return Json(new { exists = count > 0 });
+                }
+            }
+        }
+
+        [HttpGet]
         public async Task<JsonResult> GetNextPhaseOrder(int loanId)
         {
             var usedOrders = new List<int>();
@@ -545,7 +569,6 @@ using (var cmd = new SqlCommand(@"
 
                     var benefitsAssistantUserId = HttpContext.Session.GetInt32("UserID");
                     
-                    // Debug: Check if UserID is null
                     if (benefitsAssistantUserId == null)
                     {
                         return Json(new { success = false, message = "User session expired. Please login again." });

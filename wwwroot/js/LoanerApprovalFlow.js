@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     const loanId = document.getElementById('loanIdField').value;
     console.log("Loan ID:", loanId); //debug
 
@@ -95,7 +95,7 @@
                 <div class="approval-card-content">
                     <div><strong>User:</strong> ${approver.userName}</div>
                     ${approver.roleName !== "Benefits Assistant" ? 
-                        `<div><strong>Order:</strong> ${approver.order}</div>` : ''}
+                        `<div><strong>Approver Order:</strong> ${approver.order}</div>` : ''}
                     <div><strong>Department:</strong> ${department}</div>
                 </div>
             `;
