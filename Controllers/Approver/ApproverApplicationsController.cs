@@ -265,6 +265,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                             var initials = (firstName.Length > 0 ? firstName[0].ToString() : "") +
                                           (lastName.Length > 0 ? lastName[0].ToString() : "");
 
+                            var dbStatus = reader["ApplicationStatus"].ToString() ?? "";
+                            var displayStatus = dbStatus;
 
                             model.Applications.Add(new LoanApplicationViewModel
                             {
