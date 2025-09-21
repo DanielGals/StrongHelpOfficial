@@ -77,7 +77,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     LEFT JOIN LoanApproval lap_ba ON la.LoanID = lap_ba.LoanID 
                         AND lap_ba.UserID = @UserId AND lap_ba.IsActive = 1
-                    WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)";
+                    WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
+                    AND la.UserID != @UserId";
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {

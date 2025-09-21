@@ -69,6 +69,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         COUNT(DISTINCT CASE WHEN ApplicationStatus = 'Rejected' THEN la.LoanID END) AS TotalRejected
                     FROM LoanApplication la
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
+                      AND la.UserID != @UserId
                       AND la.IsActive = 1
                 ", conn))
                 {
@@ -93,6 +94,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
+                      AND la.UserID != @UserId
                       AND la.ApplicationStatus = 'Submitted'
                       AND la.IsActive = 1
                     ORDER BY la.DateSubmitted DESC

@@ -16,6 +16,8 @@
         public List<ApproverDocumentViewModel> LoanerDocuments { get; set; } = new List<ApproverDocumentViewModel>();
         public List<ApproverDocumentViewModel> ApproverDocuments { get; set; } = new List<ApproverDocumentViewModel>();
         public bool CurrentUserHasApproved { get; set; } = false;
+        public bool CurrentUserCanApprove { get; set; } = false;
+        public string ApprovalBlockedReason { get; set; } = string.Empty;
     }
 
     public class ApproverDocumentViewModel

@@ -104,6 +104,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         AVG(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE NULL END) AS AverageApprovedAmount
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                    AND UserID != @UserId
                     AND IsActive = 1
                     AND CAST(DateSubmitted AS DATE) >= @StartDate
                     AND CAST(DateSubmitted AS DATE) <= @EndDate
@@ -122,6 +123,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         AVG(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE NULL END) AS AverageApprovedAmount
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                    AND UserID != @UserId
                     AND IsActive = 1
                 ";
             }
@@ -158,6 +160,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 SELECT ISNULL(ApplicationStatus, 'Submitted') as ApplicationStatus, COUNT(*) as Count
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                AND UserID != @UserId
                 AND IsActive = 1
             ";
             if (isFilter)
@@ -206,6 +209,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) as ApprovedAmount
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                AND UserID != @UserId
                 AND IsActive = 1
             ";
             if (isFilter)
@@ -261,6 +265,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SUM(LoanAmount) as TotalAmount
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
+                AND UserID != @UserId
                 AND IsActive = 1
             ";
             if (isFilter)

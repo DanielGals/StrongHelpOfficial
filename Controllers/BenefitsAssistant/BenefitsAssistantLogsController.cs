@@ -72,6 +72,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE la.BenefitsAssistantUserID = @UserId
+                    AND la.UserID != @UserId
                     AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
                     AND la.IsActive = 1
                 ";
@@ -146,6 +147,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SELECT COUNT(*) 
                     FROM LoanApplication la
                     WHERE la.BenefitsAssistantUserID = @UserId
+                    AND la.UserID != @UserId
                     AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
                     AND la.IsActive = 1
                 ";

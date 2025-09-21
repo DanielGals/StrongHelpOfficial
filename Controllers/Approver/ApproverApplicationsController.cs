@@ -153,8 +153,9 @@ namespace StrongHelpOfficial.Controllers.Approver
                 }
                 else if (model.SelectedTab == "Approved")
                 {
-                    // Only show applications this approver has approved
+                    // Only show applications this approver has approved AND are fully approved
                     query += @"
+                    AND la.ApplicationStatus = 'Approved'
                     AND EXISTS (
                         SELECT 1
                         FROM LoanApproval myApproval
