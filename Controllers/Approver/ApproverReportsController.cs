@@ -101,7 +101,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                 INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
                 WHERE lap.UserID = @UserId
                 AND lap.IsActive = 1
-                AND la.IsActive = 1";
+                AND la.IsActive = 1
+                AND la.UserID != @UserId";
 
             if (isFilter)
             {
@@ -142,7 +143,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                 INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
                 WHERE lap.UserID = @UserId
                 AND lap.IsActive = 1
-                AND la.IsActive = 1";
+                AND la.IsActive = 1
+                AND la.UserID != @UserId";
 
             if (isFilter)
             {
@@ -187,7 +189,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                 INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
                 WHERE lap.UserID = @UserId
                 AND lap.IsActive = 1
-                AND lap.ApprovedDate IS NOT NULL";
+                AND lap.ApprovedDate IS NOT NULL
+                AND la.UserID != @UserId";
 
             if (isFilter)
             {
@@ -236,7 +239,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                 FROM LoanApproval lap
                 INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
                 WHERE lap.UserID = @UserId
-                AND lap.IsActive = 1";
+                AND lap.IsActive = 1
+                AND la.UserID != @UserId";
 
             if (isFilter)
             {

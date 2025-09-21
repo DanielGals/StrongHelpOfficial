@@ -94,6 +94,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                             AND la.IsActive = 1
+                            AND la.UserID != @UserId
                             AND EXISTS (
                                 SELECT 1 FROM LoanApproval currentApproval
                                 WHERE currentApproval.LoanID = la.LoanID
@@ -108,6 +109,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                             AND la.IsActive = 1
+                            AND la.UserID != @UserId
                             AND EXISTS (
                                 SELECT 1 FROM LoanApproval my_approval
                                 WHERE my_approval.LoanID = la.LoanID
@@ -128,6 +130,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             FROM LoanApplication la
                             INNER JOIN LoanApproval my_lap ON la.LoanID = my_lap.LoanID
                             WHERE la.IsActive = 1
+                            AND la.UserID != @UserId
                             AND my_lap.UserID = @UserId
                             AND my_lap.Status = 'Approved'
                             AND my_lap.IsActive = 1
@@ -162,6 +165,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
                     AND la.IsActive = 1
                     AND u.IsActive = 1
+                    AND la.UserID != @UserId
                     AND EXISTS (
                         SELECT 1 FROM LoanApproval currentApproval
                         WHERE currentApproval.LoanID = la.LoanID
