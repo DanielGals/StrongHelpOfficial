@@ -96,3 +96,37 @@
         background: #2327a3;
         color: #fff;
     }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .benefits-content-grid {
+        padding: 0;
+    }
+    
+    .pending-applications-section {
+        padding: 20px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9em;
+    }
+    
+    .avatar-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .table th, .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8em;
+    }
+    
+    .pending-applications-section {
+        padding: 15px 10px;
+    }
+}
