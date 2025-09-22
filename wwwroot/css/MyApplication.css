@@ -29,13 +29,14 @@
 
 .status-badge {
     display: inline-block;
-    padding: 0.5em 1.5em;
+    padding: 0.4em 1em;
     border-radius: 999px;
     font-weight: bold;
-    font-size: 1em;
+    font-size: 0.9em;
     border: none;
     color: #fff;
-    background: #757e87; 
+    background: #757e87;
+    white-space: nowrap;
 }
 
 .status-submitted {
@@ -85,7 +86,7 @@
     padding: 12px 10px;
     margin-bottom: 1.5rem;
     gap: 8px;
-    max-width: 650px;
+    width: fit-content;
 }
 
 .status-tab {
@@ -113,3 +114,51 @@
         background: #f3f3f3;
         color: #444;
     }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .myapp-card-body {
+        margin: 0;
+        border-radius: 8px;
+    }
+    
+    .status-tab-group {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px;
+    }
+    
+    .status-tab {
+        padding: 6px 16px;
+        font-size: 0.9em;
+        flex: 1;
+        min-width: calc(50% - 3px);
+        text-align: center;
+    }
+    
+    .myapp-application-wrapper > .text-end {
+        margin-top: 15px;
+        text-align: center !important;
+    }
+    
+    .btn-primary-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .status-tab {
+        min-width: 100%;
+        margin-bottom: 4px;
+    }
+    
+    .status-badge {
+        padding: 0.4em 1em;
+        font-size: 0.85em;
+    }
+    
+    .myapp-application-wrapper .border {
+        padding: 15px !important;
+    }
+}
