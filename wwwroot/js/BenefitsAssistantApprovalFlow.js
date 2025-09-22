@@ -205,6 +205,7 @@ window.saveApprover = async function () {
         // Clear file selection
         selectedFiles = [];
         document.getElementById('selected-files-list').innerHTML = '';
+        document.getElementById('pdfFileInput').value = '';
 
         closeModal();
         await loadOrderDropdown();
@@ -369,31 +370,41 @@ document.addEventListener('DOMContentLoaded', function () {
         const files = Array.from(this.files);
         const errorDiv = document.getElementById('pdfFileError');
         const fileList = document.getElementById('selected-files-list');
-        fileList.innerHTML = '';
         let valid = true;
-        selectedFiles = [];
+        let newFiles = [];
 
         files.forEach(file => {
             if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
                 valid = false;
             } else {
-                selectedFiles.push(file);
-                const li = document.createElement('li');
-                li.textContent = file.name;
-                fileList.appendChild(li);
+                // Check for duplicates
+                if (!selectedFiles.some(f => f.name === file.name)) {
+                    newFiles.push(file);
+                }
             }
         });
 
         if (!valid) {
             errorDiv.textContent = "Only PDF files are allowed.";
             errorDiv.style.display = "block";
-            this.value = "";
-            selectedFiles = [];
-            fileList.innerHTML = '';
         } else {
             errorDiv.textContent = "";
             errorDiv.style.display = "none";
+            
+            // Add new files to existing selection
+            selectedFiles = selectedFiles.concat(newFiles);
+            
+            // Update file list display
+            fileList.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file.name;
+                fileList.appendChild(li);
+            });
         }
+        
+        // Clear the input so the same file can be selected again if needed
+        this.value = "";
     });
 
     // Ensure only one of loanId or loanApprovalId is set before submit
