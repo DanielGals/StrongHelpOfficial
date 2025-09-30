@@ -90,11 +90,13 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     SELECT la.*, 
                            u.FirstName, u.LastName, u.Email, u.ContactNum, u.RoleID, u.DepartmentID,
                            d.DepartmentName,
-                           r.RoleName
+                           r.RoleName,
+                           co.FirstName AS CoMakerFirstName, co.LastName AS CoMakerLastName
                     FROM LoanApplication la
                     JOIN [User] u ON la.UserID = u.UserID
                     LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
                     LEFT JOIN Role r ON u.RoleID = r.RoleID
+                    LEFT JOIN [User] co ON la.CoMakerUserID = co.UserID
                     WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -109,6 +111,11 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         model.EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}";
                         model.Department = reader["DepartmentName"] as string ?? "";
                         model.PayrollAccountNumber = reader["ContactNum"] as string ?? "";
+                        var coMakerFirst = reader["CoMakerFirstName"] as string;
+                        var coMakerLast = reader["CoMakerLastName"] as string;
+                        model.CoMakerName = !string.IsNullOrEmpty(coMakerFirst) && !string.IsNullOrEmpty(coMakerLast)
+                            ? $"{coMakerFirst} {coMakerLast}"
+                            : null;
                     }
                 }
 

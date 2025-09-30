@@ -17,6 +17,7 @@
         public string Remarks { get; set; }
         public List<ApprovalViewModel> Approvers => ApprovalHistory;
         public List<BADocumentViewModel> LoanerDocuments { get; set; } = new List<BADocumentViewModel>();
+        public string? CoMakerName { get; set; }
     }
 
     public class DocumentViewModel

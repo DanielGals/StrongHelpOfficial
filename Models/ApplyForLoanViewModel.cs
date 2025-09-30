@@ -26,5 +26,7 @@ namespace StrongHelpOfficial.Models
 
         // Add property for required documents
         public List<string> RequiredDocuments { get; set; } = new List<string>();
+
+        public int? CoMakerId { get; set; }
     }
 }

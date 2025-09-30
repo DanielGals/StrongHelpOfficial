@@ -58,6 +58,12 @@ else if (hasExistingLoan && existingLoanId != null)
                 <label for="loanAmount" class="form-label fw-bold mb-1">Loan Amount</label>
                 <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount">
                 <span asp-validation-for="LoanAmount" class="text-danger"></span>
+
+                <!-- Modal-like box for displaying the requested amount -->
+                <div id="loanAmountModalBox" class="alert alert-info mt-3" style="display:none; max-width:350px;">
+                    <strong>Your requested loan amount:</strong>
+                    <div id="loanAmountDisplay" class="fs-4 mt-2"></div>
+                </div>
                 <br>
                 <div class="upload-container">
                     <h4>Document Upload</h4>
@@ -143,8 +149,23 @@ else if (hasExistingLoan && existingLoanId != null)
                         <strong class="d-block mb-2">Submitted Documents:</strong>
                     </div>
                     <br />
+
+                    <!-- Co-maker field box start -->
+                    <div class="co-maker-box border rounded p-4 mb-4" style="background-color: #f8f9fa;">
+                        <h5 class="mb-3 co-maker-title">Add a Co-maker<span class="text-danger">*</span></h5>
+                        <div class="co-maker-input-group" style="position:relative;">
+                            <input type="text" class="form-control" id="CoMakerName" name="CoMakerName" placeholder="Your co-maker" autocomplete="off" />
+                            <input type="hidden" id="CoMakerId" name="CoMakerId" />
+                            <div id="coMakerSuggestions" class="list-group"></div>
+                        </div>
+                        <button type="button" class="action-btn secondary w-25 mt-2" id="setCoMakerBtn">Set as co-maker</button>
+                        <div id="coMakerSuccess" class="co-maker-success mt-2" style="display:none;"></div>
+                    </div>
+                    <!-- Co-maker field box end -->
+
                 </div>
-                <input class="btn btn-primary w-100" type="submit">
+                <br />
+                <input class="action-btn primary w-100" type="submit" value="Submit loan" />
             </form>
         </div>
         <div class="col-md-4">
@@ -180,61 +201,132 @@ else if (hasExistingLoan && existingLoanId != null)
         </div>
         <div class="info-item">
             <i class="bi bi-people-fill fs-4 text-secondary"></i>
-            <span class="info-text">Co-Maker: Required</span>
+            <strong>Co-maker status:</strong>
+            <span id="coMakerStatusLabel">@ViewData["CoMakerStatus"]</span>
         </div>
     </div>
 </div>
 
 <script>
-        let coMakerResults = [];
-        let selectedCoMaker = null;
+    document.addEventListener('DOMContentLoaded', function () {
+        let selectedCoMakerId = null;
+        let selectedCoMakerName = "";
 
-        // Always hide Show More on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('documentCountDisplay').textContent = `${allFiles.length}/3 submitted`;
+        const coMakerNameInput = document.getElementById('CoMakerName');
+        const coMakerIdInput = document.getElementById('CoMakerId');
+        const coMakerSuggestions = document.getElementById('coMakerSuggestions');
+        const setCoMakerBtn = document.getElementById('setCoMakerBtn');
+        const coMakerSuccess = document.getElementById('coMakerSuccess');
+
+        if (!coMakerNameInput) return; // Prevents error if element is missing
+
+        coMakerNameInput.addEventListener('input', function() {
+            const term = this.value;
+            if (term.length < 2) {
+                coMakerSuggestions.innerHTML = "";
+                return;
+            }
+            fetch(`/Loaner/ApplyForLoan/SearchUsers?term=${encodeURIComponent(term)}`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = "";
+                    data.forEach(user => {
+                        html += `<button type="button" class="list-group-item list-group-item-action" onclick="selectCoMaker('${user.userId}', '${user.name.replace(/'/g, "\\'")}')">${user.name}</button>`;
+                    });
+                    coMakerSuggestions.innerHTML = html;
+                });
         });
 
-        function renderCoMakerTable(data, isShowMore) {
-            let html = `<table class="table table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            if (data.length === 0) {
-                html += `<tr><td colspan="3" class="text-center">No matching users found.</td></tr>`;
+        window.selectCoMaker = function(userId, name) {
+            coMakerNameInput.value = name;
+            coMakerIdInput.value = userId;
+            selectedCoMakerId = userId;
+            selectedCoMakerName = name;
+            coMakerSuggestions.innerHTML = "";
+        };
+
+        setCoMakerBtn.addEventListener('click', function() {
+            if (selectedCoMakerId && selectedCoMakerName) {
+                coMakerSuccess.style.display = "block";
+                coMakerSuccess.textContent = `${selectedCoMakerName} is currently chosen as co-maker`;
+
+                // Update the status label below
+                const statusLabel = document.getElementById('coMakerStatusLabel');
+                if (statusLabel) {
+                    statusLabel.textContent = selectedCoMakerName;
+                }
             } else {
-                data.forEach(user => {
-                    html += `<tr>
-                        <td>${user.name}</td>
-                        <td>${user.department}</td>
-                        <td>
-                            <button type="button" class="btn btn-success btn-sm" onclick="addCoMaker('${user.userId}', '${user.name}');${isShowMore ? "bootstrap.Modal.getInstance(document.getElementById('showMoreModal')).hide();" : ""}">Add as co-maker</button>
-                        </td>
-                    </tr>`;
-                });
+                coMakerSuccess.style.display = "none";
+                alert("Please select a co-maker from the list.");
             }
-            html += `</tbody></table>`;
-            if (isShowMore) {
-                document.getElementById('showMoreModalBody').innerHTML = html;
-            } else {
-                document.getElementById('coMakerTableContainer').innerHTML = html;
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            const box = document.querySelector('.co-maker-box');
+            if (box && !box.contains(event.target)) {
+                coMakerSuggestions.innerHTML = "";
             }
-        }
-    const btn1 = document.getElementById("btn1");
-    const btn2 = document.getElementById("btn2");
-    btn1.addEventListener("click", () => {
-      btn1.classList.replace("custom-outline", "custom-highlight");
-      btn2.classList.replace("custom-highlight", "custom-outline");
+        });
     });
-    btn2.addEventListener("click", () => {
-      btn2.classList.replace("custom-outline", "custom-highlight");
-      btn1.classList.replace("custom-highlight", "custom-outline");
+
+    let coMakerResults = [];
+    let selectedCoMaker = null;
+
+    // Always hide Show More on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('documentCountDisplay').textContent = `${allFiles.length}/3 submitted`;
+    });
+
+    function renderCoMakerTable(data, isShowMore) {
+        let html = `<table class="table table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        if (data.length === 0) {
+            html += `<tr><td colspan="3" class="text-center">No matching users found.</td></tr>`;
+        } else {
+            data.forEach(user => {
+                html += `<tr>
+                    <td>${user.name}</td>
+                    <td>${user.department}</td>
+                    <td>
+                        <button type="button" class="btn btn-success btn-sm" onclick="addCoMaker('${user.userId}', '${user.name}');${isShowMore ? "bootstrap.Modal.getInstance(document.getElementById('showMoreModal')).hide();" : ""}">Add as co-maker</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        html += `</tbody></table>`;
+        if (isShowMore) {
+            document.getElementById('showMoreModalBody').innerHTML = html;
+        } else {
+            document.getElementById('coMakerTableContainer').innerHTML = html;
+        }
+    }
+    // Loan amount modal logic
+    document.addEventListener('DOMContentLoaded', function () {
+        const loanAmountInput = document.getElementById('loanAmount');
+        const modalBox = document.getElementById('loanAmountModalBox');
+        const display = document.getElementById('loanAmountDisplay');
+
+        loanAmountInput.addEventListener('input', function () {
+            const value = parseFloat(this.value);
+            if (!isNaN(value) && value > 0) {
+                // Format as PHP currency
+                display.textContent = 'PHP ' + value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                modalBox.style.display = 'block';
+            } else {
+                modalBox.style.display = 'none';
+            }
+        });
     });
 </script>
+
 
 <style>
     .custom-row {
@@ -366,5 +458,46 @@ else if (hasExistingLoan && existingLoanId != null)
         background-color: #0a0666 !important;
         color: #fff !important;
         text-decoration: none;
+    }
+
+    .co-maker-box {
+        position: relative;
+        background: #f8f9fa;
+    }
+
+    .co-maker-input-group {
+        position: relative;
+    }
+
+    #CoMakerName {
+        margin-bottom: 0;
+        z-index: 2;
+        position: relative;
+    }
+
+    #coMakerSuggestions {
+        position: absolute;
+        top: calc(100% + 0.25rem); /* just below the input */
+        left: 0;
+        width: 100%;
+        z-index: 10;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0 0 0.5rem 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .co-maker-success {
+        width: 100%;
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+        border-radius: 0.375rem;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+        text-align: center;
     }
 </style>

@@ -70,6 +70,41 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         cmdCount.Parameters.AddWithValue("@LoanID", existingLoanId.Value);
                         documentCount = (int)cmdCount.ExecuteScalar();
                     }
+
+                    if (existingLoanId.HasValue)
+                    {
+                        // Fetch co-maker ID for the existing loan
+                        var cmdCoMaker = new SqlCommand("SELECT ComakerUserId FROM LoanApplication WHERE LoanID = @LoanID", conn);
+                        cmdCoMaker.Parameters.AddWithValue("@LoanID", existingLoanId.Value);
+                        var coMakerIdObj = cmdCoMaker.ExecuteScalar();
+                        if (coMakerIdObj != DBNull.Value && coMakerIdObj != null)
+                        {
+                            int coMakerId = Convert.ToInt32(coMakerIdObj);
+                            // Fetch co-maker's name
+                            var cmdCoMakerName = new SqlCommand("SELECT FirstName, LastName FROM [User] WHERE UserID = @UserID", conn);
+                            cmdCoMakerName.Parameters.AddWithValue("@UserID", coMakerId);
+                            using (var reader = cmdCoMakerName.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    string coMakerName = reader.GetString(0) + " " + reader.GetString(1);
+                                    ViewData["CoMakerStatus"] = coMakerName;
+                                }
+                                else
+                                {
+                                    ViewData["CoMakerStatus"] = "No assigned co-maker yet";
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ViewData["CoMakerStatus"] = "No assigned co-maker yet";
+                        }
+                    }
+                    else
+                    {
+                        ViewData["CoMakerStatus"] = "No assigned co-maker yet";
+                    }
                 }
                 catch
                 {
@@ -92,7 +127,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
         public IActionResult failedSubmissionResult(ApplyForLoanViewModel model)
         {
-            TempData["failedSubmitResult"] = "Your loan must at least have an amount and 3 required documents";
+            TempData["failedSubmitResult"] = "Your loan must at least have an amount, the 3 required documents, and an assigned co-maker!";
             return RedirectToAction("Index", "ApplyForLoan");
         }
 
@@ -102,8 +137,15 @@ namespace StrongHelpOfficial.Controllers.Loaner
             var files = model.Files;
             var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
             var loanAmount = model.LoanAmount;
+            var coMakerId = model.CoMakerId;
 
-            // Co-maker logic removed
+            // Require co-maker to have a value
+            if (coMakerId == null || coMakerId == 0)
+            {
+                TempData["failedSubmitResult"] = "You must assign a co-maker before submitting your loan application!";
+                return RedirectToAction("Index", "ApplyForLoan");
+            }
+
             if (files != null && loanAmount != null)
             {
                 if (files.Count >= 3 && loanAmount != 0)
@@ -113,17 +155,32 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         await conn.OpenAsync();
                         var userId = HttpContext.Session.GetInt32("UserID") ?? 0;
 
+                        // Fetch user's full name
+                        string createdByName = "";
+                        using (var nameCmd = new SqlCommand("SELECT FirstName, LastName FROM [User] WHERE UserID = @UserID", conn))
+                        {
+                            nameCmd.Parameters.AddWithValue("@UserID", userId);
+                            using (var reader = await nameCmd.ExecuteReaderAsync())
+                            {
+                                if (await reader.ReadAsync())
+                                {
+                                    createdByName = reader.GetString(0) + " " + reader.GetString(1);
+                                }
+                            }
+                        }
+
                         using (var cmd = new SqlCommand(
-                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, IsActive, CreatedAt, CreatedBy) " +
-                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, 1, @CreatedAt, @CreatedBy)", conn))
+                            "INSERT INTO LoanApplication (LoanAmount, DateSubmitted, UserID, ApplicationStatus, Title, IsActive, CreatedAt, CreatedBy, ComakerUserId) " +
+                            "VALUES (@LoanAmount, @DateSubmitted, @UserID, @ApplicationStatus, @Title, 1, @CreatedAt, @CreatedBy, @CoMakerId)", conn))
                         {
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
                             cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
-                            cmd.Parameters.AddWithValue("@Title", " Bank Salary Loan");
+                            cmd.Parameters.AddWithValue("@Title", "Bank Salary Loan");
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
-                            cmd.Parameters.AddWithValue("@CreatedBy", userId.ToString());
+                            cmd.Parameters.AddWithValue("@CreatedBy", createdByName);
+                            cmd.Parameters.AddWithValue("@CoMakerId", (object?)coMakerId ?? DBNull.Value);
                             await cmd.ExecuteNonQueryAsync();
                         }
 
@@ -179,6 +236,34 @@ namespace StrongHelpOfficial.Controllers.Loaner
             }
 
             return RedirectToAction("Index", "ApplyForLoan");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SearchUsers(string term)
+        {
+            var results = new List<object>();
+            using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+            {
+                await conn.OpenAsync();
+                var cmd = new SqlCommand(@"
+                    SELECT TOP 5 UserID, FirstName, LastName
+                    FROM [User]
+                    WHERE CONCAT(FirstName, ' ', LastName) LIKE @term
+                    ORDER BY FirstName, LastName", conn);
+                cmd.Parameters.AddWithValue("@term", $"%{term}%");
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        results.Add(new
+                        {
+                            userId = reader.GetInt32(0),
+                            name = reader.GetString(1) + " " + reader.GetString(2)
+                        });
+                    }
+                }
+            }
+            return Json(results);
         }
     }
 }
