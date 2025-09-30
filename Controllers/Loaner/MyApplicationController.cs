@@ -69,6 +69,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
         {
             return status switch
             {
+                "Drafted" => 10,
                 "Submitted" => 20,
                 "In Review" => 60,
                 "Approved" => 100,

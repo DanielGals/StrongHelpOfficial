@@ -265,6 +265,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           la.CoMakerUserId, -- Add this line
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -286,13 +287,33 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 Department = reader["DepartmentName"]?.ToString() ?? "N/A",
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<ApproverDocumentViewModel>(),
-                                Approvers = new List<ApproverApproverViewModel>()
+                                Approvers = new List<ApproverApproverViewModel>(),
+                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? (int?)reader["CoMakerUserId"] : null
                             };
                         }
                     }
                 }
                 if (model == null)
                     return null;
+
+                if (model.CoMakerUserId.HasValue)
+                {
+                    using (var cmd = new SqlCommand(@"
+                        SELECT u.FirstName, u.LastName, u.Email, d.DepartmentName
+                        FROM [User] u
+                        LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
+                        WHERE u.UserID = @UserID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserID", model.CoMakerUserId.Value);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                model.CoMakerName = $"{reader["FirstName"]} {reader["LastName"]}";
+                            }
+                        }
+                    }
+                }
 
                 // Load all documents for this loan
                 using (var cmd = new SqlCommand(@"

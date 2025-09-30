@@ -1,10 +1,10 @@
 ﻿@model BenefitsAssistantApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Loan Application Details";
-    ViewBag.LoanID = Model.LoanID; 
-    ViewBag.Status = Model.ApplicationStatus; 
-    ViewBag.TabArea = ""; 
-    ViewBag.IdParamName = "id"; 
+    ViewBag.LoanID = Model.LoanID;
+    ViewBag.Status = Model.ApplicationStatus;
+    ViewBag.TabArea = "";
+    ViewBag.IdParamName = "id";
 }
 
 @section Styles {
@@ -13,59 +13,77 @@
     <link rel="stylesheet" href="~/css/BenefitsAssistantApplicationDetails.css" asp-append-version="true" />
 }
 
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Loan Application Details</h2>
+        <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
+    </div>
+    @if (Model.ApplicationStatus == "Approved" && Model.IsActive)
+    {
+        <button type="button"
+                class="btn btn-danger ms-auto"
+                id="deactivateLoanBtn"
+                style="min-width: 180px;"
+                data-loan-id="@Model.LoanID">
+            Deactivate this loan
+        </button>
+    }
+    else if (!Model.IsActive)
+    {
+        <span class="text-danger fw-bold ms-auto" style="min-width: 180px; display: flex; align-items: center;">Loan Deactivated</span>
+    }
+</div>
+
+@await Html.PartialAsync("_LoanApplicationTabs")
+
+<div class="row mb-3">
+    <div class="col-md-6 mb-2">
+        <div class="loan-details-label">Employee Name</div>
+        <div>@Model.EmployeeName</div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="loan-details-label">Amount Applied For</div>
+        <div>₱@Model.LoanAmount.ToString("N0")</div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="loan-details-label">Department</div>
+        <div>@Model.Department</div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="loan-details-label">Payroll Account Number</div>
+        <div>@Model.PayrollAccountNumber</div>
+    </div>
+    <div class="col-md-6 mb-2">
+        <div class="loan-details-label">Co-Maker</div>
+        <div>@Model.CoMakerName</div>
+    </div>
+</div>
+<hr />
+
+<h5 class="fw-bold mb-3">Documents Submitted</h5>
+@if (Model.Documents != null && Model.LoanerDocuments.Any())
+{
+    foreach (var doc in Model.LoanerDocuments)
+    {
+        <div class="loan-details-document">
             <div>
-                <h2 class="fw-bold mb-1">Loan Application Details</h2>
-                <div class="text-muted mb-2" style="font-size:1em;">Current Status and details of your application</div>
+                <div class="doc-title">@doc.Name</div>
+                <div class="doc-type">@doc.Type</div>
             </div>
-        </div>
-
-        @await Html.PartialAsync("_LoanApplicationTabs")
-
-        <div class="row mb-3">
-            <div class="col-md-6 mb-2">
-                <div class="loan-details-label">Employee Name</div>
-                <div>@Model.EmployeeName</div>
-            </div>
-            <div class="col-md-6 mb-2">
-                <div class="loan-details-label">Amount Applied For</div>
-                <div>₱@Model.LoanAmount.ToString("N0")</div>
-            </div>
-            <div class="col-md-6 mb-2">
-                <div class="loan-details-label">Department</div>
-                <div>@Model.Department</div>
-            </div>
-            <div class="col-md-6 mb-2">
-                <div class="loan-details-label">Payroll Account Number</div>
-                <div>@Model.PayrollAccountNumber</div>
-            </div>
-        </div>
-        <hr />
-
-        <h5 class="fw-bold mb-3">Documents Submitted</h5>
-        @if (Model.Documents != null && Model.LoanerDocuments.Any())
-        {
-            foreach (var doc in Model.LoanerDocuments)
-            {
-                <div class="loan-details-document">
-                    <div>
-                        <div class="doc-title">@doc.Name</div>
-                        <div class="doc-type">@doc.Type</div>
-                    </div>
-                    <button type="button"
+            <button type="button"
                     class="btn btn-light doc-view-btn"
                     data-doc-url="@Url.Action("Preview", "Document", new { area = "Loaner", id = doc.LoanDocumentID })"
                     data-doc-type="@doc.Type"
                     data-doc-name="@doc.Name">
-                        View
-                    </button>
-                </div>
-            }
-        }
-        else
-        {
-            <div class="alert alert-info">No documents submitted.</div>
-        }
+                View
+            </button>
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-info">No documents submitted.</div>
+}
 
 <!-- Modal for document preview -->
 <div class="modal fade" id="docPreviewModal" tabindex="-1" aria-labelledby="docPreviewModalLabel" aria-hidden="true">
@@ -82,10 +100,64 @@
     </div>
 </div>
 
+<!-- Modal for loan deactivation -->
+<div class="modal fade" id="deactivateLoanModal" tabindex="-1" aria-labelledby="deactivateLoanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivateLoanModalLabel">You are about to deactivate this loan.</h5>
+            </div>
+            <div class="modal-body">
+                <div>
+                    which means:
+                    <ul>
+                        <li>the loaner can request for another loan application, and</li>
+                        <li>the co-maker assigned to this loan will now be able to be assigned as co-maker again.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeactivateBtn">Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
 @section Scripts {
     <script src="~/js/BenefitsAssistantApplicationDetails.js" asp-append-version="true"></script>
     <script>
-        document.getElementById('loanIdField').value = @Model.LoanID;
-        document.getElementById('rejectUrlField').value = '@Url.Action("RejectApplication", "BenefitsAssistantApplicationDetails")';
+        // Attach event only if the button exists
+        var deactivateBtn = document.getElementById('deactivateLoanBtn');
+        if (deactivateBtn) {
+            deactivateBtn.addEventListener('click', function () {
+                var modal = new bootstrap.Modal(document.getElementById('deactivateLoanModal'));
+                modal.show();
+            });
+        }
+
+        var confirmDeactivateBtn = document.getElementById('confirmDeactivateBtn');
+        if (confirmDeactivateBtn && deactivateBtn) {
+            confirmDeactivateBtn.addEventListener('click', function () {
+                var loanId = deactivateBtn.getAttribute('data-loan-id');
+                fetch('@Url.Action("DeactivateLoan", "BenefitsAssistantApplicationDetails", new { area = "BenefitsAssistant" })', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ loanId: loanId })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Failed to deactivate loan.');
+                    }
+                });
+            });
+        }
     </script>
 }

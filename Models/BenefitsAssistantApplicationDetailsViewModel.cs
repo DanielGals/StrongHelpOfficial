@@ -15,6 +15,9 @@
         public DateTime? ApprovedDate { get; set; } // Nullable DateTime property
         public List<BADocumentViewModel> LoanerDocuments { get; set; } = new List<BADocumentViewModel>();
         public List<BADocumentViewModel> ApproverDocuments { get; set; } = new List<BADocumentViewModel>();
+        public bool IsActive { get; set; }
+        public int? CoMakerUserId { get; set; }
+        public string? CoMakerName { get; set; }
     }
 
     public class BADocumentViewModel

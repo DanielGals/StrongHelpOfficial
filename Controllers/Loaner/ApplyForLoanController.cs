@@ -176,7 +176,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             cmd.Parameters.AddWithValue("@LoanAmount", model.LoanAmount);
                             cmd.Parameters.AddWithValue("@DateSubmitted", DateTime.Now);
                             cmd.Parameters.AddWithValue("@UserID", userId);
-                            cmd.Parameters.AddWithValue("@ApplicationStatus", "Submitted");
+                            cmd.Parameters.AddWithValue("@ApplicationStatus", "Drafted");
                             cmd.Parameters.AddWithValue("@Title", "Bank Salary Loan");
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                             cmd.Parameters.AddWithValue("@CreatedBy", createdByName);
@@ -242,15 +242,26 @@ namespace StrongHelpOfficial.Controllers.Loaner
         public async Task<IActionResult> SearchUsers(string term)
         {
             var results = new List<object>();
+            var currentUserId = HttpContext.Session.GetInt32("UserID");
+
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
                 await conn.OpenAsync();
                 var cmd = new SqlCommand(@"
                     SELECT TOP 5 UserID, FirstName, LastName
                     FROM [User]
-                    WHERE CONCAT(FirstName, ' ', LastName) LIKE @term
+                    WHERE (FirstName LIKE @term OR LastName LIKE @term)
+                        AND UserID <> @currentUserId
+                        AND IsActive = 1
+                        AND UserID NOT IN (
+                            SELECT ISNULL(ComakerUserId, 0)
+                            FROM LoanApplication
+                            WHERE IsActive = 1 AND ComakerUserId IS NOT NULL
+                        )
                     ORDER BY FirstName, LastName", conn);
                 cmd.Parameters.AddWithValue("@term", $"%{term}%");
+                cmd.Parameters.AddWithValue("@currentUserId", currentUserId ?? 0);
+
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())

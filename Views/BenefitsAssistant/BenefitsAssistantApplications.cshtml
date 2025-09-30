@@ -219,6 +219,7 @@
                                             string normalizedStatus = app.Status.Trim();
                                             string statusClass = normalizedStatus switch
                                             {
+                                                "Drafted" => "status-badge status-drafted",
                                                 "Submitted" => "status-badge status-submitted",
                                                 "Pending Review" or "In Review" or "In Progress" => "status-badge status-inreview",
                                                 "Approved" => "status-badge status-approved",

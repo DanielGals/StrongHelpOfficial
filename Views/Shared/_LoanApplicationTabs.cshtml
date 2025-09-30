@@ -5,6 +5,7 @@
         : (!string.IsNullOrWhiteSpace(Model?.ApplicationStatus) ? Model.ApplicationStatus : "Submitted");
     string statusClass = status switch
     {
+        "Drafted" => "status-badge status-drafted",
         "Submitted" => "status-badge status-submitted",
         "In Review" => "status-badge status-inreview",
         "In Progress" => "status-badge status-inreview",

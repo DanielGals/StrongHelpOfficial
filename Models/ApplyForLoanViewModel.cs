@@ -14,6 +14,7 @@ namespace StrongHelpOfficial.Models
         public int LoanID { get; set; }
         public int UserID { get; set; }
         [Required(ErrorMessage = "Loan amount is required.")]
+        [Range(1, 80000, ErrorMessage = "Loan amount must be between 1 and 80,000.")]
         public int LoanAmount { get; set; }
         public DateTime DateSubmitted { get; set; }
         public bool? isActive { get; set; }

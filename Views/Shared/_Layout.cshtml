@@ -232,7 +232,7 @@
                         </div>
                         <div class="topbar-actions">
                             <div class="notification">
-                                <span class="notification-bell-wrapper">
+                                <span class="notification-bell-wrapper" id="notificationBellBtn">
                                     <i class="bi bi-bell"></i>
                                     <span class="notification-dot"></span>
                                 </span>
@@ -300,10 +300,96 @@
         </div>
     }
 
+    <!-- Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationModalLabel">Notifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <strong>Your Notifications:</strong>
+                        <div id="coMakerNotificationCards"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- General Notification Modal -->
+    <div class="modal fade" id="notificationCardModal" tabindex="-1" aria-labelledby="notificationCardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" id="notificationCardModalContent">
+                <!-- Cards will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/_Layout.js" asp-append-version="true"></script>
+    <script>
+        $(function () {
+            $('#notificationBellBtn').on('click', function () {
+                var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+                modal.show();
+
+                // Load co-maker requests for the current user
+                $.get('/api/Notifications/CoMakerRequests', function (data) {
+                    console.log(data);
+                    var container = $('#coMakerNotificationCards');
+                    container.empty();
+
+                    if (!data || data.length === 0) {
+                        container.append('<div class="text-muted text-center my-3">No notifications</div>');
+                        return;
+                    }
+
+                    data.forEach(function (item) {
+                        var card = `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Co-maker Request</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        You are invited to be the co-maker for <strong>${item.applicantName}</strong>'s loan application.
+                                    </h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" onclick="handleCoMakerAction(${item.loanId}, 'Accept', this)">Approve</button>
+                                        <button class="btn btn-danger btn-sm" onclick="handleCoMakerAction(${item.loanId}, 'Reject', this)">Reject</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.append(card);
+                    });
+                });
+            });
+        });
+
+        function handleCoMakerAction(loanId, action, btn) {
+            $(btn).prop('disabled', true);
+            $.ajax({
+                url: '/api/Notifications/CoMakerAction',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ LoanID: loanId, Action: action }),
+                success: function () {
+                    $(btn).closest('.card').fadeOut();
+                },
+                error: function (xhr) {
+                    let msg = 'Failed to update. Please try again.';
+                    if (xhr.status === 401) msg = 'Session expired. Please log in again.';
+                    else if (xhr.status === 404) msg = 'This request is no longer available.';
+                    else if (xhr.status === 400) msg = 'Invalid action.';
+                    alert(msg);
+                    $(btn).prop('disabled', false);
+                }
+            });
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

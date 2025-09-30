@@ -56,13 +56,16 @@ else if (hasExistingLoan && existingLoanId != null)
         <div class="col-md-8 mb-3">
             <form asp-controller="ApplyForLoan" asp-action="UploadDocuments" method="post" enctype="multipart/form-data">
                 <label for="loanAmount" class="form-label fw-bold mb-1">Loan Amount</label>
-                <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount">
+                <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount" min="1" max="80000">
                 <span asp-validation-for="LoanAmount" class="text-danger"></span>
 
                 <!-- Modal-like box for displaying the requested amount -->
                 <div id="loanAmountModalBox" class="alert alert-info mt-3" style="display:none; max-width:350px;">
                     <strong>Your requested loan amount:</strong>
                     <div id="loanAmountDisplay" class="fs-4 mt-2"></div>
+                    <div id="loanAmountErrorNote" class="form-text text-muted mt-2" style="display:none;">
+                        You cannot loan above eighty-thousand pesos.
+                    </div>
                 </div>
                 <br>
                 <div class="upload-container">
@@ -309,17 +312,26 @@ else if (hasExistingLoan && existingLoanId != null)
         }
     }
     // Loan amount modal logic
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
         const loanAmountInput = document.getElementById('loanAmount');
         const modalBox = document.getElementById('loanAmountModalBox');
         const display = document.getElementById('loanAmountDisplay');
+        const errorNote = document.getElementById('loanAmountErrorNote');
 
         loanAmountInput.addEventListener('input', function () {
             const value = parseFloat(this.value);
             if (!isNaN(value) && value > 0) {
-                // Format as PHP currency
                 display.textContent = 'PHP ' + value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 modalBox.style.display = 'block';
+                if (value > 80000) {
+                    modalBox.classList.remove('alert-info');
+                    modalBox.classList.add('alert-danger');
+                    errorNote.style.display = 'block';
+                } else {
+                    modalBox.classList.remove('alert-danger');
+                    modalBox.classList.add('alert-info');
+                    errorNote.style.display = 'none';
+                }
             } else {
                 modalBox.style.display = 'none';
             }

@@ -78,7 +78,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     LEFT JOIN LoanApproval lap_ba ON la.LoanID = lap_ba.LoanID 
                         AND lap_ba.UserID = @UserId AND lap_ba.IsActive = 1
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
-                    AND la.UserID != @UserId";
+                    AND la.UserID != @UserId
+                    AND la.ApplicationStatus <> 'Drafted'";
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {

@@ -18,6 +18,8 @@
         public bool CurrentUserHasApproved { get; set; } = false;
         public bool CurrentUserCanApprove { get; set; } = false;
         public string ApprovalBlockedReason { get; set; } = string.Empty;
+        public int? CoMakerUserId { get; set; }
+        public string? CoMakerName { get; set; }
     }
 
     public class ApproverDocumentViewModel

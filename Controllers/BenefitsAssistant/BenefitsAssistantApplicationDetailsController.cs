@@ -113,7 +113,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             var email = HttpContext.Session.GetString("Email");
             var firstName = HttpContext.Session.GetString("FirstName");
             var lastName = HttpContext.Session.GetString("LastName");
-            
+
             return Json(new
             {
                 email = email ?? "",
@@ -242,7 +242,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         }
                     }
 
-                    
+
                     using (var cmd = new SqlCommand(
                         @"INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, IsActive, CreatedAt, CreatedBy)
       OUTPUT INSERTED.LoanApprovalID
@@ -289,6 +289,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
+                           la.IsActive, la.CoMakerUserId, -- Add CoMakerUserId
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -306,15 +307,38 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 LoanAmount = reader.GetDecimal(reader.GetOrdinal("LoanAmount")),
                                 DateSubmitted = reader.GetDateTime(reader.GetOrdinal("DateSubmitted")),
                                 ApplicationStatus = reader["ApplicationStatus"]?.ToString(),
+                                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                                 EmployeeName = $"{reader["FirstName"]} {reader["LastName"]}",
                                 Department = reader["DepartmentName"]?.ToString() ?? "N/A",
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<BADocumentViewModel>(),
-                                Approvers = new List<ApproverViewModel>()
+                                Approvers = new List<ApproverViewModel>(),
+                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("CoMakerUserId")) : (int?)null
                             };
                         }
                     }
                 }
+
+                // Fetch co-maker details if present
+                if (model.CoMakerUserId.HasValue)
+                {
+                    using (var cmd = new SqlCommand(@"
+                        SELECT u.FirstName, u.LastName, u.Email, d.DepartmentName
+                        FROM [User] u
+                        LEFT JOIN Department d ON u.DepartmentID = d.DepartmentID
+                        WHERE u.UserID = @UserID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UserID", model.CoMakerUserId.Value);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                model.CoMakerName = $"{reader["FirstName"]} {reader["LastName"]}";
+                            }
+                        }
+                    }
+                }
+
                 if (model == null)
                     return null;
 
@@ -323,41 +347,41 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 // Load all documents for this loan
                 // After initializing the model...
 
-using (var cmd = new SqlCommand(@"
+                using (var cmd = new SqlCommand(@"
     SELECT LoanDocumentID, LoanDocumentName, LoanApprovalID, '' AS [Type]
     FROM LoanDocument
     WHERE LoanID = @LoanID AND IsActive = 1", conn))
-{
-    cmd.Parameters.AddWithValue("@LoanID", id);
-    using (var reader = await cmd.ExecuteReaderAsync())
-    {
-        while (await reader.ReadAsync())
-        {
-            var name = reader["LoanDocumentName"]?.ToString() ?? "";
-            var ext = System.IO.Path.GetExtension(name).ToLowerInvariant();
-            string type = ext switch
-            {
-                ".pdf" => "PDF Document",
-                ".jpg" or ".jpeg" => "Image",
-                ".png" => "Image",
-                _ => "Document"
-            };
+                {
+                    cmd.Parameters.AddWithValue("@LoanID", id);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var name = reader["LoanDocumentName"]?.ToString() ?? "";
+                            var ext = System.IO.Path.GetExtension(name).ToLowerInvariant();
+                            string type = ext switch
+                            {
+                                ".pdf" => "PDF Document",
+                                ".jpg" or ".jpeg" => "Image",
+                                ".png" => "Image",
+                                _ => "Document"
+                            };
 
-            var doc = new BADocumentViewModel
-            {
-                LoanDocumentID = reader.GetInt32(reader.GetOrdinal("LoanDocumentID")),
-                Name = name,
-                Type = type,
-                LoanApprovalID = reader["LoanApprovalID"] != DBNull.Value ? Convert.ToInt32(reader["LoanApprovalID"]) : 0
-            };
+                            var doc = new BADocumentViewModel
+                            {
+                                LoanDocumentID = reader.GetInt32(reader.GetOrdinal("LoanDocumentID")),
+                                Name = name,
+                                Type = type,
+                                LoanApprovalID = reader["LoanApprovalID"] != DBNull.Value ? Convert.ToInt32(reader["LoanApprovalID"]) : 0
+                            };
 
-            if (doc.LoanApprovalID == 0)
-                model.LoanerDocuments.Add(doc);
-            else
-                model.ApproverDocuments.Add(doc);
-        }
-    }
-}
+                            if (doc.LoanApprovalID == 0)
+                                model.LoanerDocuments.Add(doc);
+                            else
+                                model.ApproverDocuments.Add(doc);
+                        }
+                    }
+                }
 
                 using (var cmd = new SqlCommand(@"
     SELECT la.LoanApprovalID, la.[Order], la.Status, la.Comment, la.ApprovedDate,
@@ -568,7 +592,7 @@ using (var cmd = new SqlCommand(@"
                     await conn.OpenAsync();
 
                     var benefitsAssistantUserId = HttpContext.Session.GetInt32("UserID");
-                    
+
                     if (benefitsAssistantUserId == null)
                     {
                         return Json(new { success = false, message = "User session expired. Please login again." });
@@ -727,5 +751,82 @@ using (var cmd = new SqlCommand(@"
             var result = cmd.ExecuteScalar();
             return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeactivateLoan([FromBody] DeactivateLoanRequest request)
+        {
+            try
+            {
+                var userId = HttpContext.Session.GetInt32("UserID");
+                if (userId == null)
+                    return Json(new { success = false, message = "Session expired. Please log in again." });
+
+                using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
+                {
+                    await conn.OpenAsync();
+
+                    // 1. Update LoanApplication isActive and set BenefitsAssistantUserID
+                    using (var cmd = new SqlCommand(@"
+                    UPDATE LoanApplication
+                    SET isActive = 0,
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy,
+                        BenefitsAssistantUserID = @BenefitsAssistantUserID
+                    WHERE LoanID = @LoanID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@ModifiedBy", userId.ToString());
+                        cmd.Parameters.AddWithValue("@BenefitsAssistantUserID", userId.Value);
+                        cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+
+                    // 2. Mark all related LoanApproval records as inactive
+                    using (var cmd = new SqlCommand(@"
+                    UPDATE LoanApproval
+                    SET IsActive = 0,
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy
+                    WHERE LoanID = @LoanID AND IsActive = 1", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@ModifiedBy", userId.ToString());
+                        cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+
+                    // 3. Mark all related LoanDocument records as inactive
+                    using (var cmd = new SqlCommand(@"
+                    UPDATE LoanDocument
+                    SET IsActive = 0,
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy
+                    WHERE LoanID = @LoanID AND IsActive = 1", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@ModifiedBy", userId.ToString());
+                        cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return Json(new { success = true });
+
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error deactivating loan: " + ex.Message });
+            }
+        }
+    }
+
+    public class DeactivateLoanRequest
+    {
+        public int LoanId { get; set; }
     }
 }
