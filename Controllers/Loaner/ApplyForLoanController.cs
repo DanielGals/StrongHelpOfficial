@@ -44,6 +44,31 @@ namespace StrongHelpOfficial.Controllers.Loaner
             ViewData["Email"] = HttpContext.Session.GetString("Email");
 
             var userId = HttpContext.Session.GetInt32("UserID");
+            var email = HttpContext.Session.GetString("Email");
+            
+            // Fetch FirstName from database like LoanerDashboard does
+            string firstName = "Unknown User";
+            if (!string.IsNullOrEmpty(email))
+            {
+                try
+                {
+                    conn.Open();
+                    using (var cmd = new SqlCommand("SELECT FirstName FROM [User] WHERE Email = @Email AND IsActive = 1", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            firstName = result.ToString();
+                        }
+                    }
+                }
+                catch
+                {
+                    // Keep default value on error
+                }
+            }
+            ViewData["FirstName"] = firstName;
             int documentCount = 0;
             bool hasExistingLoan = false;
             int? existingLoanId = null;
@@ -52,7 +77,8 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 try
                 {
-                    conn.Open();
+                    if (conn.State != System.Data.ConnectionState.Open)
+                        conn.Open();
                     // Check for existing loan
                     var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID", conn);
                     cmdCheck.Parameters.AddWithValue("@UserID", userId);

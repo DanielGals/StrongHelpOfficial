@@ -1,9 +1,9 @@
-﻿@model StrongHelpOfficial.Models.ApplyForLoanViewModel
+@model StrongHelpOfficial.Models.ApplyForLoanViewModel
 @{
     ViewData["Title"] = "Apply For Loan";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var userId = ViewData["UserID"];
-    var roleName = ViewData["Email"];
+    var roleName = ViewData["FirstName"];
     var documentCount = ViewData["DocumentCount"];
     var hasExistingLoan = ViewData["HasExistingLoan"] as bool? ?? false;
     var existingLoanId = ViewData["ExistingLoanId"] as int?;
