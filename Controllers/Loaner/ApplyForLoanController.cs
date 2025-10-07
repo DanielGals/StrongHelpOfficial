@@ -165,13 +165,13 @@ namespace StrongHelpOfficial.Controllers.Loaner
             var loanAmount = model.LoanAmount;
             var coMakerId = model.CoMakerId;
 
-            // Require co-maker to have a value
+            // Validate co-maker
             if (coMakerId == null || coMakerId == 0)
             {
-                TempData["failedSubmitResult"] = "You must assign a co-maker before submitting your loan application!";
-                return RedirectToAction("Index", "ApplyForLoan");
+                return Json(new { success = false, error = "You must assign a co-maker before submitting your loan application!" });
             }
 
+            // Validate files and loan amount
             if (files != null && loanAmount != null)
             {
                 if (files.Count >= 3 && loanAmount != 0)
@@ -223,8 +223,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         {
                             if (file.ContentType != "application/pdf" && !file.FileName.ToLower().EndsWith(".pdf"))
                             {
-                                TempData["failedSubmitResult"] = "Only PDF files are allowed for upload.";
-                                return RedirectToAction("Index", "ApplyForLoan");
+                                return Json(new { success = false, error = "Only PDF files are allowed for upload." });
                             }
 
                             byte[] fileBytes;
@@ -245,23 +244,18 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         }
                     }
 
-                    submissionResult(model);
+                    // Success: return redirect URL for AJAX
+                    return Json(new { success = true, redirectUrl = Url.Action("Index", "ApplyForLoan", new { area = "Loaner" }) });
                 }
                 else
                 {
-                    model.Filecontent = Array.Empty<byte>();
-                    model.LoanDocumentName = Array.Empty<string>();
-                    failedSubmissionResult(model);
+                    return Json(new { success = false, error = "Your loan must at least have an amount, the 3 required documents, and an assigned co-maker!" });
                 }
             }
             else
             {
-                model.Filecontent = Array.Empty<byte>();
-                model.LoanDocumentName = Array.Empty<string>();
-                failedSubmissionResult(model);
+                return Json(new { success = false, error = "Your loan must at least have an amount, the 3 required documents, and an assigned co-maker!" });
             }
-
-            return RedirectToAction("Index", "ApplyForLoan");
         }
 
         [HttpGet]

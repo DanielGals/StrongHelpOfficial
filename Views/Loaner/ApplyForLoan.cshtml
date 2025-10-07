@@ -54,9 +54,9 @@ else if (hasExistingLoan && existingLoanId != null)
 <div class="afl-content">
     <div class="row">
         <div class="col-md-8 mb-3">
-            <form asp-controller="ApplyForLoan" asp-action="UploadDocuments" method="post" enctype="multipart/form-data">
+            <form id ="loanForm" asp-controller="ApplyForLoan" asp-action="UploadDocuments" method="post" enctype="multipart/form-data">
                 <label for="loanAmount" class="form-label fw-bold mb-1">Loan Amount</label>
-                <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount" min="1" max="80000">
+                <input class="form-control" type="number" asp-for="LoanAmount" id="loanAmount" placeholder="Enter amount" min="10000" max="80000">
                 <span asp-validation-for="LoanAmount" class="text-danger"></span>
 
                 <!-- Modal-like box for displaying the requested amount -->
@@ -168,6 +168,7 @@ else if (hasExistingLoan && existingLoanId != null)
 
                 </div>
                 <br />
+                <div id="serverErrorMsg" class="alert alert-danger mt-2" style="display:none;"></div>
                 <input class="action-btn primary w-100" type="submit" value="Submit loan" />
             </form>
         </div>
@@ -327,7 +328,15 @@ else if (hasExistingLoan && existingLoanId != null)
                     modalBox.classList.remove('alert-info');
                     modalBox.classList.add('alert-danger');
                     errorNote.style.display = 'block';
-                } else {
+                    errorNote.textContent = 'You cannot loan beyond eighty-thousand pesos.';
+                } 
+                else if (value < 10000) {
+                    modalBox.classList.remove('alert-info');
+                    modalBox.classList.add('alert-danger');
+                    errorNote.style.display = 'block';
+                    errorNote.textContent = 'You cannot loan below ten-thousand pesos.';
+                }
+                else {
                     modalBox.classList.remove('alert-danger');
                     modalBox.classList.add('alert-info');
                     errorNote.style.display = 'none';
@@ -335,6 +344,47 @@ else if (hasExistingLoan && existingLoanId != null)
             } else {
                 modalBox.style.display = 'none';
             }
+        });
+    });
+</script>
+<!--for the data staying-->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('loanForm');
+        const errorMsg = document.getElementById('serverErrorMsg');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
+
+            const formData = new FormData(form);
+
+            fetch('@Url.Action("UploadDocuments", "ApplyForLoan", new { area = "Loaner" })', {
+                method: 'POST',
+                body: formData
+            })
+            .then(async response => {
+                if (response.ok) {
+                    // If the server returns a redirect, follow it
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        errorMsg.textContent = data.error || "Submission failed.";
+                        errorMsg.style.display = 'block';
+                    }
+                } else {
+                    const text = await response.text();
+                    errorMsg.textContent = text || "Submission failed.";
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                errorMsg.textContent = "An error occurred. Please try again.";
+                errorMsg.style.display = 'block';
+            });
         });
     });
 </script>
