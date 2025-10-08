@@ -138,7 +138,17 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 }
             }
             ViewData["DocumentCount"] = documentCount;
-            ViewData["HasExistingLoan"] = hasExistingLoan;
+            
+            // Only show existing loan message if loan wasn't just submitted
+            if (TempData["LoanJustSubmitted"] == null)
+            {
+                ViewData["HasExistingLoan"] = hasExistingLoan;
+            }
+            else
+            {
+                ViewData["HasExistingLoan"] = false;
+            }
+            
             ViewData["ExistingLoanId"] = existingLoanId;
 
             return View("~/Views/Loaner/ApplyForLoan.cshtml", model);
@@ -243,6 +253,10 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             }
                         }
                     }
+
+                    // Set success message
+                    TempData["submitResult"] = "Loan request submitted successfully!";
+                    TempData["LoanJustSubmitted"] = true;
 
                     // Success: return redirect URL for AJAX
                     return Json(new { success = true, redirectUrl = Url.Action("Index", "ApplyForLoan", new { area = "Loaner" }) });
