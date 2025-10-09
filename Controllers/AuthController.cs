@@ -42,7 +42,7 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "juan.delacruz@example.com"; // Hardcoded email for testing
+        userModel.Email = "liezelrobles@Stronghelps.local"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
@@ -57,7 +57,7 @@ public class AuthController : Controller
 
                     // Updated query to join User and Role tables and get IsActive
                     var query = @"
-                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email, u.IsActive
+                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email, u.IsActive, u.FirstName, u.LastName
                     FROM [User] u
                     INNER JOIN [Role] r ON u.RoleID = r.RoleID
                     WHERE u.Email = @Email";
@@ -85,6 +85,8 @@ public class AuthController : Controller
                                 HttpContext.Session.SetString("RoleName", roleName);
                                 HttpContext.Session.SetInt32("RoleID", roleId);
                                 HttpContext.Session.SetString("Email", userModel.Email.ToLower());
+                                HttpContext.Session.SetString("FirstName", reader["FirstName"] as string ?? "");
+                                HttpContext.Session.SetString("LastName", reader["LastName"] as string ?? "");
                             }
                             else
                             {

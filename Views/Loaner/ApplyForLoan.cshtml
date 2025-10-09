@@ -259,6 +259,12 @@ else if (hasExistingLoan && existingLoanId != null)
                 if (statusLabel) {
                     statusLabel.textContent = selectedCoMakerName;
                 }
+
+                // Hide error message when co-maker is set
+                const errorMsg = document.getElementById('serverErrorMsg');
+                if (errorMsg) {
+                    errorMsg.style.display = 'none';
+                }
             } else {
                 coMakerSuccess.style.display = "none";
                 alert("Please select a co-maker from the list.");
@@ -353,11 +359,17 @@ else if (hasExistingLoan && existingLoanId != null)
         const form = document.getElementById('loanForm');
         const errorMsg = document.getElementById('serverErrorMsg');
 
+        // Restore form data on page load
+        restoreFormData();
+
         form.addEventListener('submit', function (e) {
             e.preventDefault();
 
             errorMsg.style.display = 'none';
             errorMsg.textContent = '';
+
+            // Save form data before submission
+            saveFormData();
 
             const formData = new FormData(form);
 
@@ -367,9 +379,10 @@ else if (hasExistingLoan && existingLoanId != null)
             })
             .then(async response => {
                 if (response.ok) {
-                    // If the server returns a redirect, follow it
                     const data = await response.json();
                     if (data.success) {
+                        // Clear saved data on success
+                        sessionStorage.removeItem('loanFormData');
                         window.location.href = data.redirectUrl;
                     } else {
                         errorMsg.textContent = data.error || "Submission failed.";
@@ -386,6 +399,53 @@ else if (hasExistingLoan && existingLoanId != null)
                 errorMsg.style.display = 'block';
             });
         });
+
+        function saveFormData() {
+            const data = {
+                loanAmount: document.getElementById('loanAmount').value,
+                coMakerId: document.getElementById('CoMakerId').value,
+                coMakerName: document.getElementById('CoMakerName').value,
+                files: allFiles.map(f => ({ name: f.name, size: f.size, type: f.type, lastModified: f.lastModified }))
+            };
+            sessionStorage.setItem('loanFormData', JSON.stringify(data));
+        }
+
+        function restoreFormData() {
+            const saved = sessionStorage.getItem('loanFormData');
+            if (!saved) return;
+
+            const data = JSON.parse(saved);
+            
+            // Restore loan amount
+            if (data.loanAmount) {
+                document.getElementById('loanAmount').value = data.loanAmount;
+                document.getElementById('loanAmount').dispatchEvent(new Event('input'));
+            }
+
+            // Restore co-maker
+            if (data.coMakerId && data.coMakerName) {
+                document.getElementById('CoMakerId').value = data.coMakerId;
+                document.getElementById('CoMakerName').value = data.coMakerName;
+                selectedCoMakerId = data.coMakerId;
+                selectedCoMakerName = data.coMakerName;
+                
+                // Show co-maker success message
+                const coMakerSuccess = document.getElementById('coMakerSuccess');
+                coMakerSuccess.style.display = 'block';
+                coMakerSuccess.textContent = `${data.coMakerName} is currently chosen as co-maker`;
+                
+                const statusLabel = document.getElementById('coMakerStatusLabel');
+                if (statusLabel) statusLabel.textContent = data.coMakerName;
+            }
+
+            // Note: Files cannot be restored due to browser security restrictions
+            // Display message about files
+            if (data.files && data.files.length > 0) {
+                const submittedDocs = document.getElementById('submittedDocs');
+                submittedDocs.innerHTML = '<strong class="d-block mb-2">Submitted Documents:</strong>';
+                submittedDocs.innerHTML += '<div class="alert alert-warning">Please re-attach your ' + data.files.length + ' document(s): ' + data.files.map(f => f.name).join(', ') + '</div>';
+            }
+        }
     });
 </script>
 
