@@ -31,6 +31,14 @@
         .Where(a => !a.RoleName.Contains("Benefits Assistant"))
         .OrderBy(a => a.ApprovedDate ?? DateTime.MaxValue)
         .ToList();
+    
+    // Check co-maker status
+    bool coMakerRejected = Model.ApplicationStatus == "Rejected" && 
+                           !string.IsNullOrEmpty(Model.Remarks) && 
+                           Model.Remarks.Contains("Rejected by Co-maker");
+    bool coMakerApproved = !string.IsNullOrEmpty(Model.CoMakerName) && 
+                           Model.ApplicationStatus != "Drafted" && 
+                           !coMakerRejected;
 }
 
 @if (others != null)
@@ -75,6 +83,30 @@
         <div>
             <span>
                 @ba.Status by @ba.ApproverName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+            </span>
+        </div>
+    </div>
+}
+
+<!-- Co-maker Status -->
+@if (coMakerRejected)
+{
+    <div class="approval-history-item" style="border-left: 3px solid #dc3545; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: #dc3545; font-weight: bold;">Co-maker Decision</div>
+        <div>
+            <span>
+                Rejected by @(Model.CoMakerName ?? "Co-maker") on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+            </span>
+        </div>
+    </div>
+}
+@if (coMakerApproved)
+{
+    <div class="approval-history-item" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">Co-maker Decision</div>
+        <div>
+            <span>
+                Approved by @Model.CoMakerName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
             </span>
         </div>
     </div>
