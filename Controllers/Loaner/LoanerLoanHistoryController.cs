@@ -30,7 +30,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 var sql = @"
                     SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitsAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
                     FROM LoanApplication
-                    WHERE UserID = @UserID AND IsActive = 1
+                    WHERE UserID = @UserID
                     ORDER BY DateSubmitted DESC";
                 using (var cmd = new SqlCommand(sql, conn))
                 {
@@ -93,7 +93,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                            u.FirstName, u.LastName
                     FROM LoanApplication la
                     JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.LoanID = @LoanID AND la.IsActive = 1";
+                    WHERE la.LoanID = @LoanID";
                 using (var cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@LoanID", id);

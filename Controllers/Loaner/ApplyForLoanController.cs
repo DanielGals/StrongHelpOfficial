@@ -72,6 +72,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
             int documentCount = 0;
             bool hasExistingLoan = false;
             int? existingLoanId = null;
+            bool isCoMakerForActiveLoan = false;
 
             if (userId.HasValue)
             {
@@ -79,8 +80,14 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 {
                     if (conn.State != System.Data.ConnectionState.Open)
                         conn.Open();
-                    // Check for existing loan
-                    var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID", conn);
+                    
+                    // Check if user is a co-maker for any active loan
+                    var cmdCoMakerCheck = new SqlCommand("SELECT COUNT(*) FROM LoanApplication WHERE ComakerUserId = @UserID AND IsActive = 1", conn);
+                    cmdCoMakerCheck.Parameters.AddWithValue("@UserID", userId);
+                    isCoMakerForActiveLoan = (int)cmdCoMakerCheck.ExecuteScalar() > 0;
+                    
+                    // Check for existing active loan
+                    var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID AND IsActive = 1", conn);
                     cmdCheck.Parameters.AddWithValue("@UserID", userId);
                     var loanIdObj = cmdCheck.ExecuteScalar();
                     if (loanIdObj != null)
@@ -138,6 +145,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 }
             }
             ViewData["DocumentCount"] = documentCount;
+            ViewData["IsCoMakerForActiveLoan"] = isCoMakerForActiveLoan;
             
             // Only show existing loan message if loan wasn't just submitted
             if (TempData["LoanJustSubmitted"] == null)

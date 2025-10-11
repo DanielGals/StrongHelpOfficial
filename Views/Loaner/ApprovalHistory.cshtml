@@ -45,16 +45,11 @@
 {
     foreach (var approval in others)
     {
-        var statusColor = approval.Status switch
-        {
-            "Approved" => "#28a745", // Green
-            "Rejected" => "#dc3545", // Red
-            "Reviewed" => "#17a2b8", // Blue
-            _ => "#f7c948" // Default to red for pending
-        };
-
-        <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
-            <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
+        var isRejected = approval.Status == "Rejected";
+        var lineColor = isRejected ? "#dc3545" : "#3243c0";
+        
+        <div class="approval-history-item" style="border-left: 3px solid @lineColor; padding-left: 1rem; margin-bottom: 2rem;">
+            <div class="loan-details-label" style="margin-bottom:0.1em; color: @lineColor; font-weight: bold;">
                 @approval.RoleName Approval
             </div>
             <div>
@@ -68,16 +63,11 @@
 
 @if (ba != null)
 {
-    var statusColor = ba.Status switch
-    {
-        "Approved" => "#28a745",
-        "Rejected" => "#dc3545",
-        "Reviewed" => "#17a2b8",
-        _ => "#17a2b8"
-    };
-
-    <div class="approval-history-item" style="border-left: 3px solid @statusColor; padding-left: 1rem; margin-bottom: 2rem;">
-        <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
+    var baIsRejected = ba.Status == "Rejected";
+    var baLineColor = baIsRejected ? "#dc3545" : "#3243c0";
+    
+    <div class="approval-history-item" style="border-left: 3px solid @baLineColor; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: @baLineColor; font-weight: bold;">
             @ba.RoleName Review
         </div>
         <div>
@@ -91,7 +81,7 @@
 <!-- Co-maker Status -->
 @if (coMakerRejected)
 {
-    <div class="approval-history-item" style="border-left: 3px solid #dc3545; padding-left: 1rem; margin-bottom: 2rem;">
+    <div class="approval-history-item" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
         <div class="loan-details-label" style="margin-bottom:0.1em; color: #dc3545; font-weight: bold;">Co-maker Decision</div>
         <div>
             <span>
