@@ -7,6 +7,7 @@
     var documentCount = ViewData["DocumentCount"];
     var hasExistingLoan = ViewData["HasExistingLoan"] as bool? ?? false;
     var existingLoanId = ViewData["ExistingLoanId"] as int?;
+    var isCoMakerForActiveLoan = ViewData["IsCoMakerForActiveLoan"] as bool? ?? false;
 }
 
 @{
@@ -21,6 +22,18 @@
         <a class="blue-btn mt-3"
            href="@Url.Action("Index", "MyApplication", new { area = "Loaner" })">
             <i class="bi bi-list-ul me-2"></i>View My Loan Details
+        </a>
+    </div>
+    return;
+}
+else if (isCoMakerForActiveLoan)
+{
+    <div class="alert alert-warning text-center mt-5">
+        <h4>You cannot apply for a loan at this time.</h4>
+        <p>You are currently a co-maker for an active loan application. You can apply for your own loan once that application is completed or rejected.</p>
+        <a class="blue-btn mt-3"
+           href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })">
+            <i class="bi bi-house-door me-2"></i>Back to Dashboard
         </a>
     </div>
     return;
