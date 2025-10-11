@@ -35,22 +35,16 @@
 
         @foreach (var approval in others)
         {
-            var statusColor = approval.Status switch
-            {
-                "Approved" => "#28a745", // Green
-                "Rejected" => "#dc3545", // Red
-                "Reviewed" => "#17a2b8", // Blue
-                "Pending" or "Under Review" => "#ffc107", // Yellow
-                _ => "#f7c948"
-            };
-
+            var isRejected = approval.Status == "Rejected";
+            var lineColor = isRejected ? "#dc3545" : "#3243c0";
+            
             var isReviewing = approval.Status == "Pending" || approval.Status == "Under Review";
             var displayText = isReviewing
                 ? $"Currently reviewing by {approval.UserName} on {DateTime.Now:yyyy-MM-dd}"
                 : $"{approval.Status} by {approval.UserName} on {(approval.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))}";
 
-            <div class="approval-history-item" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
-                <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
+            <div class="approval-history-item" style="border-left: 3px solid @lineColor; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: @lineColor; font-weight: bold;">
                     @approval.RoleName Approval
                 </div>
                 <div>
@@ -69,8 +63,11 @@
 
         @if (ba != null)
         {
-            <div class="approval-history-item" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
-                <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">
+            var baIsRejected = ba.Status == "Rejected";
+            var baLineColor = baIsRejected ? "#dc3545" : "#3243c0";
+            
+            <div class="approval-history-item" style="border-left: 3px solid @baLineColor; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: @baLineColor; font-weight: bold;">
                     @ba.RoleName Review
                 </div>
                 <div>

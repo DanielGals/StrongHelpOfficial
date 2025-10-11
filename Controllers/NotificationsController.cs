@@ -60,7 +60,7 @@ public class NotificationsController : ControllerBase
             conn.Open();
             var cmd = new SqlCommand(@"
                 UPDATE LoanApplication
-                SET ApplicationStatus = @Status, Remarks = @Remarks
+                SET ApplicationStatus = @Status, Remarks = @Remarks, IsActive = @IsActive
                 WHERE ComakerUserId = @UserID", conn);
             cmd.Parameters.AddWithValue("@UserID", userId.Value);
 
@@ -68,11 +68,13 @@ public class NotificationsController : ControllerBase
             {
                 cmd.Parameters.AddWithValue("@Status", "Submitted");
                 cmd.Parameters.AddWithValue("@Remarks", DBNull.Value);
+                cmd.Parameters.AddWithValue("@IsActive", 1);
             }
             else if (dto.Action == "Reject")
             {
                 cmd.Parameters.AddWithValue("@Status", "Rejected");
                 cmd.Parameters.AddWithValue("@Remarks", "Rejected by Co-maker");
+                cmd.Parameters.AddWithValue("@IsActive", 0);
             }
             else
             {

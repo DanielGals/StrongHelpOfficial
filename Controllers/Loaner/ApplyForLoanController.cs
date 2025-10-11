@@ -79,8 +79,8 @@ namespace StrongHelpOfficial.Controllers.Loaner
                 {
                     if (conn.State != System.Data.ConnectionState.Open)
                         conn.Open();
-                    // Check for existing loan
-                    var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID", conn);
+                    // Check for existing active loan
+                    var cmdCheck = new SqlCommand("SELECT TOP 1 LoanID FROM LoanApplication WHERE UserID = @UserID AND IsActive = 1", conn);
                     cmdCheck.Parameters.AddWithValue("@UserID", userId);
                     var loanIdObj = cmdCheck.ExecuteScalar();
                     if (loanIdObj != null)

@@ -490,7 +490,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET Remarks = @Remarks, ApplicationStatus = @Status, BenefitsAssistantUserID = @BenefitsAssistantUserID
+                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0, BenefitsAssistantUserID = @BenefitsAssistantUserID
                     WHERE LoanID = @LoanID", conn);
                 cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");

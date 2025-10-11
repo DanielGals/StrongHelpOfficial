@@ -502,7 +502,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                 // Immediately reject the entire LoanApplication when any single approver rejects it
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET Remarks = @Remarks, ApplicationStatus = @Status, ModifiedAt = @ModifiedAt, ModifiedBy = @ModifiedBy
+                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0, ModifiedAt = @ModifiedAt, ModifiedBy = @ModifiedBy
                     WHERE LoanID = @LoanID", conn);
                 cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");
