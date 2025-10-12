@@ -327,11 +327,68 @@
         </div>
     </div>
 
+    <!-- Co-maker Confirmation Modal -->
+    <div class="modal fade" id="coMakerConfirmModal" tabindex="-1" aria-labelledby="coMakerConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="coMakerConfirmModalLabel">Confirm Action</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="coMakerConfirmModalBody">
+                    <!-- Confirmation text will be set dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="coMakerConfirmBtn">Yes, Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/_Layout.js" asp-append-version="true"></script>
     <script>
+        let pendingCoMakerAction = null;
+
+            function showCoMakerConfirmModal(loanId, action, btn) {
+            let message = "";
+            if (action === 'Approve') {
+                message = `Are you sure you want to <strong>ACCEPT</strong> this co-maker request? This means that:<br>
+                &ndash; you cannot be a co-maker of another loan,<br>
+                &ndash; and you are bound to this loan by the loaner.`;
+            } else if (action === 'Reject') {
+                message = `You are about to <strong>REJECT</strong> this co-maker request. Do you wish to continue?`;
+            } else {
+                message = "Are you sure you want to proceed with this action?";
+            }
+            $('#coMakerConfirmModalBody').html(message);
+
+            pendingCoMakerAction = { loanId, action, btn };
+
+            var modal = new bootstrap.Modal(document.getElementById('coMakerConfirmModal'));
+            modal.show();
+        }
+
+        // Handle confirmation button click
+        $('#coMakerConfirmBtn').on('click', function () {
+            if (pendingCoMakerAction) {
+                handleCoMakerAction(
+                    pendingCoMakerAction.loanId,
+                    pendingCoMakerAction.action,
+                    pendingCoMakerAction.btn
+                );
+                // Hide the modal
+                var modalEl = document.getElementById('coMakerConfirmModal');
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                pendingCoMakerAction = null;
+            }
+        });
+
+        // Update notification card buttons to use the confirmation modal
         $(function () {
             $('#notificationBellBtn').on('click', function () {
                 var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
@@ -339,7 +396,6 @@
 
                 // Load co-maker requests for the current user
                 $.get('/api/Notifications/CoMakerRequests', function (data) {
-                    console.log(data);
                     var container = $('#coMakerNotificationCards');
                     container.empty();
 
@@ -357,8 +413,8 @@
                                         You are invited to be the co-maker for <strong>${item.applicantName}</strong>'s loan application.
                                     </h6>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-success btn-sm" onclick="handleCoMakerAction(${item.loanId}, 'Approve', this)">Accept</button>
-                                        <button class="btn btn-danger btn-sm" onclick="handleCoMakerAction(${item.loanId}, 'Reject', this)">Reject</button>
+                                        <button class="btn btn-success btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Approve', this)">Accept</button>
+                                        <button class="btn btn-danger btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Reject', this)">Reject</button>
                                     </div>
                                 </div>
                             </div>
