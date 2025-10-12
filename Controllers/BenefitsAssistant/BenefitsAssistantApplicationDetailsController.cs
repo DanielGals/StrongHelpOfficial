@@ -464,16 +464,27 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 var ba = model.Approvers.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
                 var others = model.Approvers
                     .Where(a => !a.RoleName.Contains("Benefits Assistant"))
-                    .OrderBy(a =>
-                        a.Status == "Pending" ? DateTime.MaxValue :
-                        a.Status == "Reviewed" ? DateTime.MaxValue.AddDays(-1) :
-                        a.ApprovedDate ?? DateTime.MaxValue
-                    )
+                    .OrderBy(a => a.Order)
                     .ToList();
+
+                // Determine visible approvers based on sequential flow
+                var visibleApprovers = new List<ApproverViewModel>();
+                foreach (var approver in others)
+                {
+                    visibleApprovers.Add(approver);
+                    
+                    // Stop showing approvers after rejection
+                    if (approver.Status == "Rejected")
+                        break;
+                    
+                    // Stop after first pending (only show current reviewer)
+                    if (approver.Status == "Pending")
+                        break;
+                }
 
                 var newApprovers = new List<ApproverViewModel>();
                 if (ba != null) newApprovers.Add(ba);
-                newApprovers.AddRange(others);
+                newApprovers.AddRange(visibleApprovers);
                 model.Approvers = newApprovers;
 
                 return model;

@@ -93,7 +93,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
-                            AND la.IsActive = 1
+                            AND (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
                             AND la.UserID != @UserId
                             AND EXISTS (
                                 SELECT 1 FROM LoanApproval currentApproval
@@ -108,7 +108,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
-                            AND la.IsActive = 1
+                            AND (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
                             AND la.UserID != @UserId
                             AND EXISTS (
                                 SELECT 1 FROM LoanApproval my_approval
@@ -124,21 +124,24 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 AND (pending_approval.Status IS NULL OR pending_approval.Status = 'Pending')
                             )
                         ) AS InProgress,
-                        -- Completed: Applications approved by all approvers
+                        -- Completed: Applications approved/rejected by this approver
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             INNER JOIN LoanApproval my_lap ON la.LoanID = my_lap.LoanID
-                            WHERE la.IsActive = 1
+                            WHERE (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
                             AND la.UserID != @UserId
                             AND my_lap.UserID = @UserId
-                            AND my_lap.Status = 'Approved'
+                            AND my_lap.Status IN ('Approved', 'Rejected')
                             AND my_lap.IsActive = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM LoanApproval pending_lap
-                                WHERE pending_lap.LoanID = la.LoanID
-                                AND pending_lap.IsActive = 1
-                                AND pending_lap.Status IS NULL
+                            AND (
+                                my_lap.Status = 'Rejected'
+                                OR NOT EXISTS (
+                                    SELECT 1 FROM LoanApproval pending_lap
+                                    WHERE pending_lap.LoanID = la.LoanID
+                                    AND pending_lap.IsActive = 1
+                                    AND pending_lap.Status IS NULL
+                                )
                             )
                         ) AS Completed
                 ", conn))
@@ -163,7 +166,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
                     WHERE la.ApplicationStatus IN ('Submitted', 'In Review', 'In Progress')
-                    AND la.IsActive = 1
+                    AND (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
                     AND u.IsActive = 1
                     AND la.UserID != @UserId
                     AND EXISTS (
