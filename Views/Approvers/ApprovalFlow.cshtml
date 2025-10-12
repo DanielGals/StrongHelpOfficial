@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/css/LoanApplicationDetails.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/MyApplication.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ApproverApprovalFlow.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/svg-icons.css" asp-append-version="true" />
 }
 <div class="row">
     <div class="col-md-8">
@@ -105,9 +106,7 @@
                     {
                         <div class="mt-3">
                             <div class="fw-bold mb-2" style="font-size:1.05em;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#d63384" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:0.5em;">
-                                    <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.828A2 2 0 0 0 19.414 7.414l-4.828-4.828A2 2 0 0 0 12.172 2H6zm6 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414zM6 4h6v4a4 4 0 0 0 4 4h4v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4z"/>
-                                </svg>
+                                <img src="~/images/document-icon.svg" width="18" height="18" class="svg-document-pink" style="vertical-align:middle;margin-right:0.5em;" alt="Document" />
                                 Attached Documents
                             </div>
                             <div class="list-group list-group-flush">
@@ -118,9 +117,7 @@
                                        data-doc-type="@doc.Type"
                                        data-doc-name="@doc.Name"
                                        style="border-radius:6px; transition: background 0.2s;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#e63946" viewBox="0 0 24 24">
-                                            <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2-2V8.828A2 2 0 0 0 19.414 7.414l-4.828-4.828A2 2 0 0 0 12.172 2H6zm6 1.414L18.586 10H14a2 2 0 0 1-2-2V3.414z"/>
-                                        </svg>
+                                        <img src="~/images/document-icon.svg" width="20" height="20" class="svg-document-red" alt="Document" />
                                         <span class="text-primary text-break">@doc.Name</span>
                                     </a>
                                 }
@@ -151,11 +148,7 @@
                         @if (!Model.CurrentUserCanApprove && !string.IsNullOrEmpty(Model.ApprovalBlockedReason))
                         {
                             <div class="alert alert-info d-flex align-items-center" role="alert">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" viewBox="0 0 24 24" class="me-2">
-                                    <circle cx="12" cy="12" r="10" fill="none" stroke="#0dcaf0" stroke-width="2"/>
-                                    <line x1="12" y1="8" x2="12" y2="12" stroke="#0dcaf0" stroke-width="2"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16" stroke="#0dcaf0" stroke-width="2"/>
-                                </svg>
+                                <img src="~/images/info-icon.svg" width="24" height="24" class="me-2 svg-info-blue" alt="Info" />
                                 <div>
                                     <strong>Review Required</strong><br>
                                     @Model.ApprovalBlockedReason
