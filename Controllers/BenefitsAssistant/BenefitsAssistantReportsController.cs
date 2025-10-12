@@ -105,7 +105,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND IsActive = 1
+                    AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
                     AND CAST(DateSubmitted AS DATE) >= @StartDate
                     AND CAST(DateSubmitted AS DATE) <= @EndDate
                 ";
@@ -124,7 +124,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND IsActive = 1
+                    AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
                 ";
             }
 
@@ -161,7 +161,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND IsActive = 1
+                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
             ";
             if (isFilter)
             {
@@ -210,7 +210,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND IsActive = 1
+                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
             ";
             if (isFilter)
             {
@@ -266,7 +266,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND IsActive = 1
+                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
             ";
             if (isFilter)
             {

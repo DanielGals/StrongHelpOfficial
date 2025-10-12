@@ -70,7 +70,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication la
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                       AND la.UserID != @UserId
-                      AND la.IsActive = 1
+                      AND (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);
