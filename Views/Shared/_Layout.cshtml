@@ -143,12 +143,6 @@
                             <i class="bi bi-journal-text"></i>
                             <span>Logs</span>
                         </a>
-                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "BenefitsAssistant" && ViewContext.RouteData.Values["Action"]?.ToString() == "LoanInformation" ? "active" : "")"
-                               href="@Url.Action("LoanInformation", "BenefitsAssistant", new { area = "" })"
-                               title="Loan Information">
-                            <i class="bi bi-info-circle"></i>
-                            <span>Loan Information</span>
-                        </a>
                         }
                         else if (roleName == "Admin")
                         {
@@ -353,7 +347,61 @@
     <script>
         let pendingCoMakerAction = null;
 
-            function showCoMakerConfirmModal(loanId, action, btn) {
+        function updateNotificationDot() {
+            $.get('/api/Notifications/CoMakerRequests', function (data) {
+                if (data && data.length > 0) {
+                    $('.notification-dot').show();
+                } else {
+                    $('.notification-dot').hide();
+                }
+            });
+        }
+
+        // Call on page load
+        $(function () {
+            updateNotificationDot();
+
+            $('#notificationBellBtn').on('click', function () {
+                var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+                modal.show();
+
+                // Load co-maker requests for the current user
+                $.get('/api/Notifications/CoMakerRequests', function (data) {
+                    var container = $('#coMakerNotificationCards');
+                    container.empty();
+
+                    if (!data || data.length === 0) {
+                        container.append('<div class="text-muted text-center my-3">No notifications</div>');
+                        // Hide the dot if no notifications
+                        $('.notification-dot').hide();
+                        return;
+                    }
+
+                    // Show the dot if there are notifications
+                    $('.notification-dot').show();
+
+                    data.forEach(function (item) {
+                        var card = `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Co-maker Request</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        You are invited to be the co-maker for <strong>${item.applicantName}</strong>'s loan application.
+                                    </h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-success btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Approve', this)">Accept</button>
+                                        <button class="btn btn-danger btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Reject', this)">Reject</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.append(card);
+                    });
+                });
+            });
+        });
+
+        function showCoMakerConfirmModal(loanId, action, btn) {
             let message = "";
             if (action === 'Approve') {
                 message = `Are you sure you want to <strong>ACCEPT</strong> this co-maker request? This means that:<br>
@@ -388,43 +436,6 @@
             }
         });
 
-        // Update notification card buttons to use the confirmation modal
-        $(function () {
-            $('#notificationBellBtn').on('click', function () {
-                var modal = new bootstrap.Modal(document.getElementById('notificationModal'));
-                modal.show();
-
-                // Load co-maker requests for the current user
-                $.get('/api/Notifications/CoMakerRequests', function (data) {
-                    var container = $('#coMakerNotificationCards');
-                    container.empty();
-
-                    if (!data || data.length === 0) {
-                        container.append('<div class="text-muted text-center my-3">No notifications</div>');
-                        return;
-                    }
-
-                    data.forEach(function (item) {
-                        var card = `
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">Co-maker Request</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">
-                                        You are invited to be the co-maker for <strong>${item.applicantName}</strong>'s loan application.
-                                    </h6>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-success btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Approve', this)">Accept</button>
-                                        <button class="btn btn-danger btn-sm" onclick="showCoMakerConfirmModal(${item.loanId}, 'Reject', this)">Reject</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        container.append(card);
-                    });
-                });
-            });
-        });
-
         function handleCoMakerAction(loanId, action, btn) {
             $(btn).prop('disabled', true);
             $.ajax({
@@ -433,7 +444,14 @@
                 contentType: 'application/json',
                 data: JSON.stringify({ LoanID: loanId, Action: action }),
                 success: function () {
-                    $(btn).closest('.card').fadeOut();
+                    $(btn).closest('.card').fadeOut(function () {
+                        // After fading out, check if there are any cards left
+                        if ($('#coMakerNotificationCards .card:visible').length === 0) {
+                            $('.notification-dot').hide();
+                            $('#coMakerNotificationCards').append('<div class="text-muted text-center my-3">No notifications</div>');
+                        }
+                        updateNotificationDot();
+                    });
                 },
                 error: function (xhr) {
                     let msg = 'Failed to update. Please try again.';
