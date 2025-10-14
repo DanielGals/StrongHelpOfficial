@@ -12,5 +12,9 @@
 	<PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\lib\bootstrap-icons\" />
+  </ItemGroup>
+
 </Project>
     

@@ -27,10 +27,18 @@
 
 @{
     var ba = Model.Approvers?.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
-    var others = Model.Approvers?
+    var allOthers = Model.Approvers?
         .Where(a => !a.RoleName.Contains("Benefits Assistant"))
-        .OrderBy(a => a.ApprovedDate ?? DateTime.MaxValue)
-        .ToList();
+        .OrderBy(a => a.Order)
+        .ToList() ?? new List<ApprovalViewModel>();
+    
+    var others = new List<ApprovalViewModel>();
+    foreach (var approver in allOthers)
+    {
+        others.Add(approver);
+        if (approver.Status == "Rejected" || approver.Status == "Pending")
+            break;
+    }
     
     // Check co-maker status
     bool coMakerRejected = Model.ApplicationStatus == "Rejected" && 
@@ -46,15 +54,21 @@
     foreach (var approval in others)
     {
         var isRejected = approval.Status == "Rejected";
-        var lineColor = isRejected ? "#dc3545" : "#3243c0";
+        var isApproved = approval.Status == "Approved";
+        var isPending = approval.Status == "Pending";
+        var lineColor = isRejected ? "#dc3545" : (isApproved ? "#28a745" : "#3243c0");
+        
+        var displayText = isPending
+            ? $"Currently reviewing by {approval.ApproverName} on {Model.DateSubmitted.ToString("yyyy-MM-dd")}"
+            : $"{approval.Status} by {approval.ApproverName} on {approval.ApprovedDate?.ToString("yyyy-MM-dd")}";
         
         <div class="approval-history-item" style="border-left: 3px solid @lineColor; padding-left: 1rem; margin-bottom: 2rem;">
             <div class="loan-details-label" style="margin-bottom:0.1em; color: @lineColor; font-weight: bold;">
-                @approval.RoleName Approval
+                @approval.RoleName @(isPending ? "Review" : approval.Status)
             </div>
             <div>
                 <span>
-                    @approval.Status by @approval.ApproverName on @(approval.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+                    @displayText
                 </span>
             </div>
         </div>
@@ -72,7 +86,7 @@
         </div>
         <div>
             <span>
-                @ba.Status by @ba.ApproverName on @(ba.ApprovedDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))
+                @ba.Status by @ba.ApproverName on @ba.ApprovedDate?.ToString("yyyy-MM-dd")
             </span>
         </div>
     </div>

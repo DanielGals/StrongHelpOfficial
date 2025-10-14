@@ -5,56 +5,60 @@
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>@ViewData["Title"]</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/Selection.css" rel="stylesheet" asp-append-version="true" />
 </head>
+
 <body>
 
-<div class="portal-selection-container">
-    <div class="welcome-text">
-        <h1>Welcome back!</h1>
-    </div>
-    <h1 class="portal-selection-title">Choose Your Portal Access</h1>
-
-    <div class="portal-cards-container">
-        <!-- Employee Portal Card -->
-        <div class="portal-card">
-            <div class="portal-icon borrower-icon">
-                <i class="bi bi-person"></i>
-            </div>
-            <h2 class="portal-title borrower-title">Employee Portal</h2>
-            <p class="portal-description">Apply for loans, track your applications, and manage your account</p>
-            <a href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })" class="portal-button borrower-button">Login as Employee</a>
+    <div class="portal-selection-container">
+        <div class="welcome-text">
+            <h1>Welcome back!</h1>
         </div>
+        <h1 class="portal-selection-title">Choose Your Portal Access</h1>
 
-        <!-- Approver Portal Card -->
-        <div class="portal-card">
-            <div class="portal-icon approver-icon">
-                <i class="bi bi-shield-check"></i>
+        <div class="portal-cards-container">
+            <!-- Employee Portal Card -->
+            <div class="portal-card">
+                <div class="portal-icon borrower-icon">
+                    <i class="bi bi-person"></i>
+                </div>
+                <h2 class="portal-title borrower-title">Employee Portal</h2>
+                <p class="portal-description">Apply for loans, track your applications, and manage your account</p>
+                <a href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })"
+                    class="portal-button borrower-button">Login as Employee</a>
             </div>
-            <h2 class="portal-title approver-title">Approver Portal</h2>
-            <p class="portal-description">Review and approve loan applications, access reports and analytics</p>
-            @{
-                string roleName = Context.Session.GetString("RoleName") ?? "";
-                string approverAction = "";
-                
-                if (roleName == "Benefits Assistant")
-                {
-                    approverAction = Url.Action("Index", "BenefitsAssistantDashboard");
+
+            <!-- Approver Portal Card -->
+            <div class="portal-card">
+                <div class="portal-icon approver-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h2 class="portal-title approver-title">Approver Portal</h2>
+                <p class="portal-description">Review and approve loan applications, access reports and analytics</p>
+                @{
+                    string roleName = Context.Session.GetString("RoleName") ?? "";
+                    string approverAction = "";
+
+                    if (roleName == "Benefits Assistant")
+                    {
+                        approverAction = Url.Action("Index", "BenefitsAssistantDashboard");
+                    }
+                    else
+                    {
+                        approverAction = Url.Action("Index", "ApproverDashboard");
+                    }
                 }
-                else
-                {
-                    approverAction = Url.Action("Index", "ApproverDashboard");
-                }
-            }
-            <a href="@approverAction" class="portal-button approver-button">Login as Approver</a>
+                <a href="@approverAction" class="portal-button approver-button">Login as Approver</a>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Add Bootstrap Icons if not already included in layout -->
+    <!-- Add Bootstrap Icons if not already included in layout -->
 </body>
+
 </html>
