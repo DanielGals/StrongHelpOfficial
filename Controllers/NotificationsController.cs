@@ -37,6 +37,7 @@ public class NotificationsController : ControllerBase
                         ApplicantUserId = reader.GetInt32(1),
                         ApplicantName = reader.GetString(2) + " " + reader.GetString(3)
                     });
+
                 }
             }
         }
@@ -49,11 +50,14 @@ public class NotificationsController : ControllerBase
     public IActionResult CoMakerAction([FromBody] CoMakerActionDto dto)
     {
         var userId = HttpContext.Session.GetInt32("UserID");
-        if (userId == null) 
+        if (userId == null)
         {
             // Log: "UserID missing from session"
             return Unauthorized();
         }
+
+        if (dto == null) return BadRequest();
+        if (dto.LoanID <= 0) return BadRequest();
 
         using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
         {
@@ -61,8 +65,10 @@ public class NotificationsController : ControllerBase
             var cmd = new SqlCommand(@"
                 UPDATE LoanApplication
                 SET ApplicationStatus = @Status, Remarks = @Remarks, IsActive = @IsActive
-                WHERE ComakerUserId = @UserID", conn);
+                WHERE ComakerUserId = @UserID AND LoanID = @LoanID", conn);
+
             cmd.Parameters.AddWithValue("@UserID", userId.Value);
+            cmd.Parameters.AddWithValue("@LoanID", dto.LoanID);
 
             if (dto.Action == "Approve")
             {
@@ -82,7 +88,7 @@ public class NotificationsController : ControllerBase
             }
 
             int affected = cmd.ExecuteNonQuery();
-            if (affected == 0) 
+            if (affected == 0)
             {
                 // Log: $"No LoanApplication found for LoanID={dto.LoanID} and ComakerUserId={userId.Value}"
                 return NotFound();

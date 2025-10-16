@@ -209,5 +209,27 @@ namespace StrongHelpOfficial.Controllers.Admin
             TempData["EditMessage"] = "User has been deactivated.";
             return RedirectToAction("Index", new { userId });
         }
+
+        [HttpPost]
+        public IActionResult Reactivate(string userId)
+        {
+            string? connectionString = _configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException("DefaultConnection connection string is not configured.");
+
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                var cmd = new SqlCommand(@"
+                    UPDATE [User]
+                    SET isActive = 1, ModifiedAt = GETDATE()
+                    WHERE UserID = @UserID", conn);
+                cmd.Parameters.AddWithValue("@UserID", userId);
+                cmd.ExecuteNonQuery();
+            }
+
+            TempData["EditMessage"] = "User has been reactivated.";
+            return RedirectToAction("Index", new { userId });
+        }
     }
 }
