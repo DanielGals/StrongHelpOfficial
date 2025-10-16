@@ -208,11 +208,47 @@
                         </a>
                         }
                     }
+                    
+                    @* Portal switching for Benefits Assistant and Approvers - moved to bottom *@
+                    @if (!isDeactivated && (roleName == "Benefits Assistant" || isApproverRole))
+                    {
+                        <hr class="sidebar-divider">
+                        @if (ViewContext.RouteData.Values["area"]?.ToString() == "Loaner")
+                        {
+                            @* Currently in Employee Portal - Show switch to Role Portal *@
+                            @if (roleName == "Benefits Assistant")
+                            {
+                                <a class="nav-link" href="@Url.Action("Index", "BenefitsAssistantDashboard", new { area = "" })" 
+                                   title="Switch to Benefits Portal">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>Switch to Benefits Portal</span>
+                                </a>
+                            }
+                            else if (isApproverRole)
+                            {
+                                <a class="nav-link" href="@Url.Action("Index", "ApproverDashboard", new { area = "" })" 
+                                   title="Switch to Approver Portal">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>Switch to Approver Portal</span>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            @* Currently in Role Portal - Show switch to Employee Portal *@
+                            <a class="nav-link" href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })" 
+                               title="Switch to Employee Portal">
+                                <i class="bi bi-arrow-left-right"></i>
+                                <span>Switch to Employee Portal</span>
+                            </a>
+                        }
+                    }
+                    
                     <div class="mt-auto pt-3">
                         <a class="nav-link" href="@Url.Action("Logout", "LoanerDashboard", new { area = "Loaner" })"
                             title="Logout">
                             <i class="bi bi-box-arrow-right"></i>
-                            <span>Logout</span>
+                            <span>Exit</span>
                         </a>
                     </div>
                 </nav>
