@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Contact";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy - StrongHelp</title>
+    <title>Contact - StrongHelp</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <style>
@@ -17,6 +17,7 @@
         .navbar-nav .nav-link { color: #333; font-weight: 500; margin: 0 0.5rem; }
         .btn-login { background: #000; color: white; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 500; }
         .content { padding: 4rem 0; }
+        .contact-card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .footer { background: #1a1d2e; color: white; padding: 3rem 0 1.5rem; margin-top: 4rem; }
         .footer-brand { font-weight: 700; font-size: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .footer-desc { color: #aaa; font-size: 0.9rem; margin-bottom: 1.5rem; }
@@ -48,16 +49,21 @@
 
     <div class="content">
         <div class="container">
-            <h1 class="mb-4">Privacy Policy</h1>
-            <p class="text-muted">Last updated: January 2025</p>
-            <h5 class="mt-4">1. Information Collection</h5>
-            <p>We collect information necessary to process loan applications and manage your account, including personal and employment details.</p>
-            <h5 class="mt-4">2. Data Usage</h5>
-            <p>Your information is used solely for loan processing, account management, and communication regarding your applications.</p>
-            <h5 class="mt-4">3. Data Security</h5>
-            <p>We implement industry-standard security measures to protect your personal information from unauthorized access.</p>
-            <h5 class="mt-4">4. Data Sharing</h5>
-            <p>Your information is not shared with third parties except as required for loan processing and compliance with legal obligations.</p>
+            <h1 class="mb-4">Contact Us</h1>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="contact-card">
+                        <h5><i class="bi bi-geo-alt-fill text-primary"></i> Address</h5>
+                        <p>Metrobank Plaza, Gil Puyat Avenue<br>Makati City, Philippines</p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="contact-card">
+                        <h5><i class="bi bi-envelope-fill text-primary"></i> Email</h5>
+                        <p><a href="mailto:support@stronghelp.com">support@stronghelp.com</a></p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

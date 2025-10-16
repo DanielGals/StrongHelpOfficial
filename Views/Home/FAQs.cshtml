@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "FAQs";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy Policy - StrongHelp</title>
+    <title>FAQs - StrongHelp</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <style>
@@ -17,6 +17,7 @@
         .navbar-nav .nav-link { color: #333; font-weight: 500; margin: 0 0.5rem; }
         .btn-login { background: #000; color: white; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 500; }
         .content { padding: 4rem 0; }
+        .accordion-button:not(.collapsed) { background-color: #eef2ff; color: #4355db; }
         .footer { background: #1a1d2e; color: white; padding: 3rem 0 1.5rem; margin-top: 4rem; }
         .footer-brand { font-weight: 700; font-size: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .footer-desc { color: #aaa; font-size: 0.9rem; margin-bottom: 1.5rem; }
@@ -48,16 +49,45 @@
 
     <div class="content">
         <div class="container">
-            <h1 class="mb-4">Privacy Policy</h1>
-            <p class="text-muted">Last updated: January 2025</p>
-            <h5 class="mt-4">1. Information Collection</h5>
-            <p>We collect information necessary to process loan applications and manage your account, including personal and employment details.</p>
-            <h5 class="mt-4">2. Data Usage</h5>
-            <p>Your information is used solely for loan processing, account management, and communication regarding your applications.</p>
-            <h5 class="mt-4">3. Data Security</h5>
-            <p>We implement industry-standard security measures to protect your personal information from unauthorized access.</p>
-            <h5 class="mt-4">4. Data Sharing</h5>
-            <p>Your information is not shared with third parties except as required for loan processing and compliance with legal obligations.</p>
+            <h1 class="mb-4">Frequently Asked Questions</h1>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Who can use StrongHelp?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            StrongHelp is exclusively available for Metrobank employees.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            How long does loan approval take?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Loan approval time varies depending on the type of loan and completeness of documentation. You can track your application status in real-time.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Can I apply for multiple loans?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            Yes, you can apply for multiple loans. However, approval depends on your eligibility and existing loan obligations.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

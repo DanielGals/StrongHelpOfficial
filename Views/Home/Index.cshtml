@@ -1,171 +1,188 @@
 @model UserInfoViewModel
 @{
     ViewData["Title"] = "Home Page";
+    Layout = null;
 }
-
-<div class="hero-section text-center text-white py-5">
-    <div class="container">
-        <h1 class="display-4">Easy Access Self-Service<br>Loan Portal</h1>
-        <p>
-            Apply for loans, track applications, and stay updated - all in one place. Exclusively for Metrobank
-            Employees.
-        </p>
-        <div class="mt-4">
-            <a href="/Auth/Login" class="btn btn-light btn-lg me-2">Get Started</a>
-            <a href="#" class="btn btn-outline-light btn-lg">Learn More</a>
-        </div>
-    </div>
-</div>
-
-<div class="container my-5">
-    <h2 class="text-center mb-4">Key Features</h2>
-    <div class="row justify-content-center">
-        <div class="col-md-4 mb-4">
-            <div class="feature-card card p-4 text-center">
-                <div class="icon-container mx-auto mb-3">
-                    <i class="bi bi-file-text feature-icon"></i>
-                </div>
-                <h5>Easy Application</h5>
-                <p class="small">Apply for loans online with a simple, user-friendly application process.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StrongHelp - Easy Access Self-Service Loan Portal</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.08); padding: 1.5rem 2rem; overflow: visible; }
+        .navbar-brand { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; }
+        .navbar-brand img { display: block; vertical-align: middle; }
+        .navbar .container { padding-left: 3rem; padding-right: 3rem; }
+        .navbar-brand { font-weight: 700; font-size: 1.25rem; color: #4355db !important; display: flex; align-items: center; gap: 0.5rem; }
+        .navbar-nav .nav-link { color: #333; font-weight: 500; margin: 0 0.5rem; }
+        .btn-login { background: #000; color: white; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 500; }
+        .btn-login:hover { background: #333; color: white; }
+        .hero { background: linear-gradient(135deg, #4355db 0%, #5a6eeb 100%); color: white; padding: 5rem 0; }
+        .hero h1 { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; }
+        .hero p { font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.95; }
+        .btn-get-started { background: #000; color: white; padding: 0.75rem 2rem; border-radius: 6px; font-weight: 600; border: none; }
+        .btn-get-started:hover { background: #333; color: white; }
+        .btn-learn-more { background: transparent; color: white; padding: 0.75rem 2rem; border: 2px solid white; border-radius: 6px; font-weight: 600; }
+        .btn-learn-more:hover { background: white; color: #4355db; }
+        .section-title { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 3rem; }
+        .feature-card { background: white; border-radius: 12px; padding: 2rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #f0f0f0; height: 100%; }
+        .feature-icon { width: 64px; height: 64px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+        .feature-icon i { font-size: 28px; color: #4355db; }
+        .feature-card h5 { font-weight: 700; margin-bottom: 0.75rem; }
+        .feature-card p { color: #666; font-size: 0.95rem; }
+        .step-circle { width: 80px; height: 80px; background: #4355db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2rem; font-weight: 700; color: white; }
+        .step-title { font-weight: 700; margin-bottom: 0.5rem; }
+        .step-desc { color: #666; font-size: 0.9rem; }
+        .cta-section { background: linear-gradient(135deg, #4355db 0%, #5a6eeb 100%); color: white; padding: 4rem 0; }
+        .cta-section h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .cta-section p { font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.95; }
+        .footer { background: #1a1d2e; color: white; padding: 3rem 0 1.5rem; }
+        .footer-brand { font-weight: 700; font-size: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .footer-desc { color: #aaa; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .footer-title { font-weight: 700; margin-bottom: 1rem; font-size: 1rem; }
+        .footer-link { color: #aaa; text-decoration: none; display: block; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .footer-link:hover { color: white; }
+        .footer-bottom { border-top: 1px solid #333; padding-top: 1.5rem; margin-top: 2rem; text-align: center; color: #888; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="~/images/shield-logo.svg" alt="Shield" width="32" height="38" />
+                <span>StrongHelp</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="/Home/About">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Home/Contact">Contact</a></li>
+                    <li class="nav-item"><a class="btn btn-login" href="/Auth/Login">Login</a></li>
+                </ul>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="feature-card card p-4 text-center">
-                <div class="icon-container mx-auto mb-3">
-                    <i class="bi bi-graph-up feature-icon"></i>
-                </div>
-                <h5>Real-time Tracking</h5>
-                <p class="small">Monitor your loan application status in real-time with instant updates.</p>
+    </nav>
+
+    <section class="hero">
+        <div class="container text-center">
+            <h1>Easy Access Self-Service<br>Loan Portal</h1>
+            <p>Apply for loans, track applications, and stay updated - all in one place. Exclusively<br>for Metrobank Employees.</p>
+            <div>
+                <a href="/Auth/Login" class="btn btn-get-started me-3">Get Started</a>
+                <a href="#features" class="btn btn-learn-more">Learn More</a>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="feature-card card p-4 text-center">
-                <div class="icon-container mx-auto mb-3">
-                    <i class="bi bi-check-circle feature-icon"></i>
+    </section>
+
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="section-title">Key Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-file-earmark-text"></i></div>
+                        <h5>Easy Application</h5>
+                        <p>Apply for loans online with a simple, user-friendly application process.</p>
+                    </div>
                 </div>
-                <h5>Streamlined Approval</h5>
-                <p class="small">Efficient approval workflow ensures minimal delays and hassle-free processing.</p>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-file-earmark-text"></i></div>
+                        <h5>Real-time Tracking</h5>
+                        <p>Monitor your loan application status in real-time with instant updates.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-check-circle"></i></div>
+                        <h5>Streamlined Approval</h5>
+                        <p>Efficient approval workflow that reduces delays and manual workload.</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+    </section>
 
-<div class="container my-5">
-    <h2 class="text-center mb-4">How It Works</h2>
-    <div class="row text-center justify-content-center">
-        <div class="col-md-3 mb-4">
-            <div class="step-circle mx-auto mb-3">1</div>
-            <h6>Login</h6>
-            <p class="small">Securely access the portal using your Microbank employee credentials.</p>
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="row text-center g-4">
+                <div class="col-md-3">
+                    <div class="step-circle">1</div>
+                    <h6 class="step-title">Login</h6>
+                    <p class="step-desc">Securely access the portal using your Metrobank employee credentials.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-circle">2</div>
+                    <h6 class="step-title">Apply</h6>
+                    <p class="step-desc">Fill out the loan application form with your details and requirements.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-circle">3</div>
+                    <h6 class="step-title">Track</h6>
+                    <p class="step-desc">Monitor your application status as it moves through the approval process.</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="step-circle">4</div>
+                    <h6 class="step-title">Manage</h6>
+                    <p class="step-desc">View approved loans, track repayments, and manage your loan portfolio.</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="step-circle mx-auto mb-3">2</div>
-            <h6>Apply</h6>
-            <p class="small">Fill out financial information forms with your needs and requirements.</p>
+    </section>
+
+    <section class="cta-section">
+        <div class="container text-center">
+            <h2>Ready to get Started?</h2>
+            <p>Access the StrongHelp portal now to apply for loans and manage your<br>finances with ease.</p>
+            <a href="/Auth/Login" class="btn btn-get-started">Login to Portal</a>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="step-circle mx-auto mb-3">3</div>
-            <h6>Track</h6>
-            <p class="small">Monitor your application status in real-time through the approval process.</p>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="footer-brand">
+                        <img src="~/images/shield-logo.svg" alt="Shield" width="24" height="28" style="filter: brightness(0) invert(1);" />
+                        <span>StrongHelp</span>
+                    </div>
+                    <p class="footer-desc">An easy access self-service loan web application portal for Metrobank employees.</p>
+                </div>
+                <div class="col-md-2">
+                    <h6 class="footer-title">Quick Links</h6>
+                    <a href="/" class="footer-link">Home</a>
+                    <a href="/Home/About" class="footer-link">About</a>
+                    <a href="/#features" class="footer-link">Features</a>
+                    <a href="/Home/Contact" class="footer-link">Contact</a>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="footer-title">Resources</h6>
+                    <a href="/Home/HelpCenter" class="footer-link">Help Center</a>
+                    <a href="/Home/FAQs" class="footer-link">FAQs</a>
+                    <a href="/Home/Terms" class="footer-link">Terms of Service</a>
+                    <a href="/Home/Privacy" class="footer-link">Privacy Policy</a>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="footer-title">Contact</h6>
+                    <p class="footer-link" style="cursor: default;">Metrobank Plaza, Gil Puyat Avenue<br>Makati City, Philippines</p>
+                    <a href="mailto:support@stronghelp.com" class="footer-link">support@stronghelp.com</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2025 StrongHelp. All rights reserved. A capstone project by STI College Global City.
+            </div>
         </div>
-        <div class="col-md-3 mb-4">
-            <div class="step-circle mx-auto mb-3">4</div>
-            <h6>Manage</h6>
-            <p class="small">View applications, loan repayments, and manage your loan portfolio.</p>
-        </div>
-    </div>
-</div>
+    </footer>
 
-<div class="cta-section text-center text-white py-5">
-    <div class="container">
-        <h2>Ready to get Started?</h2>
-        <p class="mb-4">Access the StrongHelp portal now to apply for loans and manage your finances with ease.</p>
-        <a href="/Auth/Login" class="btn btn-light btn-lg">Login to Portal</a>
-    </div>
-</div>
-
-<style>
-    .hero-section {
-        background-color: #4355db;
-        padding: 80px 0;
-    }
-
-    .cta-section {
-        background-color: #4355db;
-    }
-
-    .feature-card {
-        height: 100%;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s;
-        border: none;
-    }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-    .icon-container {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background-color: #eef2ff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .feature-icon {
-        font-size: 28px;
-        color: #4355db;
-    }
-
-    .step-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background-color: #4355db;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        font-weight: bold;
-    }
-
-    .btn-light {
-        font-weight: 500;
-        padding: 10px 25px;
-    }
-
-    .btn-outline-light {
-        border-width: 2px;
-        padding: 10px 25px;
-    }
-
-    h5 {
-        font-weight: 600;
-        margin-bottom: 12px;
-    }
-
-    h2 {
-        font-weight: 600;
-    }
-
-    h6 {
-        font-weight: 600;
-        margin-top: 10px;
-    }
-
-    .small {
-        color: #555;
-    }
-
-    .container {
-        max-width: 1140px;
-    }
-</style>
-
-<!-- Add Bootstrap Icons for feature icons -->
-<link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" asp-append-version="true" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
