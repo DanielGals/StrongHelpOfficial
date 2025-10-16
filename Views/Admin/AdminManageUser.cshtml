@@ -114,7 +114,10 @@
     </div>
     <div>
         <button id="editUserBtn" class="btn-manage" type="button" onclick="toggleEditMode(true)">Edit User</button>
-        <button id="deactivateBtn" class="btn-danger" type="button" onclick="confirmDeactivate()">Deactivate</button>
+        @if (!string.Equals(Model.roleName, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            <button id="deactivateBtn" class="btn-danger" type="button" onclick="confirmDeactivate()">Deactivate</button>
+        }
         <button id="saveUserBtn" class="btn-manage d-none" type="button" onclick="confirmSave()">Save User Information</button>
         <button id="cancelEditBtn" class="btn-danger d-none" type="button" onclick="confirmCancel()">Cancel Change</button>
     </div>
@@ -203,7 +206,9 @@
         function toggleEditMode(edit) {
             isEditMode = edit;
             document.getElementById('editUserBtn').classList.toggle('d-none', edit);
-            document.getElementById('deactivateBtn').classList.toggle('d-none', edit);
+            let deactivateBtn = document.getElementById('deactivateBtn');
+            if (deactivateBtn) deactivateBtn.classList.toggle('d-none', edit);
+
             document.getElementById('saveUserBtn').classList.toggle('d-none', !edit);
             document.getElementById('cancelEditBtn').classList.toggle('d-none', !edit);
 
