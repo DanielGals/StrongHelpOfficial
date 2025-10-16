@@ -19,9 +19,11 @@
             margin-right: 1rem;
             transition: background 0.2s;
         }
-        .btn-back:hover {
-            background: #e2e6ea;
-        }
+
+            .btn-back:hover {
+                background: #e2e6ea;
+            }
+
         .btn-manage {
             background: #2d6cdf;
             color: #fff;
@@ -32,9 +34,11 @@
             margin-left: 0.5rem;
             transition: background 0.2s;
         }
-        .btn-manage:hover {
-            background: #1b4fa0;
-        }
+
+            .btn-manage:hover {
+                background: #1b4fa0;
+            }
+
         .btn-danger {
             background: #f44336;
             color: #fff;
@@ -45,9 +49,11 @@
             margin-left: 0.5rem;
             transition: background 0.2s;
         }
-        .btn-danger:hover {
-            background: #c62828;
-        }
+
+            .btn-danger:hover {
+                background: #c62828;
+            }
+
         .user-info-box {
             background: #fff;
             border-radius: 12px;
@@ -58,50 +64,64 @@
             margin-left: auto;
             margin-right: auto;
         }
+
         .user-info-title {
             font-size: 1.5rem;
             font-weight: 700;
         }
+
         .user-info-desc {
             color: #6c757d;
             margin-bottom: 1.5rem;
         }
+
         .user-info-section-title {
             font-size: 1.1rem;
             font-weight: 600;
             margin-top: 1.5rem;
             margin-bottom: 0.5rem;
         }
+
         .user-info-row {
             display: flex;
             flex-wrap: wrap;
             margin-bottom: 1rem;
         }
+
         .user-info-label {
             flex: 0 0 180px;
             color: #6c757d;
             font-weight: 500;
         }
+
         .user-info-value, .user-info-input {
             flex: 1 1 0;
             font-weight: 500;
         }
-        .user-info-input input, .user-info-input select {
-            width: 100%;
-            padding: 0.35rem 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
+
+            .user-info-input input, .user-info-input select {
+                width: 100%;
+                padding: 0.35rem 0.5rem;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+                font-size: 1rem;
+            }
+
         .user-info-meta {
             color: #adb5bd;
             font-size: 0.95rem;
             margin-top: 2rem;
             text-align: right;
         }
+
         @@media (max-width: 600px) {
-            .user-info-box { padding: 1rem; }
-            .user-info-label { flex: 0 0 120px; }
+            .user-info-box {
+                padding: 1rem;
+            }
+
+            .user-info-label {
+                flex: 0 0 120px;
+            }
         }
     </style>
 }
@@ -116,7 +136,14 @@
         <button id="editUserBtn" class="btn-manage" type="button" onclick="toggleEditMode(true)">Edit User</button>
         @if (!string.Equals(Model.roleName, "Admin", StringComparison.OrdinalIgnoreCase))
         {
-            <button id="deactivateBtn" class="btn-danger" type="button" onclick="confirmDeactivate()">Deactivate</button>
+            @if (Model.isActive == 1)
+            {
+                <button id="deactivateBtn" class="btn-danger" type="button" onclick="confirmDeactivate()">Deactivate</button>
+            }
+            else
+            {
+                <button id="reactivateBtn" class="btn-manage" type="button" onclick="confirmReactivate()">Reactivate</button>
+            }
         }
         <button id="saveUserBtn" class="btn-manage d-none" type="button" onclick="confirmSave()">Save User Information</button>
         <button id="cancelEditBtn" class="btn-danger d-none" type="button" onclick="confirmCancel()">Cancel Change</button>
@@ -194,6 +221,10 @@
     <input type="hidden" name="userId" value="@Model.userId" />
 </form>
 
+<form id="reactivateForm" method="post" asp-action="Reactivate" asp-controller="AdminManageUser" style="display:none;">
+    <input type="hidden" name="userId" value="@Model.userId" />
+</form>
+
 @if (TempData["EditMessage"] != null)
 {
     <div class="alert alert-info">@TempData["EditMessage"]</div>
@@ -208,6 +239,8 @@
             document.getElementById('editUserBtn').classList.toggle('d-none', edit);
             let deactivateBtn = document.getElementById('deactivateBtn');
             if (deactivateBtn) deactivateBtn.classList.toggle('d-none', edit);
+            let reactivateBtn = document.getElementById('reactivateBtn');
+            if (reactivateBtn) reactivateBtn.classList.toggle('d-none', edit);
 
             document.getElementById('saveUserBtn').classList.toggle('d-none', !edit);
             document.getElementById('cancelEditBtn').classList.toggle('d-none', !edit);
@@ -269,6 +302,11 @@
                 document.getElementById('deactivateForm').submit();
             }
         }
+
+        function confirmReactivate() {
+            if (confirm('Are you sure you want to reactivate this user?')) {
+                document.getElementById('reactivateForm').submit();
+            }
+        }
     </script>
 }
-
