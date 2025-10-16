@@ -360,6 +360,9 @@
         // Call on page load
         $(function () {
             updateNotificationDot();
+            
+            // Auto-refresh notifications every 10 seconds
+            setInterval(updateNotificationDot, 10000);
 
             $('#notificationBellBtn').on('click', function () {
                 var modal = new bootstrap.Modal(document.getElementById('notificationModal'));

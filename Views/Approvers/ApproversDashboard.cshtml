@@ -11,6 +11,7 @@
     <style>
         .dashboard-search-filter-row {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 1rem;
             margin-bottom: 1.25rem;
@@ -18,6 +19,7 @@
 
         .dashboard-search {
             flex: 1;
+            min-width: 200px;
         }
 
         .dashboard-filter-btn {
@@ -247,6 +249,19 @@
 
             // Initial filter in case there's a search value already
             filterApplications();
+
+            // Responsive placeholder
+            function updatePlaceholder() {
+                if (window.innerWidth <= 480) {
+                    searchInput.placeholder = 'Search...';
+                } else if (window.innerWidth <= 768) {
+                    searchInput.placeholder = 'Search by name...';
+                } else {
+                    searchInput.placeholder = 'Search Applications by employee name...';
+                }
+            }
+            updatePlaceholder();
+            window.addEventListener('resize', updatePlaceholder);
         });
     </script>
 

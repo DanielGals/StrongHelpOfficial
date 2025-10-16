@@ -51,7 +51,7 @@
 
 @if (others != null)
 {
-    foreach (var approval in others)
+    foreach (var approval in others.AsEnumerable().Reverse())
     {
         var isRejected = approval.Status == "Rejected";
         var isApproved = approval.Status == "Approved";

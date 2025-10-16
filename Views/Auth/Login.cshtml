@@ -2,6 +2,24 @@
 @{
     ViewData["Title"] = "Home Page";
 }
+
+@if (Model.EmailExists == true && Model.EmailMatched == true && Model.IsActive == false)
+{
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="text-center">
+            <div class="mb-4">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 5rem;"></i>
+            </div>
+            <h2 class="mb-3">Account Deactivated</h2>
+            <p class="text-muted" style="max-width: 500px;">
+                Your account has been deactivated. You cannot access the application at this time.<br>
+                Please contact your administrator for assistance.
+            </p>
+        </div>
+    </div>
+}
+else
+{
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
         <h4>SQL Connection Status</h4>
@@ -29,13 +47,6 @@
     <div class="card-body">
         @if (Model.IsAuthenticated)
         {
-            @if (Model.EmailExists == true && Model.EmailMatched == true && Model.IsActive == false)
-            {
-                <div class="alert alert-danger">
-                    Your account is <strong>deactivated</strong>. You are authenticated, but you cannot proceed to use the application.<br />
-                    Please contact your administrator for assistance.
-                </div>
-            }
             <div class="row mb-3">
                 <div class="col-md-3 font-weight-bold">Authentication Status:</div>
                 <div class="col-md-9">
@@ -148,9 +159,4 @@
     </div>
 }
 
-@if (ViewBag.DeactivatedMessage != null)
-{
-    <div class="alert alert-danger">
-        @ViewBag.DeactivatedMessage
-    </div>
 }

@@ -96,7 +96,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                     LEFT JOIN LoanApproval myApproval ON la.LoanID = myApproval.LoanID 
                                                       AND myApproval.UserID = @UserId 
                                                       AND myApproval.IsActive = 1
-                    WHERE (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
+                    WHERE (la.IsActive = 1 OR la.ApplicationStatus IN ('Approved', 'Rejected'))
                     AND u.IsActive = 1";
 
                 // Only apply status filter for Pending Review

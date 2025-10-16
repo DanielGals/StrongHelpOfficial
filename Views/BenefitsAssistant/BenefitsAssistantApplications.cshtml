@@ -138,7 +138,7 @@
 <div class="loan-tabs mb-3">
     <div class="status-tab-group">
         <a class="status-tab @(Model.SelectedTab == "Submitted" ? "active" : "")" href="?tab=Submitted@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Submitted</a>
-        <a class="status-tab @(Model.SelectedTab == "In Review" ? "active" : "")" href="?tab=In Review@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">In Review</a>
+        <a class="status-tab @(Model.SelectedTab == "In Progress" ? "active" : "")" href="?tab=In Progress@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">In Progress</a>
         <a class="status-tab @(Model.SelectedTab == "Departments Approval" ? "active" : "")" href="?tab=Departments Approval@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Departments Approval</a>
         <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Rejected</a>
         <a class="status-tab @(Model.SelectedTab == null ? "active" : "")" href="?tab=All Applications@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">All Applications</a>
@@ -163,7 +163,7 @@
                 }
             </h5>
             <p class="text-muted" style="font-size: 0.95em;">
-                @if (Model.SelectedTab == "In Review")
+                @if (Model.SelectedTab == "In Progress")
                 {
                     <text>Applications currently under review</text>
                 }
@@ -228,8 +228,8 @@
                                             };
                                             string displayStatus = normalizedStatus switch
                                             {
-                                                "Pending Review" => "In Review",
-                                                "In Progress" => "In Review",
+                                                "Pending Review" => "In Progress",
+                                                "In Review" => "In Progress",
                                                 _ => normalizedStatus
                                             };
                                         }

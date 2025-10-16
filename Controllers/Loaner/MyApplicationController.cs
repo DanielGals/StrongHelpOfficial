@@ -33,7 +33,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     var cmd = new SqlCommand(@"
                         SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitsAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
                         FROM LoanApplication
-                        WHERE UserID = @UserID
+                        WHERE UserID = @UserID AND ApplicationStatus NOT IN ('Approved', 'Rejected')
                         ORDER BY DateSubmitted DESC", conn);
                     cmd.Parameters.AddWithValue("@UserID", userId);
 

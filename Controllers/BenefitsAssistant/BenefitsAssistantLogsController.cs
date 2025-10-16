@@ -50,48 +50,115 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     }
                 }
 
-                string query = @"
-                    SELECT 
-                        la.LoanID,
-                        CASE 
-                            WHEN la.ApplicationStatus = 'In Review' THEN ISNULL(la.DateAssigned, la.DateSubmitted)
-                            WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
-                            ELSE la.DateSubmitted
-                        END AS Timestamp,
-                        ISNULL(la.ApplicationStatus, 'Unknown') AS Action,
-                        'LOAN-' + RIGHT('0000' + CAST(la.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
-                        CASE 
-                            WHEN la.ApplicationStatus = 'Approved' THEN 'Approved bank salary loan application'
-                            WHEN la.ApplicationStatus = 'Rejected' THEN 'Rejected loan application: ' + ISNULL(la.Remarks, '')
-                            WHEN la.ApplicationStatus = 'In Review' THEN 'Application under review'
-                            ELSE ISNULL(la.Title, 'No title')
-                        END AS Details,
-                        ISNULL(NULLIF(LTRIM(RTRIM(la.Remarks)), ''), la.ApplicationStatus) AS Status,
-                        ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
-                    FROM LoanApplication la
-                    INNER JOIN [User] u ON la.UserID = u.UserID
-                    WHERE la.BenefitsAssistantUserID = @UserId
-                    AND la.UserID != @UserId
-                    AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
-                    AND la.IsActive = 1
-                ";
-
+                string query;
+                
                 if (!string.IsNullOrEmpty(filterBy))
                 {
-                    query += " AND la.ApplicationStatus = @FilterBy";
+                    if (filterBy == "Loan Finished")
+                    {
+                        query = @"
+                            SELECT 
+                                la.LoanID,
+                                la.ModifiedAt AS Timestamp,
+                                'Loan Finished' AS Action,
+                                'LOAN-' + RIGHT('0000' + CAST(la.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
+                                'Marked loan as finished' AS Details,
+                                'Completed' AS Status,
+                                ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
+                            FROM LoanApplication la
+                            INNER JOIN [User] u ON la.UserID = u.UserID
+                            WHERE la.BenefitsAssistantUserID = @UserId
+                            AND la.IsActive = 0
+                            AND la.ApplicationStatus = 'Approved'
+                            AND la.UserID != @UserId
+                            AND la.ModifiedAt IS NOT NULL";
+                        if (filterDate.HasValue)
+                        {
+                            query += " AND CONVERT(date, la.ModifiedAt) = @FilterDate";
+                        }
+                    }
+                    else
+                    {
+                        query = @"
+                            SELECT 
+                                lap.LoanID,
+                                lap.ApprovedDate AS Timestamp,
+                                lap.Status AS Action,
+                                'LOAN-' + RIGHT('0000' + CAST(lap.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
+                                CASE 
+                                    WHEN lap.Status = 'Reviewed' THEN 'Reviewed and forwarded application'
+                                    WHEN lap.Status = 'Rejected' THEN 'Rejected loan application: ' + ISNULL(lap.Comment, '')
+                                    ELSE 'Processed application'
+                                END AS Details,
+                                la.ApplicationStatus AS Status,
+                                ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
+                            FROM LoanApproval lap
+                            INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
+                            INNER JOIN [User] u ON la.UserID = u.UserID
+                            WHERE lap.UserID = @UserId
+                            AND lap.IsActive = 1
+                            AND la.UserID != @UserId
+                            AND lap.Status = @FilterBy";
+                        if (filterDate.HasValue)
+                        {
+                            query += " AND CONVERT(date, lap.ApprovedDate) = @FilterDate";
+                        }
+                    }
+                }
+                else
+                {
+                    query = @"
+                        SELECT 
+                            lap.LoanID,
+                            lap.ApprovedDate AS Timestamp,
+                            lap.Status AS Action,
+                            'LOAN-' + RIGHT('0000' + CAST(lap.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
+                            CASE 
+                                WHEN lap.Status = 'Reviewed' THEN 'Reviewed and forwarded application'
+                                WHEN lap.Status = 'Rejected' THEN 'Rejected loan application: ' + ISNULL(lap.Comment, '')
+                                ELSE 'Processed application'
+                            END AS Details,
+                            la.ApplicationStatus AS Status,
+                            ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
+                        FROM LoanApproval lap
+                        INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
+                        INNER JOIN [User] u ON la.UserID = u.UserID
+                        WHERE lap.UserID = @UserId
+                        AND lap.IsActive = 1
+                        AND la.UserID != @UserId";
+                    if (filterDate.HasValue)
+                    {
+                        query += " AND CONVERT(date, lap.ApprovedDate) = @FilterDate";
+                    }
+                    
+                    query += @"
+                        
+                        UNION ALL
+                        
+                        SELECT 
+                            la.LoanID,
+                            la.ModifiedAt AS Timestamp,
+                            'Loan Finished' AS Action,
+                            'LOAN-' + RIGHT('0000' + CAST(la.LoanID AS NVARCHAR(10)), 4) AS ApplicationID,
+                            'Marked loan as finished' AS Details,
+                            'Completed' AS Status,
+                            ISNULL(u.FirstName, '') + ' ' + ISNULL(u.LastName, '') AS UserName
+                        FROM LoanApplication la
+                        INNER JOIN [User] u ON la.UserID = u.UserID
+                        WHERE la.BenefitsAssistantUserID = @UserId
+                        AND la.IsActive = 0
+                        AND la.ApplicationStatus = 'Approved'
+                        AND la.UserID != @UserId
+                        AND la.ModifiedAt IS NOT NULL";
+                    if (filterDate.HasValue)
+                    {
+                        query += " AND CONVERT(date, la.ModifiedAt) = @FilterDate";
+                    }
                 }
 
-                if (filterDate.HasValue)
-                {
-                    query += @" AND CONVERT(date, 
-                        CASE 
-                            WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
-                            WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
-                            ELSE la.DateSubmitted
-                        END) = @FilterDate";
-                }
+
+
+
 
                 query += " ORDER BY Timestamp DESC";
 
@@ -144,29 +211,25 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 }
 
                 string countQuery = @"
-                    SELECT COUNT(*) 
-                    FROM LoanApplication la
-                    WHERE la.BenefitsAssistantUserID = @UserId
-                    AND la.UserID != @UserId
-                    AND la.ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
-                    AND la.IsActive = 1
+                    SELECT COUNT(*) FROM (
+                        SELECT lap.LoanID
+                        FROM LoanApproval lap
+                        INNER JOIN LoanApplication la ON lap.LoanID = la.LoanID
+                        WHERE lap.UserID = @UserId
+                        AND lap.IsActive = 1
+                        AND la.UserID != @UserId
+                        
+                        UNION ALL
+                        
+                        SELECT la.LoanID
+                        FROM LoanApplication la
+                        WHERE la.BenefitsAssistantUserID = @UserId
+                        AND la.IsActive = 0
+                        AND la.ApplicationStatus = 'Approved'
+                        AND la.UserID != @UserId
+                        AND la.ModifiedAt IS NOT NULL
+                    ) AS AllLogs
                 ";
-
-                if (!string.IsNullOrEmpty(filterBy))
-                {
-                    countQuery += " AND la.ApplicationStatus = @FilterBy";
-                }
-
-                if (filterDate.HasValue)
-                {
-                    countQuery += @" AND CONVERT(date, 
-                        CASE 
-                            WHEN la.ApplicationStatus = 'In Review' THEN la.DateAssigned
-                            WHEN la.ApplicationStatus IN ('Approved', 'Rejected') THEN 
-                                ISNULL((SELECT MAX(lap.ApprovedDate) FROM LoanApproval lap WHERE lap.LoanID = la.LoanID AND lap.IsActive = 1), la.DateSubmitted)
-                            ELSE la.DateSubmitted
-                        END) = @FilterDate";
-                }
 
                 using (var countCommand = new SqlCommand(countQuery, connection))
                 {
@@ -194,36 +257,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     model.TotalPages = Math.Max(1, (int)Math.Ceiling((double)model.TotalItems / model.PageSize));
                 }
 
-                using (var statusCommand = new SqlCommand(
-                    @"SELECT DISTINCT ApplicationStatus FROM LoanApplication 
-                      WHERE BenefitsAssistantUserID = @UserId
-                      AND ApplicationStatus IN ('In Review', 'Approved', 'Rejected')
-                      AND IsActive = 1
-                      ORDER BY ApplicationStatus", connection))
-                {
-                    statusCommand.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);
-
-                    try
-                    {
-                        var actions = new List<string>();
-                        using (var reader = statusCommand.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                actions.Add(reader.GetString(0));
-                            }
-                        }
-                        model.AvailableActions = actions;
-                    }
-                    catch
-                    {
-                        model.AvailableActions = new List<string> {
-                            "In Review",
-                            "Approved",
-                            "Rejected"
-                        };
-                    }
-                }
+                model.AvailableActions = new List<string> {
+                    "Reviewed",
+                    "Rejected",
+                    "Loan Finished"
+                };
             }
 
             return View("~/Views/BenefitsAssistant/BenefitsAssistantLogs.cshtml", model);

@@ -74,7 +74,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 model.SubmittedCount = model.ApplicationsByStatus
                     .FirstOrDefault(x => x.Status == "Submitted")?.Count ?? 0;
                 model.InReviewCount = model.ApplicationsByStatus
-                    .FirstOrDefault(x => x.Status == "In Review")?.Count ?? 0;
+                    .FirstOrDefault(x => x.Status == "In Progress")?.Count ?? 0;
 
                 await LoadMonthlyTrends(conn, model, benefitsAssistantUserId, isFilter);
                 await LoadTopLoanTypes(conn, model, benefitsAssistantUserId, isFilter);
@@ -97,7 +97,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SELECT 
                         COUNT(*) AS TotalApplications,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Submitted' THEN 1 ELSE 0 END) AS SubmittedCount,
-                        SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'In Review' THEN 1 ELSE 0 END) AS InReviewCount,
+                        SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'In Progress' THEN 1 ELSE 0 END) AS InReviewCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN 1 ELSE 0 END) AS ApprovedCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Rejected' THEN 1 ELSE 0 END) AS RejectedCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) AS TotalApprovedAmount,
@@ -105,7 +105,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
+                    AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
+                    AND ApplicationStatus != 'Drafted'
+                    AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
                     AND CAST(DateSubmitted AS DATE) >= @StartDate
                     AND CAST(DateSubmitted AS DATE) <= @EndDate
                 ";
@@ -116,7 +118,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     SELECT 
                         COUNT(*) AS TotalApplications,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Submitted' THEN 1 ELSE 0 END) AS SubmittedCount,
-                        SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'In Review' THEN 1 ELSE 0 END) AS InReviewCount,
+                        SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'In Progress' THEN 1 ELSE 0 END) AS InReviewCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN 1 ELSE 0 END) AS ApprovedCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Rejected' THEN 1 ELSE 0 END) AS RejectedCount,
                         SUM(CASE WHEN ISNULL(ApplicationStatus, 'Submitted') = 'Approved' THEN LoanAmount ELSE 0 END) AS TotalApprovedAmount,
@@ -124,7 +126,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
+                    AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
+                    AND ApplicationStatus != 'Drafted'
+                    AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
                 ";
             }
 
@@ -161,7 +165,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
+                AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
+                AND ApplicationStatus != 'Drafted'
+                AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
             ";
             if (isFilter)
             {
@@ -210,7 +216,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
+                AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
+                AND ApplicationStatus != 'Drafted'
+                AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
             ";
             if (isFilter)
             {
@@ -266,7 +274,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (IsActive = 1 OR ApplicationStatus = 'Rejected')
+                AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
+                AND ApplicationStatus != 'Drafted'
+                AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
             ";
             if (isFilter)
             {

@@ -70,7 +70,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication la
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                       AND la.UserID != @UserId
-                      AND (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
+                      AND (la.IsActive = 1 OR la.ApplicationStatus IN ('Approved', 'Rejected'))
+                      AND NOT (la.ApplicationStatus = 'Rejected' AND la.BenefitsAssistantUserID IS NULL)
                 ", conn))
                 {
                     cmd.Parameters.AddWithValue("@UserId", benefitsAssistantUserId);
@@ -97,6 +98,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                       AND la.UserID != @UserId
                       AND la.ApplicationStatus = 'Submitted'
                       AND la.IsActive = 1
+                      AND NOT (la.ApplicationStatus = 'Rejected' AND la.BenefitsAssistantUserID IS NULL)
                     ORDER BY la.DateSubmitted DESC
                 ", conn))
                 {

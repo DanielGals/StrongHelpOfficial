@@ -224,7 +224,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             cmd.Parameters.AddWithValue("@Title", "Bank Salary Loan");
                             cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                             cmd.Parameters.AddWithValue("@CreatedBy", createdByName);
-                            cmd.Parameters.AddWithValue("@CoMakerId", (object?)coMakerId ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@CoMakerId", coMakerId);
                             await cmd.ExecuteNonQueryAsync();
                         }
 

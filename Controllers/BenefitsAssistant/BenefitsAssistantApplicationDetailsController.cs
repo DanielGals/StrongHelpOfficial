@@ -621,7 +621,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     ModifiedBy = @ModifiedBy
                 WHERE LoanID = @LoanID", conn))
                     {
-                        updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Review");
+                        updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Progress");
                         updateCmd.Parameters.AddWithValue("@Remarks", "Waiting for approvers");
                         updateCmd.Parameters.AddWithValue("@Title", request.Title ?? string.Empty);
                         updateCmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
@@ -778,7 +778,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 {
                     await conn.OpenAsync();
 
-                    // 1. Update LoanApplication isActive and set BenefitsAssistantUserID
+                    // Update LoanApplication isActive to mark loan as finished
                     using (var cmd = new SqlCommand(@"
                     UPDATE LoanApplication
                     SET isActive = 0,
@@ -795,35 +795,20 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         await cmd.ExecuteNonQueryAsync();
                     }
 
-                    // 2. Mark all related LoanApproval records as inactive
+                    // Create log entry for marking loan as finished
                     using (var cmd = new SqlCommand(@"
-                    UPDATE LoanApproval
-                    SET IsActive = 0,
-                        ModifiedAt = @ModifiedAt,
-                        ModifiedBy = @ModifiedBy
-                    WHERE LoanID = @LoanID AND IsActive = 1", conn))
+                    INSERT INTO ActivityLog (UserID, Action, Details, Timestamp)
+                    VALUES (@UserID, @Action, @Details, @Timestamp)", conn))
                     {
-                        cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
-                        cmd.Parameters.AddWithValue("@ModifiedBy", userId.ToString());
-                        cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                        cmd.Parameters.AddWithValue("@UserID", userId.Value);
+                        cmd.Parameters.AddWithValue("@Action", "Loan Marked as Finished");
+                        cmd.Parameters.AddWithValue("@Details", $"Loan ID {request.LoanId} has been marked as finished");
+                        cmd.Parameters.AddWithValue("@Timestamp", DateTime.Now);
 
                         await cmd.ExecuteNonQueryAsync();
                     }
 
-                    // 3. Mark all related LoanDocument records as inactive
-                    using (var cmd = new SqlCommand(@"
-                    UPDATE LoanDocument
-                    SET IsActive = 0,
-                        ModifiedAt = @ModifiedAt,
-                        ModifiedBy = @ModifiedBy
-                    WHERE LoanID = @LoanID AND IsActive = 1", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
-                        cmd.Parameters.AddWithValue("@ModifiedBy", userId.ToString());
-                        cmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-
-                        await cmd.ExecuteNonQueryAsync();
-                    }
+                    // Keep LoanApproval and LoanDocument records active for historical reference
                 }
 
                 return Json(new { success = true });

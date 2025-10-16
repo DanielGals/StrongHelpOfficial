@@ -124,24 +124,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 AND (pending_approval.Status IS NULL OR pending_approval.Status = 'Pending')
                             )
                         ) AS InProgress,
-                        -- Completed: Applications approved/rejected by this approver
+                        -- Completed: Applications where this approver has acted AND no pending approvals remain
                         (
                             SELECT COUNT(DISTINCT la.LoanID)
                             FROM LoanApplication la
                             INNER JOIN LoanApproval my_lap ON la.LoanID = my_lap.LoanID
-                            WHERE (la.IsActive = 1 OR la.ApplicationStatus = 'Rejected')
+                            WHERE (la.IsActive = 1 OR la.ApplicationStatus IN ('Approved', 'Rejected'))
                             AND la.UserID != @UserId
                             AND my_lap.UserID = @UserId
                             AND my_lap.Status IN ('Approved', 'Rejected')
                             AND my_lap.IsActive = 1
-                            AND (
-                                my_lap.Status = 'Rejected'
-                                OR NOT EXISTS (
-                                    SELECT 1 FROM LoanApproval pending_lap
-                                    WHERE pending_lap.LoanID = la.LoanID
-                                    AND pending_lap.IsActive = 1
-                                    AND pending_lap.Status IS NULL
-                                )
+                            AND NOT EXISTS (
+                                SELECT 1 FROM LoanApproval pending_lap
+                                WHERE pending_lap.LoanID = la.LoanID
+                                AND pending_lap.IsActive = 1
+                                AND (pending_lap.Status IS NULL OR pending_lap.Status = 'Pending')
                             )
                         ) AS Completed
                 ", conn))

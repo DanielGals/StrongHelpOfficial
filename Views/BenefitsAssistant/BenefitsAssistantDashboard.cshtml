@@ -46,29 +46,78 @@
         </div>
     </div>
 
-    <div class="benefits-content-grid">
-        <div class="pending-applications-section">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2>Pending Applications</h2>
-                    <p class="text-muted mb-0">Loan Applications awaiting your approval</p>
+    <!-- Search and Filters Row -->
+    <div class="dashboard-search-filter-row">
+        <div class="dashboard-search">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" id="applicationSearch"
+                    placeholder="Search Applications by employee name...">
+            </div>
+        </div>
+        <button type="button" class="dashboard-filter-btn" data-bs-toggle="modal" data-bs-target="#filterModal">
+            <i class="bi bi-funnel"></i> Filters
+        </button>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Applications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="d-flex gap-2">
-                    <div class="input-group" style="width: 300px;">
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input type="text" class="form-control border-start-0" placeholder="Search employees..." id="dashboardSearch" />
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <!-- Amount Range -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Amount Range</h5>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="minAmount" class="form-label">Minimum (₱)</label>
+                                    <input type="number" class="form-control" id="minAmount" placeholder="Min amount">
+                                </div>
+                                <div class="col-6">
+                                    <label for="maxAmount" class="form-label">Maximum (₱)</label>
+                                    <input type="number" class="form-control" id="maxAmount" placeholder="Max amount">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Application Date</h5>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="startDate" class="form-label">From</label>
+                                    <input type="date" class="form-control" id="startDate">
+                                </div>
+                                <div class="col-6">
+                                    <label for="endDate" class="form-label">To</label>
+                                    <input type="date" class="form-control" id="endDate">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <select class="form-select" style="width: 150px;" id="statusFilter">
-                        <option value="">All Status</option>
-                        <option value="Submitted">Submitted</option>
-                        <option value="In Review">In Review</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="clearFiltersBtn">Clear Filters</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="applyFiltersBtn">Apply Filters</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="benefits-content-grid">
+        <div class="pending-applications-section">
+            <h2>Pending Applications</h2>
+            <p class="text-muted">Loan Applications awaiting your approval</p>
+
+
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <thead>
@@ -140,30 +189,99 @@
 </div>
 
 <script>
-// Simple client-side filtering for dashboard
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('dashboardSearch');
-    const statusFilter = document.getElementById('statusFilter');
-    const tableRows = document.querySelectorAll('tbody tr');
-    
-    function filterTable() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
-        
-        tableRows.forEach(row => {
-            if (row.cells.length === 1) return; // Skip "no applications" row
-            
-            const employeeName = row.cells[0].textContent.toLowerCase();
-            const status = row.cells[3].textContent.trim();
-            
-            const matchesSearch = employeeName.includes(searchTerm);
-            const matchesStatus = !statusValue || status === statusValue;
-            
-            row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('applicationSearch');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+        const tableRows = document.querySelectorAll('table tbody tr:not(.no-results)');
+        let noResultsRow = document.querySelector('table tbody tr.no-results');
+
+        if (!searchInput) return;
+
+        if (!noResultsRow) {
+            noResultsRow = document.createElement('tr');
+            noResultsRow.className = 'no-results';
+            noResultsRow.style.display = 'none';
+            const noResultsCell = document.createElement('td');
+            noResultsCell.colSpan = 5;
+            noResultsCell.className = 'text-center';
+            noResultsCell.textContent = 'No matching applications found';
+            noResultsRow.appendChild(noResultsCell);
+            if (tableRows.length > 0) {
+                tableRows[0].parentNode.appendChild(noResultsRow);
+            }
+        }
+
+        function filterApplications() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const minAmount = parseFloat(document.getElementById('minAmount').value) || 0;
+            const maxAmount = parseFloat(document.getElementById('maxAmount').value) || Infinity;
+            const startDate = document.getElementById('startDate').value ? new Date(document.getElementById('startDate').value) : null;
+            const endDate = document.getElementById('endDate').value ? new Date(document.getElementById('endDate').value) : null;
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const employeeNameCell = row.querySelector('td:nth-child(1)');
+                const amountCell = row.querySelector('td:nth-child(2)');
+                const dateCell = row.querySelector('td:nth-child(3)');
+
+                if (!employeeNameCell) return;
+
+                const employeeName = employeeNameCell.textContent.toLowerCase();
+                const amountText = amountCell?.textContent.replace(/[₱,]/g, '') || '0';
+                const amount = parseFloat(amountText);
+                const dateText = dateCell?.textContent.trim() || '';
+                const rowDate = dateText ? new Date(dateText) : null;
+
+                const matchesSearch = searchTerm === '' || employeeName.includes(searchTerm);
+                const matchesAmount = amount >= minAmount && amount <= maxAmount;
+                const matchesDate = (!startDate || (rowDate && rowDate >= startDate)) && (!endDate || (rowDate && rowDate <= endDate));
+
+                if (matchesSearch && matchesAmount && matchesDate) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+
+        searchInput.addEventListener('keyup', function () {
+            setTimeout(filterApplications, 100);
         });
-    }
-    
-    searchInput.addEventListener('input', filterTable);
-    statusFilter.addEventListener('change', filterTable);
-});
+
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', function () {
+                document.getElementById('minAmount').value = '';
+                document.getElementById('maxAmount').value = '';
+                document.getElementById('startDate').value = '';
+                document.getElementById('endDate').value = '';
+                filterApplications();
+            });
+        }
+
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', function () {
+                filterApplications();
+                bootstrap.Modal.getInstance(document.getElementById('filterModal')).hide();
+            });
+        }
+
+        filterApplications();
+
+        // Responsive placeholder
+        function updatePlaceholder() {
+            if (window.innerWidth <= 480) {
+                searchInput.placeholder = 'Search...';
+            } else if (window.innerWidth <= 768) {
+                searchInput.placeholder = 'Search by name...';
+            } else {
+                searchInput.placeholder = 'Search Applications by employee name...';
+            }
+        }
+        updatePlaceholder();
+        window.addEventListener('resize', updatePlaceholder);
+    });
 </script>

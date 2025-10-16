@@ -29,6 +29,7 @@
             padding: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
         .chart-title {
@@ -182,7 +183,7 @@
             const statusChart = new Chart(statusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Approved', 'Rejected', 'In Review'],
+                    labels: ['Approved', 'Rejected', 'In Progress'],
                     datasets: [{
                         data: [
         @Model.ApprovedCount,
@@ -229,23 +230,26 @@
             const trendsChart = new Chart(trendsCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Total Applications', 'Approved', 'Rejected'],
+                    labels: ['Total Applications', 'Approved', 'Rejected', 'In Progress'],
                     datasets: [{
                         label: 'Count',
                         data: [
         @Model.TotalApplications,
         @Model.ApprovedCount,
-        @Model.RejectedCount
+        @Model.RejectedCount,
+        @Model.InReviewCount
                         ],
                         backgroundColor: [
                             '#6f42c1', // Purple for Total
                             '#28a745', // Green for Approved
-                            '#dc3545'  // Red for Rejected
+                            '#dc3545', // Red for Rejected
+                            '#17a2b8'  // Blue for In Progress
                         ],
                         borderColor: [
                             '#5a32a3',
                             '#1e7e34',
-                            '#c82333'
+                            '#c82333',
+                            '#117a8b'
                         ],
                         borderWidth: 1
                     }]
@@ -301,6 +305,7 @@
                     }
                 });
             }
+
         });
     </script>
 }

@@ -25,7 +25,7 @@ public class NotificationsController : ControllerBase
                 SELECT la.LoanID, la.UserID, u.FirstName, u.LastName
                 FROM LoanApplication la
                 JOIN [User] u ON la.UserID = u.UserID
-                WHERE la.ApplicationStatus = 'Drafted' AND la.ComakerUserId = @UserID", conn);
+                WHERE la.ComakerUserId = @UserID AND la.ApplicationStatus = 'Drafted' AND la.IsActive = 1", conn);
             cmd.Parameters.AddWithValue("@UserID", userId.Value);
             using (var reader = cmd.ExecuteReader())
             {

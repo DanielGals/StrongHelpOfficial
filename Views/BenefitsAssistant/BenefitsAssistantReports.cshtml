@@ -29,6 +29,7 @@
             padding: 1.5rem;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
         .chart-title {
@@ -182,7 +183,7 @@
             const statusChart = new Chart(statusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Approved', 'Rejected', 'Submitted', 'In Review'],
+                    labels: ['Approved', 'Rejected', 'Submitted', 'In Progress'],
                     datasets: [{
                         data: [
         @Model.ApprovedCount,
@@ -231,25 +232,28 @@
             const trendsChart = new Chart(trendsCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Total Applications', 'Approved', 'Rejected', 'Pending'],
+                    labels: ['Total Applications', 'Approved', 'Rejected', 'Pending', 'In Progress'],
                     datasets: [{
                         label: 'Count',
                         data: [
         @Model.TotalApplications,
         @Model.ApprovedCount,
         @Model.RejectedCount,
-        @(Model.SubmittedCount + Model.InReviewCount)
+        @Model.SubmittedCount,
+        @Model.InReviewCount
                         ],
                         backgroundColor: [
                             '#6f42c1', // Purple for Total
                             '#28a745', // Green for Approved
                             '#dc3545', // Red for Rejected
-                            '#fd7e14'  // Orange for Pending
+                            '#ffc107', // Yellow for Pending
+                            '#fd7e14'  // Orange for In Progress
                         ],
                         borderColor: [
                             '#5a32a3',
                             '#1e7e34',
                             '#c82333',
+                            '#e8a800',
                             '#e8650e'
                         ],
                         borderWidth: 1
@@ -306,6 +310,7 @@
                     }
                 });
             }
+
         });
     </script>
 }

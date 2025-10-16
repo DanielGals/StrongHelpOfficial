@@ -60,8 +60,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 {
                     if (selectedTab == "Departments Approval")
                         statusFilter = "Approved";
-                    else if (selectedTab == "In Review")
-                        statusFilter = "In Review";
+                    else if (selectedTab == "In Progress")
+                        statusFilter = "In Progress";
                     else if (selectedTab == "Submitted")
                         statusFilter = "Submitted";
                     else if (selectedTab == "Rejected")
@@ -79,7 +79,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         AND lap_ba.UserID = @UserId AND lap_ba.IsActive = 1
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                     AND la.UserID != @UserId
-                    AND la.ApplicationStatus <> 'Drafted'";
+                    AND la.ApplicationStatus <> 'Drafted'
+                    AND NOT (la.ApplicationStatus = 'Rejected' AND la.BenefitsAssistantUserID IS NULL)";
 
                 if (!string.IsNullOrEmpty(statusFilter))
                 {

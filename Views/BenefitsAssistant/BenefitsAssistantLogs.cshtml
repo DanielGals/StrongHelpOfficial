@@ -90,9 +90,9 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="statusDropdown">
                     <li><a class="dropdown-item" href="#" data-value="">All Actions</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="In Review">In Review</a></li>
-                    <li><a class="dropdown-item" href="#" data-value="Approved">Approved</a></li>
+                    <li><a class="dropdown-item" href="#" data-value="Reviewed">Reviewed</a></li>
                     <li><a class="dropdown-item" href="#" data-value="Rejected">Rejected</a></li>
+                    <li><a class="dropdown-item" href="#" data-value="Loan Finished">Loan Finished</a></li>
                 </ul>
             </form>
         </div>
@@ -121,20 +121,9 @@
                         {
                             foreach (var log in Model.Logs)
                             {
-                                string actionClass = log.Action.Trim() switch
-                                {
-                                    "Approved" => "action-badge approved",
-                                    "Rejected" => "action-badge rejected",
-                                    "In Review" => "action-badge inreview",
-                                    "Submitted" => "action-badge submitted",
-                                    _ => "action-badge"
-                                };
-
                                 <tr>
                                     <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                    <td>
-                                        <span class="@actionClass">@log.Action</span>
-                                    </td>
+                                    <td>@log.Action</td>
                                     <td>
                                         @{
                                             //Extract the numeric part from the Application ID string (format LOAN-XXXX)
@@ -156,22 +145,7 @@
                                         </a>
                                     </td>
                                     <td>@log.Details</td>
-                                    <td>
-                                        @{
-                                            string normalizedStatus = log.Status.Trim();
-                                            string statusClass = normalizedStatus switch
-                                            {
-                                                "In Review" => "status-badge status-inreview",
-                                                "Approved" => "status-badge status-approved",
-                                                "Rejected" => "status-badge status-rejected",
-                                                "Submitted" => "status-badge status-submitted",
-                                                _ => "status-badge"
-                                            };
-                                        }
-                                        <span class="@statusClass">
-                                            @normalizedStatus
-                                        </span>
-                                    </td>
+                                    <td>@log.Status</td>
                                 </tr>
                             }
                         }

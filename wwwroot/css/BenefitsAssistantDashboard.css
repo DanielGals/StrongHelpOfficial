@@ -5,6 +5,39 @@
     box-sizing: border-box;
 }
 
+.dashboard-search-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.dashboard-search {
+    flex: 1;
+    min-width: 200px;
+}
+
+.dashboard-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    color: #2563eb;
+    cursor: pointer;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+.dashboard-filter-btn i {
+    font-size: 1.1rem;
+}
+
+
+
 
 .pending-applications-section {
     width: 100%;
@@ -12,6 +45,8 @@
 
 .table-responsive {
     width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -108,6 +143,10 @@
         margin-bottom: 20px;
     }
     
+    .table {
+        min-width: 600px;
+    }
+    
     .table th, .table td {
         padding: 0.75rem 0.5rem;
         font-size: 0.9em;
@@ -121,6 +160,10 @@
 }
 
 @media (max-width: 480px) {
+    .table {
+        min-width: 600px;
+    }
+    
     .table th, .table td {
         padding: 0.5rem 0.25rem;
         font-size: 0.8em;
