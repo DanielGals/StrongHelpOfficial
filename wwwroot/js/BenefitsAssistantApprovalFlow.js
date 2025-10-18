@@ -70,7 +70,7 @@ window.handleRoleChange = async function () {
                 approverGroup.classList.add('show');
             }, 10);
 
-            const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}`);
+            const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}&loanId=${loanId}`);
             usersData = await response.json();
             
             // Get current user's email from session
@@ -78,18 +78,32 @@ window.handleRoleChange = async function () {
             const currentUser = await currentUserResponse.json();
             const currentUserEmail = currentUser.email;
 
-            // Filter out current user
+            // Filter out current user (co-maker already filtered on server)
             usersData = usersData.filter(user => user.email !== currentUserEmail);
 
             // Populate datalist
             approverList.innerHTML = '';
-            usersData.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.name;
-                option.dataset.userId = user.userId;
-                option.dataset.email = user.email;
-                approverList.appendChild(option);
-            });
+            
+            if (usersData.length === 0) {
+                // No approvers available
+                approverInput.value = '';
+                approverInput.placeholder = 'No approvers available for this role';
+                approverInput.disabled = true;
+                emailField.value = '';
+                emailField.disabled = true;
+            } else {
+                approverInput.placeholder = 'Type or select approver name...';
+                approverInput.disabled = false;
+                emailField.disabled = false;
+                
+                usersData.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.name;
+                    option.dataset.userId = user.userId;
+                    option.dataset.email = user.email;
+                    approverList.appendChild(option);
+                });
+            }
 
             approverInput.value = '';
             emailField.value = '';
@@ -138,7 +152,7 @@ window.saveApprover = async function () {
     const phaseOrder = document.getElementById('phaseOrderField').value;
 
     if (!roleId || !approverName || !email || !phaseOrder) {
-        alert('Please fill in all required fields');
+        showCustomAlert('Please fill in all required fields');
         return;
     }
 
@@ -148,12 +162,12 @@ window.saveApprover = async function () {
         const result = await response.json();
         
         if (!result.exists) {
-            alert('The specified approver does not exist in the system. Please select an approver from the dropdown or contact your administrator to add this user.');
+            showCustomAlert('The specified approver does not exist in the system. Please select an approver from the dropdown or contact your administrator to add this user.');
             return;
         }
     } catch (error) {
         console.error('Error validating approver:', error);
-        alert('Error validating approver. Please try again.');
+        showCustomAlert('Error validating approver. Please try again.');
         return;
     }
 
@@ -171,13 +185,13 @@ window.saveApprover = async function () {
 
         // Check if the selected order is already used
         if (allUsedOrders.includes(parseInt(phaseOrder))) {
-            alert('This order number is already assigned to another approver. Please select a different order.');
+            showCustomAlert('This order number is already assigned to another approver. Please select a different order.');
             await loadOrderDropdown();
             return;
         }
     } catch (error) {
         console.error('Error validating order:', error);
-        alert('Error validating order number. Please try again.');
+        showCustomAlert('Error validating order number. Please try again.');
         return;
     }
 
@@ -336,23 +350,50 @@ window.proceedWithForward = async function () {
             closeConfirmationModal();
 
             // Show success message
-            alert('Application forwarded successfully!');
-
-            // Refresh the page to show updated status
-            window.location.reload();
+            showCustomAlert('Application forwarded successfully!', () => {
+                window.location.reload();
+            });
         } else {
-            alert(result.message || 'Error forwarding application.');
+            showCustomAlert(result.message || 'Error forwarding application.');
             // Re-enable the button if there was an error
             confirmButton.disabled = false;
             confirmButton.textContent = originalText;
         }
     } catch (error) {
         console.error('Error forwarding application:', error);
-        alert('Error forwarding application. Please try again.');
+        showCustomAlert('Error forwarding application. Please try again.');
         // Re-enable the button if there was an error
         confirmButton.disabled = false;
         confirmButton.textContent = originalText;
     }
+};
+
+// Custom alert function
+window.showCustomAlert = function(message, callback) {
+    const modal = document.getElementById('customAlertModal');
+    const messageEl = document.getElementById('customAlertMessage');
+    messageEl.textContent = message;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => modal.classList.add('show'), 10);
+    
+    // Store callback for later use
+    window.customAlertCallback = callback;
+};
+
+window.closeCustomAlert = function() {
+    const modal = document.getElementById('customAlertModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Execute callback if exists
+        if (window.customAlertCallback) {
+            window.customAlertCallback();
+            window.customAlertCallback = null;
+        }
+    }, 300);
 };
 
 // --- END GLOBAL FUNCTIONS ---
@@ -461,14 +502,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (forwardBtn) {
         forwardBtn.addEventListener('click', async function () {
             if (approversList.length === 0) {
-                alert('No approvers to forward.');
+                showCustomAlert('No approvers to forward.');
                 return;
             }
 
             // Validate that all approvers have userId
             const invalidApprovers = approversList.filter(a => !a.userId);
             if (invalidApprovers.length > 0) {
-                alert('Some approvers are missing user ID information. Please remove and re-add them.');
+                showCustomAlert('Some approvers are missing user ID information. Please remove and re-add them.');
                 return;
             }
 
@@ -478,13 +519,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Validation for required fields
             if (!loanTitle) {
-                alert('Please enter a loan title before forwarding the application.');
+                showCustomAlert('Please enter a loan title before forwarding the application.');
                 document.getElementById('loanTitle').focus();
                 return;
             }
 
             if (!messageToApprovers) {
-                alert('Please enter a message to approvers before forwarding the application.');
+                showCustomAlert('Please enter a message to approvers before forwarding the application.');
                 document.getElementById('messageToApprovers').focus();
                 return;
             }
@@ -695,6 +736,13 @@ async function loadRoles() {
 
 function createApprovalCard(approverData) {
     const container = document.getElementById('approvalCardsContainer');
+    
+    // Hide "No approvers" message if it exists
+    const noApproversAlert = document.querySelector('.alert.alert-info');
+    if (noApproversAlert && noApproversAlert.textContent.includes('No approvers have been assigned')) {
+        noApproversAlert.style.display = 'none';
+    }
+    
     const card = document.createElement('div');
     card.className = 'approval-card';
     card.dataset.userName = approverData.userName;
@@ -831,6 +879,15 @@ function removeApprovalCard(cardElement, approverData) {
             item.order === approverData.order &&
             item.roleName === approverData.roleName)
     );
+
+    // Show "No approvers" message if list is empty
+    const container = document.getElementById('approvalCardsContainer');
+    if (approversList.length === 0 && container.children.length === 0) {
+        const noApproversAlert = document.querySelector('.alert.alert-info');
+        if (noApproversAlert && noApproversAlert.textContent.includes('No approvers have been assigned')) {
+            noApproversAlert.style.display = 'block';
+        }
+    }
 
     // Refresh the order dropdown to make the removed order available again
     // Only refresh if the modal is currently open

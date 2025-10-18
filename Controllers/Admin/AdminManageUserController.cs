@@ -228,7 +228,8 @@ namespace StrongHelpOfficial.Controllers.Admin
                 cmd.ExecuteNonQuery();
             }
 
-            TempData["EditMessage"] = "User has been reactivated.";
+            // Note: User's session will be refreshed on their next login attempt
+            TempData["EditMessage"] = "User has been reactivated. They may need to refresh their browser.";
             return RedirectToAction("Index", new { userId });
         }
     }

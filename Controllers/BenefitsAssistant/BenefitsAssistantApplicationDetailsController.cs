@@ -75,13 +75,35 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetUsersByRole(int roleId)
+        public async Task<JsonResult> GetUsersByRole(int roleId, int? loanId = null)
         {
             var users = new List<object>();
+            int? coMakerUserId = null;
+            int? applicantUserId = null;
 
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
                 await conn.OpenAsync();
+
+                // Get co-maker ID and applicant ID if loanId is provided
+                if (loanId.HasValue)
+                {
+                    using (var cmd = new SqlCommand("SELECT ComakerUserID, UserID FROM LoanApplication WHERE LoanID = @LoanID", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@LoanID", loanId.Value);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                if (reader["ComakerUserID"] != DBNull.Value)
+                                    coMakerUserId = reader.GetInt32(reader.GetOrdinal("ComakerUserID"));
+                                if (reader["UserID"] != DBNull.Value)
+                                    applicantUserId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                            }
+                        }
+                    }
+                }
+
                 using (var cmd = new SqlCommand(@"
                     SELECT u.UserID, u.FirstName, u.LastName, u.Email 
                     FROM [User] u 
@@ -93,9 +115,16 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     {
                         while (await reader.ReadAsync())
                         {
+                            var userId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                            
+                            // Skip co-maker and loan applicant
+                            if ((coMakerUserId.HasValue && userId == coMakerUserId.Value) ||
+                                (applicantUserId.HasValue && userId == applicantUserId.Value))
+                                continue;
+
                             users.Add(new
                             {
-                                userId = reader.GetInt32(reader.GetOrdinal("UserID")),
+                                userId = userId,
                                 name = $"{reader.GetString(reader.GetOrdinal("FirstName"))} {reader.GetString(reader.GetOrdinal("LastName"))}",
                                 email = reader.GetString(reader.GetOrdinal("Email"))
                             });
@@ -289,7 +318,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.IsActive, la.CoMakerUserId, -- Add CoMakerUserId
+                           la.IsActive, la.ComakerUserID, -- Add ComakerUserID
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -313,7 +342,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<BADocumentViewModel>(),
                                 Approvers = new List<ApproverViewModel>(),
-                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("CoMakerUserId")) : (int?)null
+                                CoMakerUserId = reader["ComakerUserID"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("ComakerUserID")) : (int?)null
                             };
                         }
                     }

@@ -26,7 +26,7 @@
         {
             <div class="form-section">
                 <label class="form-label-custom required-field">Loan Title</label>
-                <input type="text" class="form-control" id="loanTitle" name="loanTitle" placeholder="Enter loan title" required />
+                <input type="text" class="form-control" id="loanTitle" name="loanTitle" value="Bank Salary Loan" readonly />
             </div>
 
             <div class="form-section">
@@ -247,6 +247,21 @@
 
 <input type="hidden" id="loanIdField" value="@Model.LoanID" />
 <input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "BenefitsAssistantApplicationDetails")" />
+
+<!-- Custom Alert Modal -->
+<div id="customAlertModal" class="modal-backdrop-custom" style="display:none;">
+    <div class="modal-content-custom" style="max-width:500px;">
+        <div class="modal-header-custom">
+            <h3 class="mb-0" id="customAlertTitle">Alert</h3>
+        </div>
+        <div class="modal-body-custom">
+            <p id="customAlertMessage" style="margin:0;"></p>
+        </div>
+        <div class="modal-footer-custom">
+            <button type="button" class="btn-save" onclick="closeCustomAlert()" style="width:100px;">OK</button>
+        </div>
+    </div>
+</div>
 <!-- PDF Preview Modal -->
 <div id="pdfPreviewModal" class="modal-backdrop-custom" style="display:none;">
     <div class="modal-content-custom" style="max-width:900px;width:90vw;height:90vh;display:flex;flex-direction:column;">
