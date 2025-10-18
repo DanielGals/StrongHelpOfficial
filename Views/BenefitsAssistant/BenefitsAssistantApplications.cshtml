@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Loan Applications";
     int totalPages = (int)Math.Ceiling((double)Model.TotalApplications / Model.PageSize);
-    int start = ((Model.PageNumber - 1) * Model.PageSize) + 1;
+    int start = Model.TotalApplications > 0 ? ((Model.PageNumber - 1) * Model.PageSize) + 1 : 0;
     int end = Math.Min(Model.PageNumber * Model.PageSize, Model.TotalApplications);
 }
 
@@ -139,7 +139,7 @@
     <div class="status-tab-group">
         <a class="status-tab @(Model.SelectedTab == "Submitted" ? "active" : "")" href="?tab=Submitted@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Submitted</a>
         <a class="status-tab @(Model.SelectedTab == "In Progress" ? "active" : "")" href="?tab=In Progress@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">In Progress</a>
-        <a class="status-tab @(Model.SelectedTab == "Departments Approval" ? "active" : "")" href="?tab=Departments Approval@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Departments Approval</a>
+        <a class="status-tab @(Model.SelectedTab == "Departments Approval" ? "active" : "")" href="?tab=Departments Approval@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Approved</a>
         <a class="status-tab @(Model.SelectedTab == "Rejected" ? "active" : "")" href="?tab=Rejected@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Rejected</a>
         <a class="status-tab @(Model.SelectedTab == null ? "active" : "")" href="?tab=All Applications@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">All Applications</a>
     </div>
@@ -173,7 +173,7 @@
                 }
                 else if (Model.SelectedTab == "Departments Approval")
                 {
-                    <text>Applications that have been approved by departments</text>
+                    <text>Applications that have been approved</text>
                 }
                 else if (Model.SelectedTab == "Rejected")
                 {
@@ -258,30 +258,33 @@
             </div>
 
             <!-- Pagination controls below the table -->
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <div>
-                    <span class="pagination-summary text-teal">
-                        Showing <strong>@start</strong> to <strong>@end</strong> of <strong>@Model.TotalApplications</strong> applications
-                    </span>
-                </div>
-                <nav>
-                    <ul class="pagination mb-0">
-                        <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(Model.PageNumber - 1)&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Previous</a>
-                        </li>
-                        @for (int i = 1; i <= totalPages; i++)
-                        {
-                            <li class="page-item @(Model.PageNumber == i ? "active" : "")">
-                                <a class="page-link" href="?page=@i&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">@i</a>
+            @if (Model.TotalApplications > 0)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="pagination-summary text-teal">
+                            Showing <strong>@start</strong> to <strong>@end</strong> of <strong>@Model.TotalApplications</strong> applications
+                        </span>
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                <a class="page-link" href="?page=@(Model.PageNumber - 1)&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Previous</a>
                             </li>
-                        }
-                        <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
-                            <a class="page-link" href="?page=@(Model.PageNumber + 1)&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Next</a>
-                        </li>
-                    </ul>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                                    <a class="page-link" href="?page=@i&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.PageNumber == totalPages ? "disabled" : "")">
+                                <a class="page-link" href="?page=@(Model.PageNumber + 1)&tab=@(Model.SelectedTab ?? "All Applications")@(Model.SearchTerm != null ? $"&search={Model.SearchTerm}" : "")">Next</a>
+                            </li>
+                        </ul>
 
-                </nav>
-            </div>
+                    </nav>
+                </div>
+            }
         </div>
     </div>
 </div>

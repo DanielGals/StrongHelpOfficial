@@ -105,9 +105,9 @@
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MyApplication" &&
                          ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
                            href="@Url.Action("Index", "MyApplication", new { area = "Loaner" })"
-                           title="My Loans">
+                           title="Current Loan">
                             <i class="bi bi-card-checklist"></i>
-                            <span>My Loans</span>
+                            <span>Current Loan</span>
                         </a>
                         <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "LoanerLoanHistory" &&
                          ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"

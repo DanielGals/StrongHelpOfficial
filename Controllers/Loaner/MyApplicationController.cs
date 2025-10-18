@@ -33,7 +33,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     var cmd = new SqlCommand(@"
                         SELECT LoanID, LoanAmount, DateSubmitted, IsActive, BenefitsAssistantUserID, DateAssigned, ApplicationStatus, Remarks, Title, Description
                         FROM LoanApplication
-                        WHERE UserID = @UserID AND ApplicationStatus NOT IN ('Approved', 'Rejected')
+                        WHERE UserID = @UserID AND IsActive = 1
                         ORDER BY DateSubmitted DESC", conn);
                     cmd.Parameters.AddWithValue("@UserID", userId);
 
@@ -41,10 +41,11 @@ namespace StrongHelpOfficial.Controllers.Loaner
                     {
                         while (await reader.ReadAsync())
                         {
+                            var loanId = (int)reader["LoanID"];
                             var status = reader["ApplicationStatus"] as string ?? "Submitted";
                             applications.Add(new MyApplicationViewModel
                             {
-                                LoanID = (int)reader["LoanID"],
+                                LoanID = loanId,
                                 LoanAmount = (decimal)reader["LoanAmount"],
                                 DateSubmitted = (DateTime)reader["DateSubmitted"],
                                 IsActive = (bool)reader["IsActive"],
@@ -54,9 +55,15 @@ namespace StrongHelpOfficial.Controllers.Loaner
                                 Remarks = reader["Remarks"] as string,
                                 Title = reader["Title"] as string,
                                 Description = reader["Description"] as string,
-                                ProgressPercent = GetProgressPercent(status)
+                                ProgressPercent = 0
                             });
                         }
+                    }
+                    
+                    // Calculate dynamic progress for each application
+                    foreach (var app in applications)
+                    {
+                        app.ProgressPercent = await CalculateDynamicProgress(conn, app.LoanID, app.ApplicationStatus);
                     }
                 }
             }
@@ -64,18 +71,38 @@ namespace StrongHelpOfficial.Controllers.Loaner
             return View("~/Views/Loaner/MyApplication.cshtml", applications);
         }
 
-        // Map status to progress percent for UI
-        private int GetProgressPercent(string status)
+        // Calculate dynamic progress based on actual approvals
+        private async Task<int> CalculateDynamicProgress(SqlConnection conn, int loanId, string status)
         {
-            return status switch
+            if (status == "Drafted") return 10;
+            if (status == "Submitted") return 20;
+            if (status == "Approved") return 100;
+            if (status == "Rejected") return 100;
+            
+            // For In Review/In Progress, calculate based on approvals
+            var cmd = new SqlCommand(@"
+                SELECT 
+                    COUNT(*) as TotalApprovers,
+                    SUM(CASE WHEN Status = 'Approved' THEN 1 ELSE 0 END) as ApprovedCount
+                FROM LoanApproval
+                WHERE LoanID = @LoanID AND IsActive = 1", conn);
+            cmd.Parameters.AddWithValue("@LoanID", loanId);
+            
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
-                "Drafted" => 10,
-                "Submitted" => 20,
-                "In Review" => 60,
-                "Approved" => 100,
-                "Rejected" => 100,
-                _ => 20
-            };
+                if (await reader.ReadAsync())
+                {
+                    var total = reader.GetInt32(0);
+                    var approved = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                    
+                    if (total == 0) return 30; // Benefits Assistant reviewed, waiting for approvers
+                    
+                    // Calculate: 30% base (submitted + BA review) + 70% based on approvals
+                    return 30 + (int)((approved / (double)total) * 70);
+                }
+            }
+            
+            return 30;
         }
 
         public async Task<IActionResult> Details(int loanId)

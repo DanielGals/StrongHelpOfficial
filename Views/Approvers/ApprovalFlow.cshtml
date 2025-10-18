@@ -251,6 +251,48 @@
     </div>
 </div>
 
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="mb-3">Success!</h4>
+                <p id="successModalMessage" class="text-muted"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-success px-4" id="successModalOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="mb-3">Error</h4>
+                <p id="errorModalMessage" class="text-muted"></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Hidden fields for JavaScript -->
 <input type="hidden" id="loanIdField" value="@Model.LoanID" />
 <input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "ApproverApplicationDetails")" />
@@ -353,17 +395,16 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert(data.message);
-                            location.reload();
+                            showSuccessModal(data.message);
                         } else {
-                            alert('Error: ' + data.message);
+                            showErrorModal('Error: ' + data.message);
                             approveBtn.disabled = false;
                             approveBtn.textContent = 'Approve Application';
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred while approving the application.');
+                        showErrorModal('An error occurred while approving the application.');
                         approveBtn.disabled = false;
                         approveBtn.textContent = 'Approve Application';
                     });
@@ -395,17 +436,16 @@
                         .then(data => {
                             if (data.success) {
                                 approveModal.hide();
-                                alert(data.message);
-                                location.reload();
+                                showSuccessModal(data.message);
                             } else {
-                                alert('Error: ' + data.message);
+                                showErrorModal('Error: ' + data.message);
                                 confirmApproveBtn.disabled = false;
                                 confirmApproveBtn.textContent = 'Approve Application';
                             }
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('An error occurred while approving the application.');
+                            showErrorModal('An error occurred while approving the application.');
                             confirmApproveBtn.disabled = false;
                             confirmApproveBtn.textContent = 'Approve Application';
                         });
@@ -460,6 +500,23 @@
                         });
                     rejectConfirmModal.hide();
                 });
+            }
+
+            // Success and Error Modal Functions
+            function showSuccessModal(message) {
+                document.getElementById('successModalMessage').textContent = message;
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+                
+                document.getElementById('successModalOkBtn').addEventListener('click', function() {
+                    location.reload();
+                });
+            }
+
+            function showErrorModal(message) {
+                document.getElementById('errorModalMessage').textContent = message;
+                const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
             }
         });
     </script>
