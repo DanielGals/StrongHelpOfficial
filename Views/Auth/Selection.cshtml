@@ -30,7 +30,7 @@
                 <h2 class="portal-title borrower-title">Employee Portal</h2>
                 <p class="portal-description">Apply for loans, track your applications, and manage your account</p>
                 <a href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })"
-                    class="portal-button borrower-button">Login as Employee</a>
+                    class="portal-button borrower-button">Go to Employee Portal</a>
             </div>
 
             <!-- Approver Portal Card -->
@@ -53,7 +53,7 @@
                         approverAction = Url.Action("Index", "ApproverDashboard");
                     }
                 }
-                <a href="@approverAction" class="portal-button approver-button">Login as Approver</a>
+                <a href="@approverAction" class="portal-button approver-button">Go to Approver Portal</a>
             </div>
         </div>
     </div>
