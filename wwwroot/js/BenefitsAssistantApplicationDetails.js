@@ -22,24 +22,143 @@
         });
     });
 
-    // Checklist add item modal logic
+    // Checklist add item modal logic (scoped)
     const addItemBtn = document.getElementById('addItemBtn');
     const checklistItemsContainer = document.getElementById('checklistItemsContainer');
     const forwardBtn = document.getElementById('forwardApplicationBtn');
-
+    const modalEl = document.getElementById('addChecklistItemModal');
     let addChecklistItemModal = null;
-    let confirmAddChecklistBtn = null;
-    let conditionTextInput = null;
+    const CHAR_LIMIT = 200;
+
+    // Safe scoped query helper
+    function modalQuery(selector) {
+        return modalEl ? modalEl.querySelector(selector) : null;
+    }
+
+    // Ensure modal instance and wire scoped handlers
+    if (modalEl) {
+        addChecklistItemModal = new bootstrap.Modal(modalEl);
+
+        // When modal is shown, reset input and ensure maxlength (scoped)
+        modalEl.addEventListener('shown.bs.modal', function () {
+            const conditionTextInput = modalQuery('#conditionTextInput');
+            if (conditionTextInput) {
+                conditionTextInput.value = '';
+                conditionTextInput.setAttribute('maxlength', String(CHAR_LIMIT));
+                conditionTextInput.focus();
+            }
+        });
+
+        // Scoped confirm / fill buttons (attach once)
+        const confirmBtn = modalQuery('#confirmAddChecklistBtn');
+        const fillBtn = modalQuery('#fillPreexistingChecklistBtn');
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function () {
+                const conditionTextInput = modalQuery('#conditionTextInput');
+                const text = (conditionTextInput?.value || '').trim();
+
+                // Enforce CHAR_LIMIT (defensive)
+                if (text.length === 0) {
+                    conditionTextInput?.focus();
+                    return;
+                }
+                if (text.length > CHAR_LIMIT) {
+                    alert(`Checklist item must be ${CHAR_LIMIT} characters or fewer.`);
+                    conditionTextInput.focus();
+                    return;
+                }
+
+                // add near top of file (after CHAR_LIMIT or utility functions)
+window.addPreexistingChecklistItems = function(items, container) {
+    if (!Array.isArray(items) || !container) return;
+    items.forEach((it, idx) => {
+        const id = 'checklist_' + Date.now() + '_' + idx;
+        const div = document.createElement('div');
+        div.className = 'form-check mb-2';
+        div.innerHTML = `<div class="check-left">
+                                <input class="form-check-input" type="checkbox" id="${id}">
+                                <label class="form-check-label checklist-item ms-2" for="${id}">${it}</label>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    <path d="M10 11v6" />
+                                    <path d="M14 11v6" />
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                            </button>`;
+        container.appendChild(div);
+    });
+};
+
+                const id = 'checklist_' + Date.now();
+                const div = document.createElement('div');
+                div.className = 'form-check mb-2';
+                div.innerHTML = `<div class="check-left">
+                                        <input class="form-check-input" type="checkbox" id="${id}">
+                                        <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>`;
+                checklistItemsContainer.appendChild(div);
+
+                // Reset modal input then hide
+                if (conditionTextInput) {
+                    conditionTextInput.value = '';
+                }
+                addChecklistItemModal.hide();
+                updateRejectButtonState();
+            });
+        }
+
+        if (fillBtn) {
+            fillBtn.addEventListener('click', function () {
+                const items = [
+                    'Completed Requirements',
+                    'No derogatory legal records (civil/criminal cases)',
+                    'Eligible co-maker'
+                ];
+                items.forEach((it, idx) => {
+                    const id = 'checklist_' + Date.now() + '_' + idx;
+                    const div = document.createElement('div');
+                    div.className = 'form-check mb-2';
+                    div.innerHTML = `<div class="check-left">
+                                            <input class="form-check-input" type="checkbox" id="${id}">
+                                            <label class="form-check-label checklist-item ms-2" for="${id}">${it}</label>
+                                        </div>
+                                        <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                <path d="M10 11v6" />
+                                                <path d="M14 11v6" />
+                                                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                            </svg>
+                                        </button>`;
+                    checklistItemsContainer.appendChild(div);
+                });
+
+                addChecklistItemModal.hide();
+                updateRejectButtonState();
+            });
+        }
+    }
 
     if (addItemBtn) {
         addItemBtn.addEventListener('click', function () {
-            if (!addChecklistItemModal) {
-                addChecklistItemModal = new bootstrap.Modal(document.getElementById('addChecklistItemModal'));
-                confirmAddChecklistBtn = document.getElementById('confirmAddChecklistBtn');
-                conditionTextInput = document.getElementById('conditionTextInput');
+            if (!addChecklistItemModal && modalEl) {
+                addChecklistItemModal = new bootstrap.Modal(modalEl);
             }
-            conditionTextInput.value = '';
-            addChecklistItemModal.show();
+            addChecklistItemModal?.show();
         });
     }
 
@@ -64,110 +183,11 @@
     checklistItemsContainer.addEventListener('click', function (e) {
         if (e.target.closest('.checklist-remove-btn')) {
             const btn = e.target.closest('.checklist-remove-btn');
-            btn.parentElement.parentElement.remove();
+            // remove the nearest .form-check wrapper
+            const wrapper = btn.closest('.form-check');
+            if (wrapper) wrapper.remove();
             updateRejectButtonState();
         }
-    });
-
-    // Confirm add checklist item
-    document.getElementById('confirmAddChecklistBtn').addEventListener('click', function () {
-        if (!conditionTextInput) {
-            conditionTextInput = document.getElementById('conditionTextInput');
-        }
-        const text = conditionTextInput.value.trim();
-        if (text.length > 0) {
-            const id = 'checklist_' + Date.now();
-            const div = document.createElement('div');
-            div.className = 'form-check mb-2';
-            div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="${id}">
-                                    <label class="form-check-label checklist-item ms-2" for="${id}">${text}</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-            checklistItemsContainer.appendChild(div);
-            addChecklistItemModal.hide();
-            updateRejectButtonState();
-        } else {
-            conditionTextInput.focus();
-        }
-    });
-
-    document.getElementById('fillPreexistingChecklistBtn').addEventListener('click', function () {
-        if (!conditionTextInput) {
-            conditionTextInput = document.getElementById('conditionTextInput');
-        }
-        for (let i = 0; i < 3; i++) {
-            const id = 'checklist_' + Date.now();
-            const div = document.createElement('div');
-            div.className = 'form-check mb-2';
-            if (i === 0) {
-                div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_1">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_1">No existing active loans</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-                checklistItemsContainer.appendChild(div);
-            }
-            else if (i === 1) {
-                div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_2">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_2">Not a co-maker for another active loan</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-                checklistItemsContainer.appendChild(div);
-            }
-            else if (i === 2) {
-                div.innerHTML = `<div class="form-check mb-2 d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center flex-grow-1">
-                                    <input class="form-check-input" type="checkbox" id="checklist_3">
-                                    <label class="form-check-label checklist-item ms-2" for="checklist_3">No derogatory legal records (civil/criminal cases)</label>
-                                </div>
-                                <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6" />
-                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                                    </svg>
-                                </button>
-                            </div>`;
-                checklistItemsContainer.appendChild(div);
-            }
-        }
-
-        addChecklistItemModal.hide();
-        updateRejectButtonState();
     });
 
     // Initial state
@@ -193,7 +213,8 @@
     });
 
     // Reject action handler
-    document.getElementById('finalRejectBtn').addEventListener('click', function () {
+    const finalRejectBtn = document.getElementById('finalRejectBtn');
+    finalRejectBtn.addEventListener('click', function () {
         const loanId = document.getElementById('loanIdField').value;
         const remarks = document.getElementById('rejectCommentBox').value.trim();
         const rejectUrl = document.getElementById('rejectUrlField').value;
