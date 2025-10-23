@@ -44,9 +44,8 @@
     bool coMakerRejected = Model.ApplicationStatus == "Rejected" && 
                            !string.IsNullOrEmpty(Model.Remarks) && 
                            Model.Remarks.Contains("Rejected by Co-maker");
-    bool coMakerApproved = !string.IsNullOrEmpty(Model.CoMakerName) && 
-                           Model.ApplicationStatus != "Drafted" && 
-                           !coMakerRejected;
+    bool coMakerApproved = !string.IsNullOrEmpty(Model.Remarks) && 
+                           Model.Remarks.Contains("Accepted by Co-maker");
 }
 
 @if (others != null)
@@ -106,11 +105,11 @@
 }
 @if (coMakerApproved)
 {
-    <div class="approval-history-item" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
-        <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">Co-maker Decision</div>
+    <div class="approval-history-item" style="border-left: 3px solid #28a745; padding-left: 1rem; margin-bottom: 2rem;">
+        <div class="loan-details-label" style="margin-bottom:0.1em; color: #28a745; font-weight: bold;">Co-maker Decision</div>
         <div>
             <span>
-                Approved by @Model.CoMakerName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+                Accepted by @Model.CoMakerName on @Model.DateSubmitted.ToString("yyyy-MM-dd")
             </span>
         </div>
     </div>
