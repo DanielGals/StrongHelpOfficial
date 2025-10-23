@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -86,7 +86,7 @@
                 <nav class="sidebar-menu">
                     @if (!isDeactivated)
                     {
-                        if (roleName == "Employee" || ((isApproverRole || roleName == "Benefits Assistant") && ViewContext.RouteData.Values["area"]?.ToString() == "Loaner"))
+                        if (roleName == "Employee" || ((isApproverRole || roleName == "Benefits Assistant" || roleName == "Admin") && ViewContext.RouteData.Values["area"]?.ToString() == "Loaner"))
                         {
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "LoanerDashboard" &&
                              ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
@@ -210,7 +210,7 @@
                     }
                     
                     @* Portal switching for Benefits Assistant and Approvers - moved to bottom *@
-                    @if (!isDeactivated && (roleName == "Benefits Assistant" || isApproverRole))
+                    @if (!isDeactivated && (roleName == "Benefits Assistant" || isApproverRole || roleName == "Admin"))
                     {
                         <hr class="sidebar-divider">
                         @if (ViewContext.RouteData.Values["area"]?.ToString() == "Loaner")
@@ -230,6 +230,14 @@
                                    title="Switch to Approver Portal">
                                     <i class="bi bi-arrow-left-right"></i>
                                     <span>Switch to Approver Portal</span>
+                                </a>
+                            }
+                            else if (roleName == "Admin")
+                            {
+                                <a class="nav-link" href="@Url.Action("Index", "AdminDashboard", new { area = "" })" 
+                                   title="Switch to Admin Portal">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>Switch to Admin Portal</span>
                                 </a>
                             }
                         }
