@@ -684,11 +684,10 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                     using (var baCmd = new SqlCommand(@"
                 INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
-                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
+                VALUES (@LoanID, @UserID, 0, 'Reviewed', '', @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         baCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         baCmd.Parameters.AddWithValue("@UserID", benefitsAssistantUserId);
-                        baCmd.Parameters.AddWithValue("@Comment", request.Description ?? "Application reviewed and forwarded");
                         baCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedBy", benefitsAssistantUserId.ToString());

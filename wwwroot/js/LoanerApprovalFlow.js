@@ -77,11 +77,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const department = approver.roleName === "Benefits Assistant" ?
                 "Benefits Assistant" : approver.roleName;
                 
-            // Don't show "Waiting for approvers" for Benefits Assistant
+            // Always show "Application reviewed" for Benefits Assistant
             let description = '';
             if (approver.roleName === "Benefits Assistant") {
-                description = approver.description === 'Waiting for approvers' ? 
-                    'Application reviewed' : approver.description || '';
+                description = 'Application reviewed';
             } else {
                 description = approver.description || '';
             }

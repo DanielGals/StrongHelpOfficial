@@ -40,7 +40,6 @@ window.closeModal = function () {
     document.getElementById('approverInput').value = '';
     document.getElementById('selectedApproverUserId').value = '';
     document.getElementById('emailField').value = '';
-    document.getElementById('descriptionField').value = '';
 
     const approverGroup = document.getElementById('approverDropdownGroup');
     const emailGroup = document.getElementById('emailField').closest('.form-group');
@@ -148,7 +147,6 @@ window.saveApprover = async function () {
     const approverName = document.getElementById('approverInput').value.trim();
     const userId = document.getElementById('selectedApproverUserId').value;
     const email = document.getElementById('emailField').value.trim();
-    const description = document.getElementById('descriptionField').value;
     const phaseOrder = document.getElementById('phaseOrderField').value;
 
     if (!roleId || !approverName || !email || !phaseOrder) {
@@ -207,7 +205,6 @@ window.saveApprover = async function () {
             userName: finalUserName,
             email: email,
             order: parseInt(phaseOrder),
-            description: description,
             isSaved: false,
             attachedFiles: selectedFiles.map(f => f.name),
             attachedFileObjects: [...selectedFiles] // <-- Store File objects here
@@ -796,7 +793,6 @@ function createApprovalCard(approverData) {
         <div style="position:relative;">
             <button type="button" class="remove-approver-btn" style="position:absolute;top:0;right:0;background:none;border:none;font-size:1.5rem;color:#dc3545;padding:4px 8px;cursor:pointer;" title="Remove approver">&times;</button>
             <div class="approval-card-title">${approverData.roleName}</div>
-            <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
             <div class="approval-card-content">
                 <div><strong>User:</strong> ${approverData.userName}</div>
                 <div><strong>Approver Order:</strong> ${approverData.order}</div>
