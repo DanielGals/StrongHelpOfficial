@@ -93,6 +93,38 @@
             </div>
         }
 
+        @{
+            // Check co-maker status
+            bool coMakerRejected = !string.IsNullOrEmpty(Model.Remarks) && 
+                                   Model.Remarks.Contains("Rejected by Co-maker");
+            bool coMakerApproved = (!string.IsNullOrEmpty(Model.Remarks) && Model.Remarks.Contains("Accepted by Co-maker")) ||
+                                   (!string.IsNullOrEmpty(Model.CoMakerName) && Model.ApplicationStatus != "Rejected" && Model.ApplicationStatus != "Drafted");
+        }
+
+        <!-- Co-maker Status -->
+        @if (coMakerRejected)
+        {
+            <div class="approval-history-item" style="border-left: 3px solid #dc3545; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: #dc3545; font-weight: bold;">Co-maker Decision</div>
+                <div>
+                    <span>
+                        Rejected by @(Model.CoMakerName ?? "Co-maker") on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+                    </span>
+                </div>
+            </div>
+        }
+        @if (coMakerApproved)
+        {
+            <div class="approval-history-item" style="border-left: 3px solid #28a745; padding-left: 1rem; margin-bottom: 2rem;">
+                <div class="loan-details-label" style="margin-bottom:0.1em; color: #28a745; font-weight: bold;">Co-maker Decision</div>
+                <div>
+                    <span>
+                        Accepted by @(Model.CoMakerName ?? "Co-maker") on @Model.DateSubmitted.ToString("yyyy-MM-dd")
+                    </span>
+                </div>
+            </div>
+        }
+
         <!-- Application Submitted (always last) -->
         <div class="approval-history-submitted" style="border-left: 3px solid #3243c0; padding-left: 1rem; margin-bottom: 2rem;">
             <div class="loan-details-label" style="margin-bottom:0.1em; color: #3243c0; font-weight: bold;">Application Submitted</div>

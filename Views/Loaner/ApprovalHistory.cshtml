@@ -41,11 +41,10 @@
     }
     
     // Check co-maker status
-    bool coMakerRejected = Model.ApplicationStatus == "Rejected" && 
-                           !string.IsNullOrEmpty(Model.Remarks) && 
+    bool coMakerRejected = !string.IsNullOrEmpty(Model.Remarks) && 
                            Model.Remarks.Contains("Rejected by Co-maker");
-    bool coMakerApproved = !string.IsNullOrEmpty(Model.Remarks) && 
-                           Model.Remarks.Contains("Accepted by Co-maker");
+    bool coMakerApproved = (!string.IsNullOrEmpty(Model.Remarks) && Model.Remarks.Contains("Accepted by Co-maker")) ||
+                           (!string.IsNullOrEmpty(Model.CoMakerName) && Model.ApplicationStatus != "Rejected" && Model.ApplicationStatus != "Drafted");
 }
 
 @if (others != null)

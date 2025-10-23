@@ -265,7 +265,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.CoMakerUserId, -- Add this line
+                           la.CoMakerUserId, la.Remarks,
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -288,7 +288,8 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<ApproverDocumentViewModel>(),
                                 Approvers = new List<ApproverApproverViewModel>(),
-                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? (int?)reader["CoMakerUserId"] : null
+                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? (int?)reader["CoMakerUserId"] : null,
+                                Remarks = reader["Remarks"]?.ToString()
                             };
                         }
                     }
