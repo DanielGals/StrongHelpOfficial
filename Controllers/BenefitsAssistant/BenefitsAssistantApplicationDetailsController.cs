@@ -318,7 +318,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.IsActive, la.ComakerUserID, -- Add ComakerUserID
+                           la.IsActive, la.ComakerUserID, la.Remarks,
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -342,7 +342,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<BADocumentViewModel>(),
                                 Approvers = new List<ApproverViewModel>(),
-                                CoMakerUserId = reader["ComakerUserID"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("ComakerUserID")) : (int?)null
+                                CoMakerUserId = reader["ComakerUserID"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("ComakerUserID")) : (int?)null,
+                                Remarks = reader["Remarks"]?.ToString()
                             };
                         }
                     }
@@ -638,6 +639,24 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         return Json(new { success = false, message = "User session expired. Please login again." });
                     }
 
+                    // Get existing remarks to preserve comaker decision
+                    string existingRemarks = "";
+                    using (var getRemarksCmd = new SqlCommand("SELECT Remarks FROM LoanApplication WHERE LoanID = @LoanID", conn))
+                    {
+                        getRemarksCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
+                        var result = await getRemarksCmd.ExecuteScalarAsync();
+                        if (result != null && result != DBNull.Value)
+                            existingRemarks = result.ToString();
+                    }
+
+                    // Preserve comaker decision if it exists
+                    string newRemarks = "Waiting for approvers";
+                    if (!string.IsNullOrEmpty(existingRemarks) && 
+                        (existingRemarks.Contains("Accepted by Co-maker") || existingRemarks.Contains("Rejected by Co-maker")))
+                    {
+                        newRemarks = existingRemarks;
+                    }
+
                     using (var updateCmd = new SqlCommand(@"
                 UPDATE LoanApplication 
                 SET ApplicationStatus = @ApplicationStatus, 
@@ -651,7 +670,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 WHERE LoanID = @LoanID", conn))
                     {
                         updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Progress");
-                        updateCmd.Parameters.AddWithValue("@Remarks", "Waiting for approvers");
+                        updateCmd.Parameters.AddWithValue("@Remarks", newRemarks);
                         updateCmd.Parameters.AddWithValue("@Title", request.Title ?? string.Empty);
                         updateCmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
                         updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
@@ -665,11 +684,10 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                     using (var baCmd = new SqlCommand(@"
                 INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
-                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
+                VALUES (@LoanID, @UserID, 0, 'Reviewed', '', @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         baCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         baCmd.Parameters.AddWithValue("@UserID", benefitsAssistantUserId);
-                        baCmd.Parameters.AddWithValue("@Comment", request.Description ?? "Application reviewed and forwarded");
                         baCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedBy", benefitsAssistantUserId.ToString());

@@ -231,17 +231,19 @@ namespace StrongHelpOfficial.Controllers.Loaner
             {
                 await conn.OpenAsync();
 
-                // Get loan application details including Benefits Assistant info
+                // Get loan application details including Benefits Assistant and CoMaker info
                 var loanCmd = new SqlCommand(@"
                     SELECT la.*, 
                            u.FirstName, u.LastName,
                            ba.UserID AS BenefitAssistantUserID,
                            ba.FirstName + ' ' + ba.LastName AS BenefitAssistantName,
+                           co.FirstName + ' ' + co.LastName AS CoMakerName,
                            la.DateAssigned,
                            la.Remarks
                     FROM LoanApplication la
                     JOIN [User] u ON la.UserID = u.UserID
                     LEFT JOIN [User] ba ON la.BenefitsAssistantUserID = ba.UserID
+                    LEFT JOIN [User] co ON la.CoMakerUserID = co.UserID
                     WHERE la.LoanID = @LoanID", conn);
                 loanCmd.Parameters.AddWithValue("@LoanID", loanId);
 
@@ -256,6 +258,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
                         model.LoanAmount = (decimal)reader["LoanAmount"];
                         model.BenefitAssistantUserID = reader["BenefitAssistantUserID"] as int?;
                         model.BenefitAssistantName = reader["BenefitAssistantName"] as string;
+                        model.CoMakerName = reader["CoMakerName"] as string;
                         model.DateAssigned = reader["DateAssigned"] as DateTime?;
                         model.Remarks = reader["Remarks"] as string;
                     }

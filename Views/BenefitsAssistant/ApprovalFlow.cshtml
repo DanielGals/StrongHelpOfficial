@@ -1,4 +1,4 @@
-﻿@model BenefitsAssistantApplicationDetailsViewModel
+@model BenefitsAssistantApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Approval Flow";
     ViewBag.IdParamName = "id";
@@ -83,7 +83,7 @@
                         <div class="approval-card-subtitle mb-2" style="color: #888;">
                             @if (isBenefitsAssistant)
                             {
-                                @(approver.Description == "Waiting for approvers" ? "Application reviewed" : approver.Description)
+                                @:Application reviewed
                             }
                             else
                             {
@@ -165,7 +165,7 @@
             <!-- Approver (shows after role is selected) -->
             <div class="form-group" id="approverDropdownGroup">
                 <label class="form-label">Approver</label>
-                <input type="text" class="form-select" id="approverInput" list="approverList" placeholder="Type or select approver name..." oninput="handleApproverInput()">
+                <input type="text" class="form-select" id="approverInput" list="approverList" placeholder="Type or select approver name..." oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, ''); handleApproverInput();" pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed">
                 <datalist id="approverList"></datalist>
                 <input type="hidden" id="selectedApproverUserId" value="">
             </div>
@@ -174,12 +174,6 @@
             <div class="form-group">
                 <label class="form-label">Email</label>
                 <input type="email" class="form-control" id="emailField" placeholder="email@company.com">
-            </div>
-
-            <!-- Description -->
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-control description-textarea" id="descriptionField" placeholder="Enter description..."></textarea>
             </div>
 
             <!-- Attach PDF Documents (NO classic POST) -->
