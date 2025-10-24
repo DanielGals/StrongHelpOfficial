@@ -434,16 +434,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                 var ba = model.Approvers.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
                 var others = model.Approvers
                     .Where(a => !a.RoleName.Contains("Benefits Assistant"))
-                    .OrderBy(a =>
-                        a.Status == "Pending" ? DateTime.MaxValue :
-                        a.Status == "Reviewed" ? DateTime.MaxValue.AddDays(-1) :
-                        a.ApprovedDate ?? DateTime.MaxValue
-                    )
+                    .OrderBy(a => a.Order)
                     .ToList();
+
+                var visibleApprovers = new List<ApproverApproverViewModel>();
+                foreach (var approver in others)
+                {
+                    visibleApprovers.Add(approver);
+                    
+                    if (approver.Status == "Rejected")
+                        break;
+                }
 
                 var newApprovers = new List<ApproverApproverViewModel>();
                 if (ba != null) newApprovers.Add(ba);
-                newApprovers.AddRange(others);
+                newApprovers.AddRange(visibleApprovers);
                 model.Approvers = newApprovers;
 
                 // Check if current user has already approved this application

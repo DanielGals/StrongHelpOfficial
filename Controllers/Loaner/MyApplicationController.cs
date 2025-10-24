@@ -394,11 +394,12 @@ namespace StrongHelpOfficial.Controllers.Loaner
 
                 cmd.Parameters.AddWithValue("@LoanID", loanId);
 
+                var allApprovers = new List<dynamic>();
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
-                        approvers.Add(new
+                        allApprovers.Add(new
                         {
                             userId = (int)reader["ApproverUserID"],
                             userName = reader["ApproverName"].ToString(),
@@ -408,6 +409,14 @@ namespace StrongHelpOfficial.Controllers.Loaner
                             description = reader["Comment"] as string ?? ""
                         });
                     }
+                }
+
+                // Filter approvers: stop after rejection
+                foreach (var approver in allApprovers)
+                {
+                    approvers.Add(approver);
+                    if (approver.status == "Rejected")
+                        break;
                 }
 
                 // If no Benefits Assistant was found in the approval records but the application 

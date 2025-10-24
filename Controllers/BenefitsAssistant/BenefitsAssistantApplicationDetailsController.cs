@@ -497,18 +497,12 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     .OrderBy(a => a.Order)
                     .ToList();
 
-                // Determine visible approvers based on sequential flow
                 var visibleApprovers = new List<ApproverViewModel>();
                 foreach (var approver in others)
                 {
                     visibleApprovers.Add(approver);
                     
-                    // Stop showing approvers after rejection
                     if (approver.Status == "Rejected")
-                        break;
-                    
-                    // Stop after first pending (only show current reviewer)
-                    if (approver.Status == "Pending")
                         break;
                 }
 
