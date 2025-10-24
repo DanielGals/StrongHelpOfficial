@@ -77,12 +77,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const department = approver.roleName === "Benefits Assistant" ?
                 "Benefits Assistant" : approver.roleName;
                 
-            // Always show "Application reviewed" for Benefits Assistant
-            let description = '';
+            // Display status-based subtitle instead of comment
+            let subtitle = '';
             if (approver.roleName === "Benefits Assistant") {
-                description = 'Application reviewed';
+                subtitle = 'Application reviewed and forwarded to approvers';
+            } else if (approver.status === 'Approved') {
+                subtitle = `Approved by ${approver.userName}`;
+            } else if (approver.status === 'Rejected') {
+                subtitle = `Rejected by ${approver.userName}`;
             } else {
-                description = approver.description || '';
+                subtitle = `Awaiting review by ${approver.userName}`;
             }
 
             card.innerHTML = `
@@ -90,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ${statusDot}
                     ${approver.roleName}
                 </div>
-                <div class="approval-card-subtitle">${description}</div>
+                <div class="approval-card-subtitle">${subtitle}</div>
                 <div class="approval-card-content">
                     <div><strong>User:</strong> ${approver.userName}</div>
                     ${approver.roleName !== "Benefits Assistant" ? 

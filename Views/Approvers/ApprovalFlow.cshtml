@@ -82,11 +82,19 @@
                     <div class="approval-card-subtitle mb-2" style="color: #888;">
                         @if (isBenefitsAssistant)
                         {
-                            @:Application reviewed
+                            @:Application reviewed and forwarded to approvers
+                        }
+                        else if (isApproved)
+                        {
+                            @:Approved by @approver.UserName on @approver.ApprovedDate?.ToString("MMM d, yyyy")
+                        }
+                        else if (isRejected)
+                        {
+                            @:Rejected by @approver.UserName
                         }
                         else
                         {
-                            @approver.Description
+                            @:Awaiting review by @approver.UserName
                         }
                     </div>
                     <div class="approval-card-content">

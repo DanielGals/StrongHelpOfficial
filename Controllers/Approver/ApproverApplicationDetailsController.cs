@@ -681,17 +681,17 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                         if (existingLoanApprovalId != null)
                         {
-                            // Update existing LoanApproval record to "Approved"
-                            // No comment for approvals, only for rejections
+                            // Update existing LoanApproval record to "Approved" with the comment/description
                             using (var updateApprovalCmd = new SqlCommand(@"
                                 UPDATE LoanApproval 
                                 SET Status = 'Approved', 
-                                    Comment = NULL, 
+                                    Comment = @Comment, 
                                     ApprovedDate = @ApprovedDate,
                                     ModifiedAt = @ModifiedAt,
                                     ModifiedBy = @ModifiedBy
                                 WHERE LoanApprovalID = @LoanApprovalID", conn))
                             {
+                                updateApprovalCmd.Parameters.AddWithValue("@Comment", request.Description ?? string.Empty);
                                 updateApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                                 updateApprovalCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
                                 updateApprovalCmd.Parameters.AddWithValue("@ModifiedBy", approverUserId?.ToString() ?? "");
@@ -702,14 +702,14 @@ namespace StrongHelpOfficial.Controllers.Approver
                         }
                         else
                         {
-                            // Create new LoanApproval record if it doesn't exist
-                            // No comment for approvals, only for rejections
+                            // Create new LoanApproval record if it doesn't exist, with the comment/description
                             using (var insertApprovalCmd = new SqlCommand(@"
                                 INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
-                                VALUES (@LoanID, @UserID, 0, 'Approved', NULL, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
+                                VALUES (@LoanID, @UserID, 0, 'Approved', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                             {
                                 insertApprovalCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                                 insertApprovalCmd.Parameters.AddWithValue("@UserID", approverUserId);
+                                insertApprovalCmd.Parameters.AddWithValue("@Comment", request.Description ?? string.Empty);
                                 insertApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                                 insertApprovalCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                                 insertApprovalCmd.Parameters.AddWithValue("@CreatedBy", approverUserId?.ToString() ?? "");
