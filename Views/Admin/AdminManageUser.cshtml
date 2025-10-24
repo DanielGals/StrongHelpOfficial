@@ -157,6 +157,8 @@
     <div class="user-info-section-title">Personal Information</div>
     <form id="userInfoForm" method="post" asp-action="Edit" asp-controller="AdminManageUser">
         <input type="hidden" name="userId" value="@Model.userId" />
+        <input type="hidden" name="email" value="@Model.email" /> <!-- preserve work email in the model binder but not editable -->
+
         <div class="user-info-row">
             <div class="user-info-label">First Name</div>
             <div class="user-info-value" id="firstNameView">@Model.firstName</div>
@@ -173,17 +175,16 @@
         </div>
 
         <div class="user-info-row">
-            <div class="user-info-label">Email Address</div>
+            <div class="user-info-label">Work Email</div>
             <div class="user-info-value" id="emailView">@Model.email</div>
-            <div class="user-info-input d-none" id="emailEdit">
-                <input type="email" name="email" value="@Model.email" />
-            </div>
         </div>
 
         <div class="user-info-row">
             <div class="user-info-label">Personal Email</div>
             <div class="user-info-value" id="personalEmailView">@Model.personalEmail</div>
-            <!-- personal email remains read-only; no edit control provided -->
+            <div class="user-info-input d-none" id="personalEmailEdit">
+                <input type="email" name="personalEmail" value="@Model.personalEmail" />
+            </div>
         </div>
 
         <div class="user-info-row">
@@ -254,7 +255,7 @@
             document.getElementById('cancelEditBtn').classList.toggle('d-none', !edit);
 
             // Toggle view/edit fields
-            ['firstName', 'lastName', 'email', 'department', 'role'].forEach(function (field) {
+            ['firstName', 'lastName', 'personalEmail', 'department', 'role'].forEach(function (field) {
                 document.getElementById(field + 'View').classList.toggle('d-none', edit);
                 let editElem = document.getElementById(field + 'Edit');
                 if (editElem) editElem.classList.toggle('d-none', !edit);
