@@ -83,10 +83,10 @@
                     <span>
                         Reviewed by @ba.UserName on @ba.ApprovedDate?.ToString("yyyy-MM-dd")
                     </span>
-                    @if (!string.IsNullOrEmpty(ba.Description))
+                    @if (!string.IsNullOrEmpty(Model.Description))
                     {
                         <div class="approval-comments mt-2">
-                            <i class="bi bi-chat-left-text"></i> @ba.Description
+                            <i class="bi bi-chat-left-text"></i> @Model.Description
                         </div>
                     }
                 </div>

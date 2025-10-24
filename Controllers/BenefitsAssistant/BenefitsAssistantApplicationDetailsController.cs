@@ -318,7 +318,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.IsActive, la.ComakerUserID, la.Remarks,
+                           la.IsActive, la.ComakerUserID, la.Remarks, la.Description,
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -343,7 +343,8 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 Documents = new List<BADocumentViewModel>(),
                                 Approvers = new List<ApproverViewModel>(),
                                 CoMakerUserId = reader["ComakerUserID"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("ComakerUserID")) : (int?)null,
-                                Remarks = reader["Remarks"]?.ToString()
+                                Remarks = reader["Remarks"]?.ToString(),
+                                Description = reader["Description"]?.ToString()
                             };
                         }
                     }
