@@ -80,7 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
             // Display status-based subtitle instead of comment
             let subtitle = '';
             if (approver.roleName === "Benefits Assistant") {
-                subtitle = 'Application reviewed and forwarded to approvers';
+                if (approver.status === 'Rejected') {
+                    subtitle = `Application rejected by ${approver.userName}`;
+                } else {
+                    subtitle = 'Application reviewed and forwarded to approvers';
+                }
             } else if (approver.status === 'Approved') {
                 subtitle = `Approved by ${approver.userName}`;
             } else if (approver.status === 'Rejected') {

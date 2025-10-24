@@ -524,17 +524,21 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 await conn.OpenAsync();
 
+                // Update application status to Rejected (not In Progress)
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0, BenefitsAssistantUserID = @BenefitsAssistantUserID
+                    SET ApplicationStatus = @Status, IsActive = 0, BenefitsAssistantUserID = @BenefitsAssistantUserID,
+                        ModifiedAt = @ModifiedAt, ModifiedBy = @ModifiedBy
                     WHERE LoanID = @LoanID", conn);
-                cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");
                 cmdUpdateApp.Parameters.AddWithValue("@BenefitsAssistantUserID", userId ?? 0);
+                cmdUpdateApp.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                cmdUpdateApp.Parameters.AddWithValue("@ModifiedBy", userId?.ToString() ?? "");
                 cmdUpdateApp.Parameters.AddWithValue("@LoanID", id);
 
                 await cmdUpdateApp.ExecuteNonQueryAsync();
 
+                // Insert rejection record in LoanApproval table
                 var cmdInsertApproval = new SqlCommand(@"
                     INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt, CreatedBy)
                     VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn);
