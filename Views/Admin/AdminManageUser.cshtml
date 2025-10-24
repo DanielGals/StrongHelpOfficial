@@ -171,6 +171,7 @@
                 <input type="text" name="lastName" value="@Model.lastName" />
             </div>
         </div>
+
         <div class="user-info-row">
             <div class="user-info-label">Email Address</div>
             <div class="user-info-value" id="emailView">@Model.email</div>
@@ -178,6 +179,13 @@
                 <input type="email" name="email" value="@Model.email" />
             </div>
         </div>
+
+        <div class="user-info-row">
+            <div class="user-info-label">Personal Email</div>
+            <div class="user-info-value" id="personalEmailView">@Model.personalEmail</div>
+            <!-- personal email remains read-only; no edit control provided -->
+        </div>
+
         <div class="user-info-row">
             <div class="user-info-label">Department</div>
             <div class="user-info-value" id="departmentView">@Model.departmentName</div>

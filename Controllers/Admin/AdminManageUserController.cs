@@ -24,7 +24,7 @@ namespace StrongHelpOfficial.Controllers.Admin
             {
                 conn.Open();
                 var cmd = new SqlCommand(@"
-                    SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.isActive AS Status, u.CreatedAt, u.ModifiedAt,
+                    SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.PersonalEmail, u.isActive AS Status, u.CreatedAt, u.ModifiedAt,
                            r.RoleName, r.RoleID, d.DepartmentName, d.DepartmentID
                     FROM [User] u
                     LEFT JOIN [Role] r ON u.RoleID = r.RoleID
@@ -40,6 +40,7 @@ namespace StrongHelpOfficial.Controllers.Admin
                         model.firstName = reader["FirstName"]?.ToString() ?? "";
                         model.lastName = reader["LastName"]?.ToString() ?? "";
                         model.email = reader["Email"]?.ToString() ?? "";
+                        model.personalEmail = reader["PersonalEmail"]?.ToString() ?? ""; // NEW mapping
                         model.isActive = reader["Status"] != DBNull.Value ? Convert.ToInt32(reader["Status"]) : 0;
                         model.role = reader["RoleID"]?.ToString() ?? ""; // ID
                         model.roleName = reader["RoleName"]?.ToString() ?? ""; // Name

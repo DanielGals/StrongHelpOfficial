@@ -18,16 +18,24 @@
             margin-left: auto;
             margin-right: auto;
         }
-        .form-label { font-weight: 500; }
+
+        .form-label {
+            font-weight: 500;
+        }
+
         .modal-bg {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0,0,0,0.3);
             z-index: 1050;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
         .modal-content {
             background: #fff;
             border-radius: 8px;
@@ -37,6 +45,7 @@
             box-shadow: 0 4px 24px rgba(0,0,0,0.12);
             text-align: center;
         }
+
         .modal-actions {
             margin-top: 1.5rem;
             display: flex;
@@ -65,7 +74,7 @@
             <span asp-validation-for="LastName" class="text-danger"></span>
         </div>
         <div class="mb-3">
-            <label asp-for="Email" class="form-label"></label>
+            <label asp-for="Email" class="form-label">Personal Email</label>
             <input asp-for="Email" class="form-control" required />
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
