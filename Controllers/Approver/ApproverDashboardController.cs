@@ -134,11 +134,17 @@ namespace StrongHelpOfficial.Controllers.Approver
                             AND my_lap.UserID = @UserId
                             AND my_lap.Status IN ('Approved', 'Rejected')
                             AND my_lap.IsActive = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM LoanApproval pending_lap
-                                WHERE pending_lap.LoanID = la.LoanID
-                                AND pending_lap.IsActive = 1
-                                AND (pending_lap.Status IS NULL OR pending_lap.Status = 'Pending')
+                            AND (
+                                -- Either the application is finalized (Approved or Rejected)
+                                la.ApplicationStatus IN ('Approved', 'Rejected')
+                                OR
+                                -- Or there are no pending approvals remaining
+                                NOT EXISTS (
+                                    SELECT 1 FROM LoanApproval pending_lap
+                                    WHERE pending_lap.LoanID = la.LoanID
+                                    AND pending_lap.IsActive = 1
+                                    AND (pending_lap.Status IS NULL OR pending_lap.Status = 'Pending')
+                                )
                             )
                         ) AS Completed
                 ", conn))
