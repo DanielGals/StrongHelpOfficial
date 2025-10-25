@@ -462,6 +462,22 @@
                         return;
                     }
                     forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
+                    
+                    // Update delete buttons state - disable if only one item left
+                    const deleteButtons = checklistItemsContainer.querySelectorAll('.checklist-remove-btn');
+                    if (checkboxes.length === 1) {
+                        deleteButtons.forEach(btn => {
+                            btn.style.opacity = '0.5';
+                            btn.style.cursor = 'not-allowed';
+                            btn.title = 'Cannot delete the last checklist item';
+                        });
+                    } else {
+                        deleteButtons.forEach(btn => {
+                            btn.style.opacity = '1';
+                            btn.style.cursor = 'pointer';
+                            btn.title = 'Remove item';
+                        });
+                    }
                 }
 
                 checklistItemsContainer.addEventListener('change', function (e) {
@@ -473,6 +489,16 @@
                 checklistItemsContainer.addEventListener('click', function (e) {
                     if (e.target.closest('.checklist-remove-btn')) {
                         const btn = e.target.closest('.checklist-remove-btn');
+                        
+                        // Count current checklist items
+                        const currentCheckboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+                        
+                        // Prevent deletion if this is the last item
+                        if (currentCheckboxes.length <= 1) {
+                            showCustomAlert('You must have at least one checklist item. You cannot delete the last item.');
+                            return;
+                        }
+                        
                         btn.parentElement.parentElement.remove();
                         updateForwardButtonState();
                     }

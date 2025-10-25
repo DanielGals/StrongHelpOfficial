@@ -41,6 +41,19 @@ window.closeModal = function () {
     document.getElementById('selectedApproverUserId').value = '';
     document.getElementById('emailField').value = '';
 
+    // Clear file selection
+    selectedFiles = [];
+    document.getElementById('selected-files-list').innerHTML = '';
+    const fileInput = document.getElementById('pdfFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    const errorDiv = document.getElementById('pdfFileError');
+    if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
+    }
+
     const approverGroup = document.getElementById('approverDropdownGroup');
     const emailGroup = document.getElementById('emailField').closest('.form-group');
     approverGroup.classList.remove('show');
@@ -1020,3 +1033,88 @@ window.addFilesToApprover = function(approverName) {
     document.body.appendChild(fileInput);
     fileInput.click();
 };
+
+// Remove checklist item logic
+checklistItemsContainer.addEventListener('click', function (e) {
+    if (e.target.closest('.checklist-remove-btn')) {
+        const btn = e.target.closest('.checklist-remove-btn');
+        
+        // Count current checklist items
+        const currentCheckboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+        
+        // Prevent deletion if this is the last item
+        if (currentCheckboxes.length <= 1) {
+            showCustomAlert('You must have at least one checklist item. You cannot delete the last item.');
+            return;
+        }
+        
+        // remove the nearest .form-check wrapper
+        const wrapper = btn.closest('.form-check');
+        if (wrapper) wrapper.remove();
+        updateRejectButtonState();
+    }
+});
+
+// Function to check if all checklist checkboxes are checked
+function updateRejectButtonState() {
+    const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+    if (checkboxes.length === 0) {
+        forwardBtn.disabled = true;
+        return;
+    }
+    forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
+    
+    // Update delete buttons state - disable if only one item left
+    const deleteButtons = checklistItemsContainer.querySelectorAll('.checklist-remove-btn');
+    if (checkboxes.length === 1) {
+        deleteButtons.forEach(btn => {
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'Cannot delete the last checklist item';
+        });
+    } else {
+        deleteButtons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = 'Remove item';
+        });
+    }
+}
+
+// Fill checklist items button logic
+const fillBtn = document.getElementById('fillChecklistItemsBtn');
+if (fillBtn) {
+    fillBtn.addEventListener('click', function () {
+        const items = [
+            'Completed Requirements',
+            'No derogatory legal records (civil/criminal cases)',
+            'Eligible co-maker'
+        ];
+        
+        // Clear existing items first
+        checklistItemsContainer.innerHTML = '';
+        
+        items.forEach((it, idx) => {
+            const id = 'checklist_' + Date.now() + '_' + idx;
+            const div = document.createElement('div');
+            div.className = 'form-check mb-2';
+            div.innerHTML = `<div class="check-left">
+                                        <input class="form-check-input" type="checkbox" id="${id}">
+                                        <label class="form-check-label checklist-item ms-2" for="${id}">${it}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>`;
+            checklistItemsContainer.appendChild(div);
+        });
+
+        addChecklistItemModal.hide();
+        updateRejectButtonState();
+    });
+}

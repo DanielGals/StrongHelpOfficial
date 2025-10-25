@@ -202,6 +202,29 @@
     </div>
 </div>
 
+<!-- Approve Confirmation Modal (NEW) -->
+<div class="modal fade" id="approveConfirmModal" tabindex="-1" aria-labelledby="approveConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approveConfirmModalLabel">Confirm Approval</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to approve this loan application?</p>
+                <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <div id="approveConfirmMessage">This action cannot be undone.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmApproveActionBtn">Yes, Approve</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Approve Application Modal -->
 <div class="modal fade" id="approveApplicationModal" tabindex="-1" aria-labelledby="approveApplicationModalLabel"
     aria-hidden="true">
@@ -353,7 +376,10 @@
             // Approve Application functionality
             const approveBtn = document.getElementById('approveApplicationBtn');
             const approveModal = new bootstrap.Modal(document.getElementById('approveApplicationModal'));
+            const approveConfirmModal = new bootstrap.Modal(document.getElementById('approveConfirmModal'));
             const confirmApproveBtn = document.getElementById('confirmApproveBtn');
+            
+            let isFinalApproverFlag = false;
 
             if (approveBtn) {
                 approveBtn.addEventListener('click', function () {
@@ -370,14 +396,18 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                if (data.isFinalApprover) {
-                                    // Final approver - show modal for title and description
+                                isFinalApproverFlag = data.isFinalApprover;
+                               
+                                if (isFinalApproverFlag) {
+                                    // Final approver - go directly to title/description modal (OLD BEHAVIOR)
                                     document.getElementById('approveTitle').value = 'Application Approved';
                                     document.getElementById('approveDescription').value = '';
                                     approveModal.show();
                                 } else {
-                                    // Not final approver - approve immediately without modal
-                                    approveApplicationImmediately(loanId, approveUrl);
+                                    // Not final approver - show confirmation modal first (NEW BEHAVIOR)
+                                    const confirmMessage = document.getElementById('approveConfirmMessage');
+                                    confirmMessage.textContent = 'The application will move to the next approver in the sequence.';
+                                    approveConfirmModal.show();
                                 }
                             } else {
                                 alert('Error checking approval status: ' + data.message);
@@ -390,7 +420,22 @@
                 });
             }
 
-            // Function to approve immediately without modal
+            // Handle confirmation of approve action (only for non-final approvers)
+            const confirmApproveActionBtn = document.getElementById('confirmApproveActionBtn');
+            if (confirmApproveActionBtn) {
+                confirmApproveActionBtn.addEventListener('click', function () {
+                    const loanId = document.getElementById('loanIdField').value;
+                    const approveUrl = document.getElementById('approveUrlField').value;
+                    
+                    // Close confirmation modal
+                    approveConfirmModal.hide();
+                    
+                    // Non-final approver - approve immediately
+                    approveApplicationImmediately(loanId, approveUrl);
+                });
+            }
+
+            // Function to approve immediately without title/description
             function approveApplicationImmediately(loanId, approveUrl) {
                 approveBtn.disabled = true;
                 approveBtn.textContent = 'Processing...';
