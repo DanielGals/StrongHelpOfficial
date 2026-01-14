@@ -79,6 +79,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         AND lap_ba.UserID = @UserId AND lap_ba.IsActive = 1
                     WHERE (la.BenefitsAssistantUserID = @UserId OR la.BenefitsAssistantUserID IS NULL)
                     AND la.UserID != @UserId
+                    AND (la.ComakerUserID IS NULL OR la.ComakerUserID != @UserId)
                     AND la.ApplicationStatus <> 'Drafted'
                     AND NOT (la.ApplicationStatus = 'Rejected' AND la.BenefitsAssistantUserID IS NULL)";
 

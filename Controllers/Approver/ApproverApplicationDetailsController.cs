@@ -265,7 +265,7 @@ namespace StrongHelpOfficial.Controllers.Approver
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.CoMakerUserId, -- Add this line
+                           la.CoMakerUserId, la.Remarks, la.Description,
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -288,7 +288,9 @@ namespace StrongHelpOfficial.Controllers.Approver
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<ApproverDocumentViewModel>(),
                                 Approvers = new List<ApproverApproverViewModel>(),
-                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? (int?)reader["CoMakerUserId"] : null
+                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? (int?)reader["CoMakerUserId"] : null,
+                                Remarks = reader["Remarks"]?.ToString(),
+                                Description = reader["Description"]?.ToString()
                             };
                         }
                     }
@@ -433,16 +435,21 @@ namespace StrongHelpOfficial.Controllers.Approver
                 var ba = model.Approvers.FirstOrDefault(a => a.RoleName.Contains("Benefits Assistant"));
                 var others = model.Approvers
                     .Where(a => !a.RoleName.Contains("Benefits Assistant"))
-                    .OrderBy(a =>
-                        a.Status == "Pending" ? DateTime.MaxValue :
-                        a.Status == "Reviewed" ? DateTime.MaxValue.AddDays(-1) :
-                        a.ApprovedDate ?? DateTime.MaxValue
-                    )
+                    .OrderBy(a => a.Order)
                     .ToList();
+
+                var visibleApprovers = new List<ApproverApproverViewModel>();
+                foreach (var approver in others)
+                {
+                    visibleApprovers.Add(approver);
+                    
+                    if (approver.Status == "Rejected")
+                        break;
+                }
 
                 var newApprovers = new List<ApproverApproverViewModel>();
                 if (ba != null) newApprovers.Add(ba);
-                newApprovers.AddRange(others);
+                newApprovers.AddRange(visibleApprovers);
                 model.Approvers = newApprovers;
 
                 // Check if current user has already approved this application
@@ -674,17 +681,17 @@ namespace StrongHelpOfficial.Controllers.Approver
 
                         if (existingLoanApprovalId != null)
                         {
-                            // Update existing LoanApproval record to "Approved"
-                            // No comment for approvals, only for rejections
+                            // Update existing LoanApproval record to "Approved" with the comment/description
                             using (var updateApprovalCmd = new SqlCommand(@"
                                 UPDATE LoanApproval 
                                 SET Status = 'Approved', 
-                                    Comment = NULL, 
+                                    Comment = @Comment, 
                                     ApprovedDate = @ApprovedDate,
                                     ModifiedAt = @ModifiedAt,
                                     ModifiedBy = @ModifiedBy
                                 WHERE LoanApprovalID = @LoanApprovalID", conn))
                             {
+                                updateApprovalCmd.Parameters.AddWithValue("@Comment", request.Description ?? string.Empty);
                                 updateApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                                 updateApprovalCmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
                                 updateApprovalCmd.Parameters.AddWithValue("@ModifiedBy", approverUserId?.ToString() ?? "");
@@ -695,14 +702,14 @@ namespace StrongHelpOfficial.Controllers.Approver
                         }
                         else
                         {
-                            // Create new LoanApproval record if it doesn't exist
-                            // No comment for approvals, only for rejections
+                            // Create new LoanApproval record if it doesn't exist, with the comment/description
                             using (var insertApprovalCmd = new SqlCommand(@"
                                 INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
-                                VALUES (@LoanID, @UserID, 0, 'Approved', NULL, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
+                                VALUES (@LoanID, @UserID, 0, 'Approved', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                             {
                                 insertApprovalCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                                 insertApprovalCmd.Parameters.AddWithValue("@UserID", approverUserId);
+                                insertApprovalCmd.Parameters.AddWithValue("@Comment", request.Description ?? string.Empty);
                                 insertApprovalCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                                 insertApprovalCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                                 insertApprovalCmd.Parameters.AddWithValue("@CreatedBy", approverUserId?.ToString() ?? "");

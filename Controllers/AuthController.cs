@@ -25,7 +25,7 @@ public class AuthController : Controller
             IsAuthenticated = User.Identity?.IsAuthenticated ?? false
         };
 
-        // Test SQL database connection
+        // Attempt to connect to the SQL database regardless of AD authentication
         try
         {
             using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
@@ -42,138 +42,128 @@ public class AuthController : Controller
 
         // Bypass AD authentication for testing
         userModel.IsAuthenticated = true; // Simulate authentication
-        userModel.Email = "jaspermanalo@StrongHelps.local"; // Hardcoded email for testing
+        userModel.Email = "elenacruz@Stronghelps.local"; // Hardcoded email for testing
         userModel.Username = "asdasd";
         userModel.Domain = "Sample Tae";
 
         // Check if Email exists in the SQL database table [User] and get IsActive
         if (!string.IsNullOrEmpty(userModel.Email))
-
-        // Only proceed if user is authenticated via Active Directory
-        if (userModel.IsAuthenticated && User.Identity != null)
         {
-            // Get user information from Active Directory
-            string username = User.Identity.Name ?? string.Empty;
-            userModel.Username = username;
-            userModel.Domain = GetDomainFromUsername(username);
-
-            // Get email from Active Directory
-            userModel.Email = GetEmailFromActiveDirectory(username);
-
-            // Check if Email exists in the SQL database table [User] and get IsActive
-            if (!string.IsNullOrEmpty(userModel.Email))
+            try
             {
-                try
+                using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
                 {
-                    using (var sqlConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+                    sqlConnection.Open();
+
+                    // Updated query to join User and Role tables and get IsActive 
+                    var query = @"
+                    SELECT u.UserID, r.RoleName, r.RoleID, u.Email, u.IsActive, u.FirstName, u.LastName
+                    FROM [User] u
+                    INNER JOIN [Role] r ON u.RoleID = r.RoleID
+                    WHERE u.Email = @Email";
+
+                    using (var command = new SqlCommand(query, sqlConnection))
                     {
-                        sqlConnection.Open();
+                        command.Parameters.AddWithValue("@Email", userModel.Email);
 
-                        // Updated query to join User and Role tables and get IsActive
-                        var query = @"
-                        SELECT u.UserID, r.RoleName, r.RoleID, u.Email, u.IsActive, u.FirstName, u.LastName
-                        FROM [User] u
-                        INNER JOIN [Role] r ON u.RoleID = r.RoleID
-                        WHERE u.Email = @Email";
-
-                        using (var command = new SqlCommand(query, sqlConnection))
+                        using (var reader = command.ExecuteReader())
                         {
-                            command.Parameters.AddWithValue("@Email", userModel.Email);
-
-                            using (var reader = command.ExecuteReader())
+                            if (reader.Read())
                             {
-                                if (reader.Read())
-                                {
-                                    userModel.EmailExists = true;
-                                    userModel.SQLEmail = reader["Email"] as string;
-                                    userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
+                                userModel.EmailExists = true;
+                                userModel.SQLEmail = reader["Email"] as string;
+                                userModel.EmailMatched = string.Equals(userModel.Email, userModel.SQLEmail, StringComparison.OrdinalIgnoreCase);
 
-                                    int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
-                                    string roleName = reader["RoleName"] as string ?? string.Empty;
-                                    int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
-                                    bool isActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"]);
-                                    userModel.IsActive = isActive;
+                                int userId = reader.GetInt32(reader.GetOrdinal("UserID"));
+                                string roleName = reader["RoleName"] as string ?? string.Empty;
+                                int roleId = reader.GetInt32(reader.GetOrdinal("RoleID"));
+                                bool isActive = reader["IsActive"] != DBNull.Value && Convert.ToBoolean(reader["IsActive"]);
+                                userModel.IsActive = isActive;
 
-                                    // Store SQL data in session
-                                    HttpContext.Session.SetInt32("UserID", userId);
-                                    HttpContext.Session.SetString("RoleName", roleName);
-                                    HttpContext.Session.SetInt32("RoleID", roleId);
-                                    HttpContext.Session.SetString("Email", userModel.Email.ToLower());
-                                    HttpContext.Session.SetString("FirstName", reader["FirstName"] as string ?? "");
-                                    HttpContext.Session.SetString("LastName", reader["LastName"] as string ?? "");
-                                }
-                                else
-                                {
-                                    userModel.EmailExists = false;
-                                    userModel.SQLEmail = null;
-                                    userModel.EmailMatched = false;
-                                    userModel.IsActive = null;
-                                }
+                                // Store SQL data in session using role name instead of role id.
+                                HttpContext.Session.SetInt32("UserID", userId);
+                                HttpContext.Session.SetString("RoleName", roleName);
+                                HttpContext.Session.SetInt32("RoleID", roleId);
+                                HttpContext.Session.SetString("Email", userModel.Email.ToLower());
+                                HttpContext.Session.SetString("FirstName", reader["FirstName"] as string ?? "");
+                                HttpContext.Session.SetString("LastName", reader["LastName"] as string ?? "");
+                            }
+                            else
+                            {
+                                userModel.EmailExists = false;
+                                userModel.SQLEmail = null;
+                                userModel.EmailMatched = false;
+                                userModel.IsActive = null;
                             }
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error checking email in SQL database.");
-                }
             }
-
-            // If user is deactivated, do not authenticate, show login page with deactivated message
-            if (userModel.EmailExists == true && userModel.EmailMatched == true && userModel.IsActive == false)
+            catch (Exception ex)
             {
-                userModel.IsAuthenticated = false;
-                ViewBag.DeactivatedMessage = "Your account is deactivated. You cannot proceed to use the application. Please contact your administrator for assistance.";
-                HttpContext.Session.SetString("IsDeactivated", "true");
-                return View(userModel);
+                _logger.LogError(ex, "Error checking email in SQL database.");
             }
+        }
 
-            // If the user is authenticated and the email matches SQL, redirect based on RoleName
-            if (userModel.IsAuthenticated && userModel.EmailExists == true && userModel.EmailMatched == true &&
-                !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")) && userModel.IsActive == true)
+        // If user is deactivated, do not authenticate, show login page with deactivated message
+        if (userModel.EmailExists == true && userModel.EmailMatched == true && userModel.IsActive == false)
+        {
+            userModel.IsAuthenticated = false;
+            ViewBag.DeactivatedMessage = "Your account is deactivated. You cannot proceed to use the application. Please contact your administrator for assistance.";
+            HttpContext.Session.SetString("IsDeactivated", "true");
+            return View(userModel);
+        }
+
+        // Clear IsDeactivated flag if user is now active
+        if (userModel.IsActive == true)
+        {
+            HttpContext.Session.Remove("IsDeactivated");
+        }
+
+        // If the user is authenticated and the email matches SQL, redirect based on RoleName.
+        if (userModel.IsAuthenticated && userModel.EmailExists == true && userModel.EmailMatched == true &&
+            !string.IsNullOrEmpty(HttpContext.Session.GetString("RoleName")) && userModel.IsActive == true)
+        {
+            string roleName = HttpContext.Session.GetString("RoleName")!;
+            if (roleName == "Employee") // Employee goes to Loaner Dashboard.
             {
-                string roleName = HttpContext.Session.GetString("RoleName")!;
+                return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
+            }
+            else if (roleName == "Benefits Assistant") // Benefits Assistant goes to selection page.
+            {
+                return RedirectToAction("Selection", "Auth");
+            }
+            else if (roleName == "Admin")
+            {
+                return RedirectToAction("Selection", "Auth");
+            }
+            else // All other roles go to selection page if they are approvers.
+            {
+                // Check if the role is one of the approver roles
+                string[] approverRoles = new[] {
+                    "Loans Division Approver",
+                    "Specialized Accounting Approver",
+                    "Compensation Management Approver",
+                    "Benefits Services Officer",
+                    "Benefit Management Department Head",
+                    "Approving Officer",
+                    "Final Disbursement Approver",
+                    "Approver"
+                };
 
-                if (roleName == "Employee") // Employee goes to Loaner Dashboard
-                {
-                    return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
-                }
-                else if (roleName == "Benefits Assistant") // Benefits Assistant goes to selection page
+                if (approverRoles.Contains(roleName))
                 {
                     return RedirectToAction("Selection", "Auth");
                 }
-                else if (roleName == "Admin") // Admin goes to Admin Dashboard
+                else
                 {
-                    return RedirectToAction("Index", "AdminDashboard", new { area = "Admin" });
-                }
-                else // All other roles go to selection page if they are approvers
-                {
-                    // Check if the role is one of the approver roles
-                    string[] approverRoles = new[] {
-                        "Loans Division Approver",
-                        "Specialized Accounting Approver",
-                        "Compensation Management Approver",
-                        "Benefits Services Officer",
-                        "Benefit Management Department Head",
-                        "Approving Officer",
-                        "Final Disbursement Approver",
-                        "Approver"
-                    };
-
-                    if (approverRoles.Contains(roleName))
-                    {
-                        return RedirectToAction("Selection", "Auth");
-                    }
-                    else
-                    {
-                        // If role doesn't match any known role, display login view with role info
-                        return View(userModel);
-                    }
+                    // If role doesn't match any known role, display login view with role info
+                    return View(userModel);
                 }
             }
         }
 
-        // If not authenticated or user not found in database, display the login view
+        // Otherwise, display the login view.
         return View(userModel);
     }
 
@@ -192,7 +182,7 @@ public class AuthController : Controller
         {
             return RedirectToAction("Login");
         }
-        return RedirectToAction("Index", "LoanerDashboard");
+        return RedirectToAction("Index", "LoanerDashboard", new { area = "Loaner" });
     }
 
     private string GetDomainFromUsername(string username)
@@ -206,28 +196,6 @@ public class AuthController : Controller
         }
 
         return Environment.UserDomainName;
-    }
-
-    private string GetEmailFromActiveDirectory(string username)
-    {
-        try
-        {
-            // Remove domain prefix if present
-            string samAccountName = username.Contains('\\') ? username.Split('\\')[1] : username;
-
-            using (var context = new PrincipalContext(ContextType.Domain))
-            {
-                using (var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, samAccountName))
-                {
-                    return user?.EmailAddress ?? string.Empty;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving email from Active Directory for user: {Username}", username);
-            return string.Empty;
-        }
     }
 
     public IActionResult Privacy()

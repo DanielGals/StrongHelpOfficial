@@ -24,7 +24,7 @@ namespace StrongHelpOfficial.Controllers.Admin
             {
                 conn.Open();
                 var cmd = new SqlCommand(@"
-                    SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.isActive AS Status, u.CreatedAt, u.ModifiedAt,
+                    SELECT u.UserID, u.FirstName, u.LastName, u.Email, u.PersonalEmail, u.isActive AS Status, u.CreatedAt, u.ModifiedAt,
                            r.RoleName, r.RoleID, d.DepartmentName, d.DepartmentID
                     FROM [User] u
                     LEFT JOIN [Role] r ON u.RoleID = r.RoleID
@@ -40,6 +40,7 @@ namespace StrongHelpOfficial.Controllers.Admin
                         model.firstName = reader["FirstName"]?.ToString() ?? "";
                         model.lastName = reader["LastName"]?.ToString() ?? "";
                         model.email = reader["Email"]?.ToString() ?? "";
+                        model.personalEmail = reader["PersonalEmail"]?.ToString() ?? "";
                         model.isActive = reader["Status"] != DBNull.Value ? Convert.ToInt32(reader["Status"]) : 0;
                         model.role = reader["RoleID"]?.ToString() ?? ""; // ID
                         model.roleName = reader["RoleName"]?.ToString() ?? ""; // Name
@@ -103,13 +104,13 @@ namespace StrongHelpOfficial.Controllers.Admin
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException("DefaultConnection connection string is not configured.");
 
-            // Fetch current data for comparison
+            // Fetch current data for comparison (include Email and PersonalEmail)
             AdminManageUserViewModel current = new();
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 var cmd = new SqlCommand(@"
-                    SELECT u.FirstName, u.LastName, u.Email, u.RoleID, u.DepartmentID, u.isActive AS Status
+                    SELECT u.FirstName, u.LastName, u.Email, u.PersonalEmail, u.RoleID, u.DepartmentID, u.isActive AS Status
                     FROM [User] u WHERE u.UserID = @UserID", conn);
                 cmd.Parameters.AddWithValue("@UserID", model.userId);
                 using (var reader = cmd.ExecuteReader())
@@ -119,6 +120,7 @@ namespace StrongHelpOfficial.Controllers.Admin
                         current.firstName = reader["FirstName"]?.ToString() ?? "";
                         current.lastName = reader["LastName"]?.ToString() ?? "";
                         current.email = reader["Email"]?.ToString() ?? "";
+                        current.personalEmail = reader["PersonalEmail"]?.ToString() ?? "";
                         current.role = reader["RoleID"]?.ToString() ?? "";
                         current.department = reader["DepartmentID"]?.ToString() ?? "";
                         current.isActive = reader["Status"] != DBNull.Value ? Convert.ToInt32(reader["Status"]) : 0;
@@ -127,9 +129,10 @@ namespace StrongHelpOfficial.Controllers.Admin
             }
 
             // Check if any data changed
+            // NOTE: Work email is not editable — only compare PersonalEmail (and other editable fields)
             bool changed = model.firstName != current.firstName ||
                            model.lastName != current.lastName ||
-                           model.email != current.email ||
+                           model.personalEmail != current.personalEmail ||
                            model.role != current.role ||
                            model.department != current.department ||
                            model.isActive != current.isActive;
@@ -140,7 +143,7 @@ namespace StrongHelpOfficial.Controllers.Admin
                 return RedirectToAction("Index", new { userId = model.userId });
             }
 
-            // Update user info
+            // Update user info (do NOT update work Email; update PersonalEmail)
             try
             {
                 using (var conn = new SqlConnection(connectionString))
@@ -150,14 +153,14 @@ namespace StrongHelpOfficial.Controllers.Admin
                         UPDATE [User]
                         SET FirstName = @FirstName,
                             LastName = @LastName,
-                            Email = @Email,
+                            PersonalEmail = @PersonalEmail,
                             RoleID = @RoleID,
                             DepartmentID = @DepartmentID,
                             ModifiedAt = GETDATE()
                         WHERE UserID = @UserID", conn);
                     cmd.Parameters.AddWithValue("@FirstName", model.firstName);
                     cmd.Parameters.AddWithValue("@LastName", model.lastName);
-                    cmd.Parameters.AddWithValue("@Email", model.email);
+                    cmd.Parameters.AddWithValue("@PersonalEmail", model.personalEmail ?? (object)DBNull.Value);
 
                     // Ensure these are IDs, not names!
                     if (!int.TryParse(model.role, out int roleId))
@@ -228,7 +231,8 @@ namespace StrongHelpOfficial.Controllers.Admin
                 cmd.ExecuteNonQuery();
             }
 
-            TempData["EditMessage"] = "User has been reactivated.";
+            // Note: User's session will be refreshed on their next login attempt
+            TempData["EditMessage"] = "User has been reactivated. They may need to refresh their browser.";
             return RedirectToAction("Index", new { userId });
         }
     }

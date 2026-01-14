@@ -30,30 +30,40 @@
                 <h2 class="portal-title borrower-title">Employee Portal</h2>
                 <p class="portal-description">Apply for loans, track your applications, and manage your account</p>
                 <a href="@Url.Action("Index", "LoanerDashboard", new { area = "Loaner" })"
-                    class="portal-button borrower-button">Login as Employee</a>
+                    class="portal-button borrower-button">Go to Employee Portal</a>
             </div>
 
-            <!-- Approver Portal Card -->
+            <!-- Approver/Admin Portal Card -->
+            @{
+                string roleName = Context.Session.GetString("RoleName") ?? "";
+                string portalTitle = "Approver Portal";
+                string portalDescription = "Review and approve loan applications, access reports and analytics";
+                string buttonText = "Go to Approver Portal";
+                string approverAction = "";
+
+                if (roleName == "Benefits Assistant")
+                {
+                    approverAction = Url.Action("Index", "BenefitsAssistantDashboard");
+                }
+                else if (roleName == "Admin")
+                {
+                    portalTitle = "Admin Portal";
+                    portalDescription = "Manage users, roles, departments, and system settings";
+                    buttonText = "Go to Admin Portal";
+                    approverAction = Url.Action("Index", "AdminDashboard");
+                }
+                else
+                {
+                    approverAction = Url.Action("Index", "ApproverDashboard");
+                }
+            }
             <div class="portal-card">
                 <div class="portal-icon approver-icon">
                     <i class="bi bi-shield-check"></i>
                 </div>
-                <h2 class="portal-title approver-title">Approver Portal</h2>
-                <p class="portal-description">Review and approve loan applications, access reports and analytics</p>
-                @{
-                    string roleName = Context.Session.GetString("RoleName") ?? "";
-                    string approverAction = "";
-
-                    if (roleName == "Benefits Assistant")
-                    {
-                        approverAction = Url.Action("Index", "BenefitsAssistantDashboard");
-                    }
-                    else
-                    {
-                        approverAction = Url.Action("Index", "ApproverDashboard");
-                    }
-                }
-                <a href="@approverAction" class="portal-button approver-button">Login as Approver</a>
+                <h2 class="portal-title approver-title">@portalTitle</h2>
+                <p class="portal-description">@portalDescription</p>
+                <a href="@approverAction" class="portal-button approver-button">@buttonText</a>
             </div>
         </div>
     </div>

@@ -73,7 +73,7 @@ public class NotificationsController : ControllerBase
             if (dto.Action == "Approve")
             {
                 cmd.Parameters.AddWithValue("@Status", "Submitted");
-                cmd.Parameters.AddWithValue("@Remarks", DBNull.Value);
+                cmd.Parameters.AddWithValue("@Remarks", "Accepted by Co-maker");
                 cmd.Parameters.AddWithValue("@IsActive", 1);
             }
             else if (dto.Action == "Reject")

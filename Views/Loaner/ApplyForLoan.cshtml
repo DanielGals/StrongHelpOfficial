@@ -96,7 +96,7 @@ else if (hasExistingLoan && existingLoanId != null)
                     <div class="mb-4">
                         <div class="mb-4">
                             <div id="drop-area" class="drop-area rounded p-4 text-center text-muted" onclick="document.getElementById('files').click();">
-                                Drop files here or click to select
+                                Click here to select and upload your documents (Maximum 3 PDF files)
                                 <input type="file" accept=".pdf,application/pdf" id="files" name="Files" hidden multiple>
                                 <input type="hidden" id="LoanDocumentName" name="LoanDocumentName" value="@Model.LoanDocumentName" />
                                 <input type="hidden" id="FileContent" name="FileContent" value="@Model.Filecontent" />
@@ -192,7 +192,7 @@ else if (hasExistingLoan && existingLoanId != null)
                             <input type="hidden" id="CoMakerId" name="CoMakerId" />
                             <div id="coMakerSuggestions" class="list-group"></div>
                         </div>
-                        <button type="button" class="action-btn secondary w-25 mt-2" id="setCoMakerBtn">Set as co-maker</button>
+                        <button type="button" class="action-btn secondary mt-2" id="setCoMakerBtn">Set as co-maker</button>
                         <div id="coMakerSuccess" class="co-maker-success mt-2" style="display:none;"></div>
                         <div id="coMakerError" class="co-maker-error mt-2" style="display:none;"></div>
                     </div>
@@ -203,6 +203,25 @@ else if (hasExistingLoan && existingLoanId != null)
                 <div id="serverErrorMsg" class="alert alert-danger mt-2" style="display:none;"></div>
                 <input class="action-btn primary w-100" type="submit" value="Submit loan" />
             </form>
+
+            <!-- Confirmation Modal -->
+            <div id="confirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+                <div style="background:white; padding:2rem; border-radius:0.75rem; max-width:500px; width:90%;">
+                    <h4 class="mb-3">Confirm Loan Application</h4>
+                    <div class="mb-3">
+                        <strong>Loan Amount:</strong> <span id="confirmAmount"></span><br>
+                        <strong>Co-maker:</strong> <span id="confirmCoMaker"></span><br>
+                        <strong>Documents:</strong><br><span id="confirmDocs"></span>
+                    </div>
+                    <div class="alert alert-info mb-3" style="font-size:0.9rem;">
+                        <i class="bi bi-info-circle me-1"></i> Your co-maker will need to approve this request before processing.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="action-btn primary flex-fill" onclick="proceedSubmit()">Confirm & Submit</button>
+                        <button type="button" class="btn btn-secondary flex-fill" onclick="closeConfirmModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-4">
             <div class="guideline-box">
@@ -410,7 +429,22 @@ else if (hasExistingLoan && existingLoanId != null)
             errorMsg.style.display = 'none';
             errorMsg.textContent = '';
 
-            // Save form data before submission
+            // Show confirmation modal
+            const loanAmount = document.getElementById('loanAmount').value;
+            const coMakerName = document.getElementById('CoMakerName').value;
+            const fileCount = allFiles.length;
+            
+            document.getElementById('confirmAmount').textContent = 'PHP ' + parseFloat(loanAmount).toLocaleString('en-PH', {minimumFractionDigits: 2});
+            document.getElementById('confirmCoMaker').textContent = coMakerName || 'Not set';
+            document.getElementById('confirmDocs').innerHTML = allFiles.map(f => '• ' + f.name).join('<br>') || 'None';
+            document.getElementById('confirmModal').style.display = 'flex';
+        });
+
+        window.proceedSubmit = function() {
+            document.getElementById('confirmModal').style.display = 'none';
+            
+            errorMsg.style.display = 'none';
+            errorMsg.textContent = '';
             saveFormData();
 
             const formData = new FormData(form);
@@ -440,7 +474,11 @@ else if (hasExistingLoan && existingLoanId != null)
                 errorMsg.textContent = "An error occurred. Please try again.";
                 errorMsg.style.display = 'block';
             });
-        });
+        };
+
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').style.display = 'none';
+        };
 
         function saveFormData() {
             const data = {

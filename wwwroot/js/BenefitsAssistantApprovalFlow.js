@@ -40,7 +40,19 @@ window.closeModal = function () {
     document.getElementById('approverInput').value = '';
     document.getElementById('selectedApproverUserId').value = '';
     document.getElementById('emailField').value = '';
-    document.getElementById('descriptionField').value = '';
+
+    // Clear file selection
+    selectedFiles = [];
+    document.getElementById('selected-files-list').innerHTML = '';
+    const fileInput = document.getElementById('pdfFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    const errorDiv = document.getElementById('pdfFileError');
+    if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.style.display = 'none';
+    }
 
     const approverGroup = document.getElementById('approverDropdownGroup');
     const emailGroup = document.getElementById('emailField').closest('.form-group');
@@ -70,7 +82,7 @@ window.handleRoleChange = async function () {
                 approverGroup.classList.add('show');
             }, 10);
 
-            const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}`);
+            const response = await fetch(`/BenefitsAssistantApplicationDetails/GetUsersByRole?roleId=${roleId}&loanId=${loanId}`);
             usersData = await response.json();
             
             // Get current user's email from session
@@ -78,18 +90,32 @@ window.handleRoleChange = async function () {
             const currentUser = await currentUserResponse.json();
             const currentUserEmail = currentUser.email;
 
-            // Filter out current user
+            // Filter out current user (co-maker already filtered on server)
             usersData = usersData.filter(user => user.email !== currentUserEmail);
 
             // Populate datalist
             approverList.innerHTML = '';
-            usersData.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.name;
-                option.dataset.userId = user.userId;
-                option.dataset.email = user.email;
-                approverList.appendChild(option);
-            });
+            
+            if (usersData.length === 0) {
+                // No approvers available
+                approverInput.value = '';
+                approverInput.placeholder = 'No approvers available for this role';
+                approverInput.disabled = true;
+                emailField.value = '';
+                emailField.disabled = true;
+            } else {
+                approverInput.placeholder = 'Type or select approver name...';
+                approverInput.disabled = false;
+                emailField.disabled = false;
+                
+                usersData.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.name;
+                    option.dataset.userId = user.userId;
+                    option.dataset.email = user.email;
+                    approverList.appendChild(option);
+                });
+            }
 
             approverInput.value = '';
             emailField.value = '';
@@ -134,11 +160,10 @@ window.saveApprover = async function () {
     const approverName = document.getElementById('approverInput').value.trim();
     const userId = document.getElementById('selectedApproverUserId').value;
     const email = document.getElementById('emailField').value.trim();
-    const description = document.getElementById('descriptionField').value;
     const phaseOrder = document.getElementById('phaseOrderField').value;
 
     if (!roleId || !approverName || !email || !phaseOrder) {
-        alert('Please fill in all required fields');
+        showCustomAlert('Please fill in all required fields');
         return;
     }
 
@@ -148,12 +173,12 @@ window.saveApprover = async function () {
         const result = await response.json();
         
         if (!result.exists) {
-            alert('The specified approver does not exist in the system. Please select an approver from the dropdown or contact your administrator to add this user.');
+            showCustomAlert('The specified approver does not exist in the system. Please select an approver from the dropdown or contact your administrator to add this user.');
             return;
         }
     } catch (error) {
         console.error('Error validating approver:', error);
-        alert('Error validating approver. Please try again.');
+        showCustomAlert('Error validating approver. Please try again.');
         return;
     }
 
@@ -171,13 +196,13 @@ window.saveApprover = async function () {
 
         // Check if the selected order is already used
         if (allUsedOrders.includes(parseInt(phaseOrder))) {
-            alert('This order number is already assigned to another approver. Please select a different order.');
+            showCustomAlert('This order number is already assigned to another approver. Please select a different order.');
             await loadOrderDropdown();
             return;
         }
     } catch (error) {
         console.error('Error validating order:', error);
-        alert('Error validating order number. Please try again.');
+        showCustomAlert('Error validating order number. Please try again.');
         return;
     }
 
@@ -193,7 +218,6 @@ window.saveApprover = async function () {
             userName: finalUserName,
             email: email,
             order: parseInt(phaseOrder),
-            description: description,
             isSaved: false,
             attachedFiles: selectedFiles.map(f => f.name),
             attachedFileObjects: [...selectedFiles] // <-- Store File objects here
@@ -336,23 +360,50 @@ window.proceedWithForward = async function () {
             closeConfirmationModal();
 
             // Show success message
-            alert('Application forwarded successfully!');
-
-            // Refresh the page to show updated status
-            window.location.reload();
+            showCustomAlert('Application forwarded successfully!', () => {
+                window.location.reload();
+            });
         } else {
-            alert(result.message || 'Error forwarding application.');
+            showCustomAlert(result.message || 'Error forwarding application.');
             // Re-enable the button if there was an error
             confirmButton.disabled = false;
             confirmButton.textContent = originalText;
         }
     } catch (error) {
         console.error('Error forwarding application:', error);
-        alert('Error forwarding application. Please try again.');
+        showCustomAlert('Error forwarding application. Please try again.');
         // Re-enable the button if there was an error
         confirmButton.disabled = false;
         confirmButton.textContent = originalText;
     }
+};
+
+// Custom alert function
+window.showCustomAlert = function(message, callback) {
+    const modal = document.getElementById('customAlertModal');
+    const messageEl = document.getElementById('customAlertMessage');
+    messageEl.textContent = message;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => modal.classList.add('show'), 10);
+    
+    // Store callback for later use
+    window.customAlertCallback = callback;
+};
+
+window.closeCustomAlert = function() {
+    const modal = document.getElementById('customAlertModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Execute callback if exists
+        if (window.customAlertCallback) {
+            window.customAlertCallback();
+            window.customAlertCallback = null;
+        }
+    }, 300);
 };
 
 // --- END GLOBAL FUNCTIONS ---
@@ -461,14 +512,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (forwardBtn) {
         forwardBtn.addEventListener('click', async function () {
             if (approversList.length === 0) {
-                alert('No approvers to forward.');
+                showCustomAlert('No approvers to forward.');
                 return;
             }
 
             // Validate that all approvers have userId
             const invalidApprovers = approversList.filter(a => !a.userId);
             if (invalidApprovers.length > 0) {
-                alert('Some approvers are missing user ID information. Please remove and re-add them.');
+                showCustomAlert('Some approvers are missing user ID information. Please remove and re-add them.');
                 return;
             }
 
@@ -478,13 +529,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Validation for required fields
             if (!loanTitle) {
-                alert('Please enter a loan title before forwarding the application.');
+                showCustomAlert('Please enter a loan title before forwarding the application.');
                 document.getElementById('loanTitle').focus();
                 return;
             }
 
             if (!messageToApprovers) {
-                alert('Please enter a message to approvers before forwarding the application.');
+                showCustomAlert('Please enter a message to approvers before forwarding the application.');
                 document.getElementById('messageToApprovers').focus();
                 return;
             }
@@ -695,6 +746,13 @@ async function loadRoles() {
 
 function createApprovalCard(approverData) {
     const container = document.getElementById('approvalCardsContainer');
+    
+    // Hide "No approvers" message if it exists
+    const noApproversAlert = document.querySelector('.alert.alert-info');
+    if (noApproversAlert && noApproversAlert.textContent.includes('No approvers have been assigned')) {
+        noApproversAlert.style.display = 'none';
+    }
+    
     const card = document.createElement('div');
     card.className = 'approval-card';
     card.dataset.userName = approverData.userName;
@@ -748,7 +806,6 @@ function createApprovalCard(approverData) {
         <div style="position:relative;">
             <button type="button" class="remove-approver-btn" style="position:absolute;top:0;right:0;background:none;border:none;font-size:1.5rem;color:#dc3545;padding:4px 8px;cursor:pointer;" title="Remove approver">&times;</button>
             <div class="approval-card-title">${approverData.roleName}</div>
-            <div class="approval-card-subtitle">${approverData.description || 'No description provided'}</div>
             <div class="approval-card-content">
                 <div><strong>User:</strong> ${approverData.userName}</div>
                 <div><strong>Approver Order:</strong> ${approverData.order}</div>
@@ -831,6 +888,15 @@ function removeApprovalCard(cardElement, approverData) {
             item.order === approverData.order &&
             item.roleName === approverData.roleName)
     );
+
+    // Show "No approvers" message if list is empty
+    const container = document.getElementById('approvalCardsContainer');
+    if (approversList.length === 0 && container.children.length === 0) {
+        const noApproversAlert = document.querySelector('.alert.alert-info');
+        if (noApproversAlert && noApproversAlert.textContent.includes('No approvers have been assigned')) {
+            noApproversAlert.style.display = 'block';
+        }
+    }
 
     // Refresh the order dropdown to make the removed order available again
     // Only refresh if the modal is currently open
@@ -967,3 +1033,88 @@ window.addFilesToApprover = function(approverName) {
     document.body.appendChild(fileInput);
     fileInput.click();
 };
+
+// Remove checklist item logic
+checklistItemsContainer.addEventListener('click', function (e) {
+    if (e.target.closest('.checklist-remove-btn')) {
+        const btn = e.target.closest('.checklist-remove-btn');
+        
+        // Count current checklist items
+        const currentCheckboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+        
+        // Prevent deletion if this is the last item
+        if (currentCheckboxes.length <= 1) {
+            showCustomAlert('You must have at least one checklist item. You cannot delete the last item.');
+            return;
+        }
+        
+        // remove the nearest .form-check wrapper
+        const wrapper = btn.closest('.form-check');
+        if (wrapper) wrapper.remove();
+        updateRejectButtonState();
+    }
+});
+
+// Function to check if all checklist checkboxes are checked
+function updateRejectButtonState() {
+    const checkboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
+    if (checkboxes.length === 0) {
+        forwardBtn.disabled = true;
+        return;
+    }
+    forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
+    
+    // Update delete buttons state - disable if only one item left
+    const deleteButtons = checklistItemsContainer.querySelectorAll('.checklist-remove-btn');
+    if (checkboxes.length === 1) {
+        deleteButtons.forEach(btn => {
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'Cannot delete the last checklist item';
+        });
+    } else {
+        deleteButtons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.title = 'Remove item';
+        });
+    }
+}
+
+// Fill checklist items button logic
+const fillBtn = document.getElementById('fillChecklistItemsBtn');
+if (fillBtn) {
+    fillBtn.addEventListener('click', function () {
+        const items = [
+            'Completed Requirements',
+            'No derogatory legal records (civil/criminal cases)',
+            'Eligible co-maker'
+        ];
+        
+        // Clear existing items first
+        checklistItemsContainer.innerHTML = '';
+        
+        items.forEach((it, idx) => {
+            const id = 'checklist_' + Date.now() + '_' + idx;
+            const div = document.createElement('div');
+            div.className = 'form-check mb-2';
+            div.innerHTML = `<div class="check-left">
+                                        <input class="form-check-input" type="checkbox" id="${id}">
+                                        <label class="form-check-label checklist-item ms-2" for="${id}">${it}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm text-danger ms-2 checklist-remove-btn" title="Remove item" style="padding:0 0.25rem;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="none" stroke="currentColor" class="feather feather-trash" viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6" />
+                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                    </button>`;
+            checklistItemsContainer.appendChild(div);
+        });
+
+        addChecklistItemModal.hide();
+        updateRejectButtonState();
+    });
+}
