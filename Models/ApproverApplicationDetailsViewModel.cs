@@ -20,7 +20,6 @@
         public string ApprovalBlockedReason { get; set; } = string.Empty;
         public int? CoMakerUserId { get; set; }
         public string? CoMakerName { get; set; }
-        public string? Description { get; set; }
     }
 
     public class ApproverDocumentViewModel

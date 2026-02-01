@@ -1,4 +1,4 @@
-@model BenefitsAssistantApplicationDetailsViewModel
+﻿@model BenefitsAssistantApplicationDetailsViewModel
 @{
     ViewData["Title"] = "Approval Flow";
     ViewBag.IdParamName = "id";
@@ -26,12 +26,12 @@
         {
             <div class="form-section">
                 <label class="form-label-custom required-field">Loan Title</label>
-                <input type="text" class="form-control" id="loanTitle" name="loanTitle" value="Bank Salary Loan" readonly />
+                <input type="text" class="form-control" id="loanTitle" name="loanTitle" placeholder="Enter loan title" required />
             </div>
 
             <div class="form-section">
                 <label class="form-label-custom required-field">Message to approvers</label>
-                <textarea class="form-control message-textarea" id="messageToApprovers" name="messageToApprovers" rows="6" placeholder="Enter your message to approvers..." maxlength="500" required></textarea>
+                <textarea class="form-control message-textarea" id="messageToApprovers" name="messageToApprovers" rows="6" placeholder="Enter your message to approvers..." required></textarea>
             </div>
         }
 
@@ -83,26 +83,11 @@
                         <div class="approval-card-subtitle mb-2" style="color: #888;">
                             @if (isBenefitsAssistant)
                             {
-                                if (isRejected)
-                                {
-                                    @:Application rejected by @approver.UserName
-                                }
-                                else
-                                {
-                                    @:Application reviewed and forwarded to approvers
-                                }
-                            }
-                            else if (isApproved)
-                            {
-                                @:Approved by @approver.UserName on @approver.ApprovedDate?.ToString("MMM d, yyyy")
-                            }
-                            else if (isRejected)
-                            {
-                                @:Rejected by @approver.UserName
+                                @(approver.Description == "Waiting for approvers" ? "Application reviewed" : approver.Description)
                             }
                             else
                             {
-                                @:Awaiting review by @approver.UserName
+                                @approver.Description
                             }
                         </div>
                         <div class="approval-card-content">
@@ -180,7 +165,7 @@
             <!-- Approver (shows after role is selected) -->
             <div class="form-group" id="approverDropdownGroup">
                 <label class="form-label">Approver</label>
-                <input type="text" class="form-select" id="approverInput" list="approverList" placeholder="Type or select approver name..." oninput="this.value = this.value.replace(/[^A-Za-z\s]/g, ''); handleApproverInput();" pattern="[A-Za-z\s]+" title="Only letters and spaces are allowed">
+                <input type="text" class="form-select" id="approverInput" list="approverList" placeholder="Type or select approver name..." oninput="handleApproverInput()">
                 <datalist id="approverList"></datalist>
                 <input type="hidden" id="selectedApproverUserId" value="">
             </div>
@@ -189,6 +174,12 @@
             <div class="form-group">
                 <label class="form-label">Email</label>
                 <input type="email" class="form-control" id="emailField" placeholder="email@company.com">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control description-textarea" id="descriptionField" placeholder="Enter description..."></textarea>
             </div>
 
             <!-- Attach PDF Documents (NO classic POST) -->
@@ -206,7 +197,7 @@
         </div>
     </div>
 </div>
-<!--approval confirmation modal-->
+
 <div id="confirmationModal" class="modal-backdrop-custom">
     <div class="modal-content-custom">
         <div class="modal-header-custom">
@@ -256,21 +247,6 @@
 
 <input type="hidden" id="loanIdField" value="@Model.LoanID" />
 <input type="hidden" id="rejectUrlField" value="@Url.Action("RejectApplication", "BenefitsAssistantApplicationDetails")" />
-
-<!-- Custom Alert Modal -->
-<div id="customAlertModal" class="modal-backdrop-custom" style="display:none;">
-    <div class="modal-content-custom" style="max-width:500px;">
-        <div class="modal-header-custom">
-            <h3 class="mb-0" id="customAlertTitle">Alert</h3>
-        </div>
-        <div class="modal-body-custom">
-            <p id="customAlertMessage" style="margin:0;"></p>
-        </div>
-        <div class="modal-footer-custom">
-            <button type="button" class="btn-save" onclick="closeCustomAlert()" style="width:100px;">OK</button>
-        </div>
-    </div>
-</div>
 <!-- PDF Preview Modal -->
 <div id="pdfPreviewModal" class="modal-backdrop-custom" style="display:none;">
     <div class="modal-content-custom" style="max-width:900px;width:90vw;height:90vh;display:flex;flex-direction:column;">
@@ -403,9 +379,9 @@
             if (fillPreexistingChecklistBtn) {
                 fillPreexistingChecklistBtn.addEventListener('click', function() {
                     const checklistItems = [
-                        'Completed requirements',
-                        'No derogatory legal records (civil/criminal cases)',
-                        'Eligible co-maker'
+                        'No existing active loans',
+                        'Not a co-maker for another active loan',
+                        'No derogatory legal records (civil/criminal cases)'
                     ];
 
                     // Clear existing items
@@ -462,22 +438,6 @@
                         return;
                     }
                     forwardBtn.disabled = !Array.from(checkboxes).every(cb => cb.checked);
-                    
-                    // Update delete buttons state - disable if only one item left
-                    const deleteButtons = checklistItemsContainer.querySelectorAll('.checklist-remove-btn');
-                    if (checkboxes.length === 1) {
-                        deleteButtons.forEach(btn => {
-                            btn.style.opacity = '0.5';
-                            btn.style.cursor = 'not-allowed';
-                            btn.title = 'Cannot delete the last checklist item';
-                        });
-                    } else {
-                        deleteButtons.forEach(btn => {
-                            btn.style.opacity = '1';
-                            btn.style.cursor = 'pointer';
-                            btn.title = 'Remove item';
-                        });
-                    }
                 }
 
                 checklistItemsContainer.addEventListener('change', function (e) {
@@ -489,16 +449,6 @@
                 checklistItemsContainer.addEventListener('click', function (e) {
                     if (e.target.closest('.checklist-remove-btn')) {
                         const btn = e.target.closest('.checklist-remove-btn');
-                        
-                        // Count current checklist items
-                        const currentCheckboxes = checklistItemsContainer.querySelectorAll('input[type="checkbox"]');
-                        
-                        // Prevent deletion if this is the last item
-                        if (currentCheckboxes.length <= 1) {
-                            showCustomAlert('You must have at least one checklist item. You cannot delete the last item.');
-                            return;
-                        }
-                        
                         btn.parentElement.parentElement.remove();
                         updateForwardButtonState();
                     }

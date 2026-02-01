@@ -5,7 +5,6 @@
         public string firstName { get; set; } = string.Empty;
         public string lastName { get; set; } = string.Empty;
         public string email { get; set; } = string.Empty;
-        public string personalEmail { get; set; } = string.Empty; // NEW: Personal email
         public string department { get; set; } = string.Empty; // Department ID
         public string departmentName { get; set; } = string.Empty; // Department Name
         public string userId { get; set; } = string.Empty;

@@ -8,6 +8,7 @@
     var managementTitle = $"{context} Management";
     var subtitle = $"Modify this {context}";
     var nameLabel = $"{context} Name";
+    var editButtonLabel = $"Edit this {context.ToLower()}";
 }
 
 @section Styles {
@@ -19,20 +20,17 @@
             align-items: center;
             min-height: 70vh;
         }
-
         .log-details-label {
             font-weight: 600;
             margin-top: 2rem;
             margin-bottom: 0.5rem;
         }
-
         .top-action-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
         }
-
         .deactivate-btn {
             min-width: 120px;
         }
@@ -50,36 +48,13 @@
         </a>
         @if (Model.IsActive)
         {
-            // Disallow deactivation UI for Admin role
-            var canDeactivate = !(Model.Context == "Role" && string.Equals(Model.Name, "Admin", StringComparison.OrdinalIgnoreCase));
-            if (canDeactivate)
-            {
-                <form asp-action="Deactivate" method="post" style="margin: 0;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="Context" value="@Model.Context" />
-                    <input type="hidden" name="Id" value="@Model.Id" />
-                    <button type="submit" class="btn btn-danger deactivate-btn"
-                            onclick="return confirm('Are you sure you want to deactivate this @context.ToLower()?');">
-                        Deactivate
-                    </button>
-                </form>
-            }
-            else
-            {
-                <button class="btn btn-secondary deactivate-btn" disabled title="Admin role cannot be deactivated">
-                    Admin (cannot deactivate)
-                </button>
-            }
-        }
-        else
-        {
-            <form asp-action="Reactivate" method="post" style="margin: 0;">
+            <form asp-action="Deactivate" method="post" style="margin: 0;">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Context" value="@Model.Context" />
                 <input type="hidden" name="Id" value="@Model.Id" />
-                <button type="submit" class="btn btn-success deactivate-btn"
-                        onclick="return confirm('Are you sure you want to reactivate this @context.ToLower()?');">
-                    Reactivate
+                <button type="submit" class="btn btn-danger deactivate-btn"
+                        onclick="return confirm('Are you sure you want to deactivate this @context.ToLower()? This action is irreversible.');">
+                    Deactivate
                 </button>
             </form>
         }
@@ -91,33 +66,41 @@
                 <h2 class="card-title">@managementTitle</h2>
                 <h5 class="card-subtitle mb-4 text-muted">@subtitle</h5>
 
-                @if (ViewBag.ActionSuccess != null)
+                @if (Model.ShowSuccess)
                 {
                     <div class="alert alert-success mt-3" role="alert">
-                        @ViewBag.ActionSuccess
+                        Changes saved successfully!
                     </div>
                 }
-                @if (ViewBag.ActionError != null)
+                @if (TempData["DeactivationSuccess"] != null)
                 {
-                    <div class="alert alert-danger mt-3" role="alert">
-                        @ViewBag.ActionError
+                    <div class="alert alert-success mt-3" role="alert">
+                        @TempData["DeactivationSuccess"]
                     </div>
                 }
 
-                <div>
+                <form asp-action="Save" method="post" autocomplete="off">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="Context" />
                     <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                     <div class="mb-3">
                         <label class="form-label">ID</label>
                         <input type="text" class="form-control" value="@Model.Id" readonly />
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">@nameLabel</label>
-                        <input type="text" class="form-control" value="@Model.Name" readonly />
+                        <label for="Name" class="form-label">@nameLabel</label>
+                        @if (Model.EditMode)
+                        {
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" value="@Model.Name" readonly />
+                        }
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <div>
@@ -134,14 +117,27 @@
                         <div>Last modified: @(Model.ModifiedAt?.ToString("g") ?? "-")</div>
                         <div>Modified by: @(Model.ModifiedBy ?? "-")</div>
                     </div>
-                </div>
+
+                    @if (Model.EditMode)
+                    {
+                        <button type="submit" class="btn btn-success mt-3"
+                                onclick="return confirm('Are you sure you want to save changes?');">
+                            Save Changes
+                        </button>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary mt-3"
+                           href="@Url.Action("Index", new { context = Model.Context, id = Model.Id, edit = true })">
+                            @editButtonLabel
+                        </a>
+                    }
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

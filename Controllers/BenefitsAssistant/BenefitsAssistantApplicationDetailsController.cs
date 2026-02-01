@@ -75,35 +75,13 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
         }
 
         [HttpGet]
-        public async Task<JsonResult> GetUsersByRole(int roleId, int? loanId = null)
+        public async Task<JsonResult> GetUsersByRole(int roleId)
         {
             var users = new List<object>();
-            int? coMakerUserId = null;
-            int? applicantUserId = null;
 
             using (var conn = new SqlConnection(_config.GetConnectionString("DefaultConnection")))
             {
                 await conn.OpenAsync();
-
-                // Get co-maker ID and applicant ID if loanId is provided
-                if (loanId.HasValue)
-                {
-                    using (var cmd = new SqlCommand("SELECT ComakerUserID, UserID FROM LoanApplication WHERE LoanID = @LoanID", conn))
-                    {
-                        cmd.Parameters.AddWithValue("@LoanID", loanId.Value);
-                        using (var reader = await cmd.ExecuteReaderAsync())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                if (reader["ComakerUserID"] != DBNull.Value)
-                                    coMakerUserId = reader.GetInt32(reader.GetOrdinal("ComakerUserID"));
-                                if (reader["UserID"] != DBNull.Value)
-                                    applicantUserId = reader.GetInt32(reader.GetOrdinal("UserID"));
-                            }
-                        }
-                    }
-                }
-
                 using (var cmd = new SqlCommand(@"
                     SELECT u.UserID, u.FirstName, u.LastName, u.Email 
                     FROM [User] u 
@@ -115,16 +93,9 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     {
                         while (await reader.ReadAsync())
                         {
-                            var userId = reader.GetInt32(reader.GetOrdinal("UserID"));
-                            
-                            // Skip co-maker and loan applicant
-                            if ((coMakerUserId.HasValue && userId == coMakerUserId.Value) ||
-                                (applicantUserId.HasValue && userId == applicantUserId.Value))
-                                continue;
-
                             users.Add(new
                             {
-                                userId = userId,
+                                userId = reader.GetInt32(reader.GetOrdinal("UserID")),
                                 name = $"{reader.GetString(reader.GetOrdinal("FirstName"))} {reader.GetString(reader.GetOrdinal("LastName"))}",
                                 email = reader.GetString(reader.GetOrdinal("Email"))
                             });
@@ -318,7 +289,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 await conn.OpenAsync();
                 using (var cmd = new SqlCommand(@"
                     SELECT la.LoanID, la.LoanAmount, la.DateSubmitted, la.ApplicationStatus,
-                           la.IsActive, la.ComakerUserID, la.Remarks, la.Description,
+                           la.IsActive, la.CoMakerUserId, -- Add CoMakerUserId
                            u.FirstName, u.LastName, d.DepartmentName
                     FROM LoanApplication la
                     INNER JOIN [User] u ON la.UserID = u.UserID
@@ -342,9 +313,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                                 PayrollAccountNumber = "Credit Proceeds to Account Number",
                                 Documents = new List<BADocumentViewModel>(),
                                 Approvers = new List<ApproverViewModel>(),
-                                CoMakerUserId = reader["ComakerUserID"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("ComakerUserID")) : (int?)null,
-                                Remarks = reader["Remarks"]?.ToString(),
-                                Description = reader["Description"]?.ToString()
+                                CoMakerUserId = reader["CoMakerUserId"] != DBNull.Value ? reader.GetInt32(reader.GetOrdinal("CoMakerUserId")) : (int?)null
                             };
                         }
                     }
@@ -498,12 +467,18 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     .OrderBy(a => a.Order)
                     .ToList();
 
+                // Determine visible approvers based on sequential flow
                 var visibleApprovers = new List<ApproverViewModel>();
                 foreach (var approver in others)
                 {
                     visibleApprovers.Add(approver);
                     
+                    // Stop showing approvers after rejection
                     if (approver.Status == "Rejected")
+                        break;
+                    
+                    // Stop after first pending (only show current reviewer)
+                    if (approver.Status == "Pending")
                         break;
                 }
 
@@ -524,21 +499,17 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
             {
                 await conn.OpenAsync();
 
-                // Update application status to Rejected (not In Progress)
                 var cmdUpdateApp = new SqlCommand(@"
                     UPDATE LoanApplication
-                    SET ApplicationStatus = @Status, IsActive = 0, BenefitsAssistantUserID = @BenefitsAssistantUserID,
-                        ModifiedAt = @ModifiedAt, ModifiedBy = @ModifiedBy
+                    SET Remarks = @Remarks, ApplicationStatus = @Status, IsActive = 0, BenefitsAssistantUserID = @BenefitsAssistantUserID
                     WHERE LoanID = @LoanID", conn);
+                cmdUpdateApp.Parameters.AddWithValue("@Remarks", remarks ?? string.Empty);
                 cmdUpdateApp.Parameters.AddWithValue("@Status", "Rejected");
                 cmdUpdateApp.Parameters.AddWithValue("@BenefitsAssistantUserID", userId ?? 0);
-                cmdUpdateApp.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
-                cmdUpdateApp.Parameters.AddWithValue("@ModifiedBy", userId?.ToString() ?? "");
                 cmdUpdateApp.Parameters.AddWithValue("@LoanID", id);
 
                 await cmdUpdateApp.ExecuteNonQueryAsync();
 
-                // Insert rejection record in LoanApproval table
                 var cmdInsertApproval = new SqlCommand(@"
                     INSERT INTO LoanApproval (LoanID, UserID, Status, Comment, [Order], ApprovedDate, IsActive, CreatedAt, CreatedBy)
                     VALUES (@LoanID, @UserID, 'Rejected', @Remarks, 0, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn);
@@ -638,24 +609,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                         return Json(new { success = false, message = "User session expired. Please login again." });
                     }
 
-                    // Get existing remarks to preserve comaker decision
-                    string existingRemarks = "";
-                    using (var getRemarksCmd = new SqlCommand("SELECT Remarks FROM LoanApplication WHERE LoanID = @LoanID", conn))
-                    {
-                        getRemarksCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
-                        var result = await getRemarksCmd.ExecuteScalarAsync();
-                        if (result != null && result != DBNull.Value)
-                            existingRemarks = result.ToString();
-                    }
-
-                    // Preserve comaker decision if it exists
-                    string newRemarks = "Waiting for approvers";
-                    if (!string.IsNullOrEmpty(existingRemarks) && 
-                        (existingRemarks.Contains("Accepted by Co-maker") || existingRemarks.Contains("Rejected by Co-maker")))
-                    {
-                        newRemarks = existingRemarks;
-                    }
-
                     using (var updateCmd = new SqlCommand(@"
                 UPDATE LoanApplication 
                 SET ApplicationStatus = @ApplicationStatus, 
@@ -669,7 +622,7 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 WHERE LoanID = @LoanID", conn))
                     {
                         updateCmd.Parameters.AddWithValue("@ApplicationStatus", "In Progress");
-                        updateCmd.Parameters.AddWithValue("@Remarks", newRemarks);
+                        updateCmd.Parameters.AddWithValue("@Remarks", "Waiting for approvers");
                         updateCmd.Parameters.AddWithValue("@Title", request.Title ?? string.Empty);
                         updateCmd.Parameters.AddWithValue("@Description", request.Description ?? string.Empty);
                         updateCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
@@ -683,10 +636,11 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
 
                     using (var baCmd = new SqlCommand(@"
                 INSERT INTO LoanApproval (LoanID, UserID, [Order], Status, Comment, ApprovedDate, IsActive, CreatedAt, CreatedBy)
-                VALUES (@LoanID, @UserID, 0, 'Reviewed', '', @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
+                VALUES (@LoanID, @UserID, 0, 'Reviewed', @Comment, @ApprovedDate, 1, @CreatedAt, @CreatedBy)", conn))
                     {
                         baCmd.Parameters.AddWithValue("@LoanID", request.LoanId);
                         baCmd.Parameters.AddWithValue("@UserID", benefitsAssistantUserId);
+                        baCmd.Parameters.AddWithValue("@Comment", request.Description ?? "Application reviewed and forwarded");
                         baCmd.Parameters.AddWithValue("@ApprovedDate", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
                         baCmd.Parameters.AddWithValue("@CreatedBy", benefitsAssistantUserId.ToString());

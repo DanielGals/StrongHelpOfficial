@@ -105,7 +105,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND (ComakerUserID IS NULL OR ComakerUserID != @UserId)
                     AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
                     AND ApplicationStatus != 'Drafted'
                     AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
@@ -127,7 +126,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                     FROM LoanApplication
                     WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                     AND UserID != @UserId
-                    AND (ComakerUserID IS NULL OR ComakerUserID != @UserId)
                     AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
                     AND ApplicationStatus != 'Drafted'
                     AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
@@ -167,7 +165,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (ComakerUserID IS NULL OR ComakerUserID != @UserId)
                 AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
                 AND ApplicationStatus != 'Drafted'
                 AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
@@ -219,7 +216,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (ComakerUserID IS NULL OR ComakerUserID != @UserId)
                 AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
                 AND ApplicationStatus != 'Drafted'
                 AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)
@@ -278,7 +274,6 @@ namespace StrongHelpOfficial.Controllers.BenefitsAssistant
                 FROM LoanApplication
                 WHERE (BenefitsAssistantUserID = @UserId OR BenefitsAssistantUserID IS NULL)
                 AND UserID != @UserId
-                AND (ComakerUserID IS NULL OR ComakerUserID != @UserId)
                 AND (IsActive = 1 OR ApplicationStatus IN ('Rejected', 'Approved'))
                 AND ApplicationStatus != 'Drafted'
                 AND NOT (ApplicationStatus = 'Rejected' AND BenefitsAssistantUserID IS NULL)

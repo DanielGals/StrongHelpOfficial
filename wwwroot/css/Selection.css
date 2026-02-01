@@ -54,7 +54,6 @@ body {
     align-items: center;
     text-align: center;
     transition: transform 0.3s ease;
-    min-height: 200px;
 }
 
 .portal-card:hover {
@@ -96,7 +95,6 @@ body {
     color: #6c757d;
     margin-bottom: 30px;
     font-size: 16px;
-    flex-grow: 1;
 }
 
 .portal-button {

@@ -27,31 +27,6 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult About()
-    {
-        return View();
-    }
-
-    public IActionResult Contact()
-    {
-        return View();
-    }
-
-    public IActionResult HelpCenter()
-    {
-        return View();
-    }
-
-    public IActionResult FAQs()
-    {
-        return View();
-    }
-
-    public IActionResult Terms()
-    {
-        return View();
-    }
-
     public IActionResult Privacy()
     {
         return View();

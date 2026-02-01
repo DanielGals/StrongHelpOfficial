@@ -1,8 +1,0 @@
-Bug ID,Title,Severity,Priority,Status,Module,Description,Steps to Reproduce,Expected Result,Actual Result,Environment,Reported By,Reported Date,,
-BUG-001,Integration tests fail due to authentication,Medium,P2,Open,Integration Testing,Negotiate authentication not supported in test environment,"1. Run dotnet test
-2. Observe integration test failures
-3. Check error logs",Integration tests should pass,500 Internal Server Error - Negotiate authentication requires Kestrel,Windows 11 / .NET 8.0,Axel Sacdal,1/15/2024,,
-BUG-002,TempData null reference in ApplyForLoanController,Medium,P2,Open,Loan Application,TempData not mocked in unit tests causing NullReferenceException,"1. Run ApplyForLoanController tests
-2. Observe test failures",Tests should pass,NullReferenceException at line 167,Test Environment,Axel Sacdal,1/15/2024,,
-BUG-003,UserInfoViewModel IsActive property nullable,Low,P3,Open,Models,IsActive property returns null instead of false by default,"1. Create new UserInfoViewModel
-2. Check IsActive value",IsActive should be false,IsActive is null,Test Environment,Axel Sacdal,1/15/2024,,

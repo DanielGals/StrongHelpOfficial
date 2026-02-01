@@ -4,7 +4,6 @@ using StrongHelpOfficial.Models;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace StrongHelpOfficial.Controllers.Admin
 {
@@ -42,55 +41,46 @@ namespace StrongHelpOfficial.Controllers.Admin
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException("DefaultConnection connection string is not configured.");
 
+            // Check for duplicate email or contact number
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (var checkCmd = new SqlCommand(@"
-                        SELECT COUNT(*) FROM [User] 
-                        WHERE Email = @Email OR ContactNum = @ContactNum", conn))
+                var checkCmd = new SqlCommand(@"
+                    SELECT COUNT(*) FROM [User] 
+                    WHERE Email = @Email OR ContactNum = @ContactNum", conn);
+                checkCmd.Parameters.AddWithValue("@Email", model.Email);
+                checkCmd.Parameters.AddWithValue("@ContactNum", model.ContactNum);
+                int count = (int)checkCmd.ExecuteScalar();
+                if (count > 0)
                 {
-                    checkCmd.Parameters.AddWithValue("@Email", model.Email);
-                    checkCmd.Parameters.AddWithValue("@ContactNum", model.ContactNum);
-                    int count = (int)checkCmd.ExecuteScalar();
-                    if (count > 0)
-                    {
-                        ModelState.AddModelError("", "A user with this email or contact number already exists.");
-                        return View("~/Views/Admin/AdminAddUser.cshtml", model);
-                    }
+                    ModelState.AddModelError("", "A user with this email or contact number already exists.");
+                    return View("~/Views/Admin/AdminAddUser.cshtml", model);
                 }
 
                 // Get current admin name
                 string createdBy = GetCurrentAdminName();
 
-                // Build a clean personal email: firstname.lastname@stronghelps.local
-                var localPart = $"{NormalizeForEmail(model.FirstName)}{NormalizeForEmail(model.LastName)}".Trim('.');
-                var appemail = (string.IsNullOrWhiteSpace(localPart))
-                    ? $"user@stronghelps.local"
-                    : $"{localPart}@stronghelps.local";
+                var cmd = new SqlCommand(@"
+                    INSERT INTO [User]
+                        (FirstName, LastName, Email, ContactNum, RoleID, DepartmentID, DateHired, CreatedAt, CreatedBy, DepartmentAssignedAt, RoleAssignedAt, IsBanned, IsActive)
+                    VALUES
+                        (@FirstName, @LastName, @Email, @ContactNum, @RoleID, @DepartmentID, @DateHired, @CreatedAt, @CreatedBy, @DepartmentAssignedAt, @RoleAssignedAt, @IsBanned, @IsActive)", conn);
 
-                using (var cmd = new SqlCommand(@"
-                        INSERT INTO [User]
-                            (FirstName, LastName, Email, PersonalEmail, ContactNum, RoleID, DepartmentID, DateHired, CreatedAt, CreatedBy, DepartmentAssignedAt, RoleAssignedAt, IsBanned, IsActive)
-                        VALUES
-                            (@FirstName, @LastName, @Email, @PersonalEmail, @ContactNum, @RoleID, @DepartmentID, @DateHired, @CreatedAt, @CreatedBy, @DepartmentAssignedAt, @RoleAssignedAt, @IsBanned, @IsActive)", conn))
-                {
-                    cmd.Parameters.AddWithValue("@FirstName", model.FirstName ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@LastName", model.LastName ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@Email", appemail);
-                    cmd.Parameters.AddWithValue("@PersonalEmail", model.Email ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@ContactNum", model.ContactNum ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@RoleID", model.RoleId ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@DepartmentID", model.DepartmentId ?? (object)DBNull.Value);
-                    cmd.Parameters.AddWithValue("@DateHired", model.DateHired.HasValue ? (object)model.DateHired.Value : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
-                    cmd.Parameters.AddWithValue("@CreatedBy", createdBy);
-                    cmd.Parameters.AddWithValue("@DepartmentAssignedAt", DateTime.Now);
-                    cmd.Parameters.AddWithValue("@RoleAssignedAt", DateTime.Now);
-                    cmd.Parameters.AddWithValue("@IsBanned", 0);
-                    cmd.Parameters.AddWithValue("@IsActive", 1);
+                cmd.Parameters.AddWithValue("@FirstName", model.FirstName);
+                cmd.Parameters.AddWithValue("@LastName", model.LastName);
+                cmd.Parameters.AddWithValue("@Email", model.Email);
+                cmd.Parameters.AddWithValue("@ContactNum", model.ContactNum);
+                cmd.Parameters.AddWithValue("@RoleID", model.RoleId);
+                cmd.Parameters.AddWithValue("@DepartmentID", model.DepartmentId);
+                cmd.Parameters.AddWithValue("@DateHired", model.DateHired);
+                cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@CreatedBy", createdBy);
+                cmd.Parameters.AddWithValue("@DepartmentAssignedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@RoleAssignedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@IsBanned", 0);
+                cmd.Parameters.AddWithValue("@IsActive", 1);
 
-                    cmd.ExecuteNonQuery();
-                }
+                cmd.ExecuteNonQuery();
             }
 
             ModelState.Clear();
@@ -158,16 +148,6 @@ namespace StrongHelpOfficial.Controllers.Admin
             if (!string.IsNullOrWhiteSpace(firstName))
                 return firstName;
             return "System Admin";
-        }
-
-        // Helper: remove characters not valid in an email local-part (keep letters and digits)
-        private static string NormalizeForEmail(string? input)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-                return string.Empty;
-            var lower = input.Trim().ToLowerInvariant();
-            // replace any sequence of non-alphanumeric characters with empty string
-            return Regex.Replace(lower, @"[^a-z0-9]", "");
         }
     }
 }

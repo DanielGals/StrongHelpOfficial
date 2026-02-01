@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using StrongHelpOfficial.Models;
 using Microsoft.Data.SqlClient;
 using System;
-using Microsoft.AspNetCore.Http;
 
 namespace StrongHelpOfficial.Controllers.Admin
 {
@@ -16,7 +15,7 @@ namespace StrongHelpOfficial.Controllers.Admin
         }
 
         [HttpGet]
-        public IActionResult Index(string context, int id, bool success = false)
+        public IActionResult Index(string context, int id, bool edit = false, bool success = false)
         {
             string table = context?.ToLower() == "department" ? "Department" : "Role";
             string idColumn = table == "Department" ? "DepartmentId" : "RoleId";
@@ -52,24 +51,68 @@ namespace StrongHelpOfficial.Controllers.Admin
                 }
             }
 
-            // Editing removed: always false
-            vm.EditMode = false;
+            vm.EditMode = edit;
             vm.ShowSuccess = success;
-
+            // Show deactivation success message if present
             if (TempData["DeactivationSuccess"] != null)
             {
-                ViewBag.ActionSuccess = TempData["DeactivationSuccess"];
+                ViewBag.DeactivationSuccess = TempData["DeactivationSuccess"];
             }
-            if (TempData["ReactivationSuccess"] != null)
+            return View("~/Views/Admin/AdminRADModification.cshtml", vm);
+        }
+
+        [HttpPost]
+        public IActionResult Save(AdminRADModificationViewModel model)
+        {
+            if (!ModelState.IsValid)
             {
-                ViewBag.ActionSuccess = TempData["ReactivationSuccess"];
-            }
-            if (TempData["ActionError"] != null)
-            {
-                ViewBag.ActionError = TempData["ActionError"];
+                model.EditMode = true;
+                return View("~/Views/Admin/AdminRADModification.cshtml", model);
             }
 
-            return View("~/Views/Admin/AdminRADModification.cshtml", vm);
+            string table = model.Context == "Department" ? "Department" : "Role";
+            string idColumn = table == "Department" ? "DepartmentId" : "RoleId";
+            string nameColumn = table == "Department" ? "DepartmentName" : "RoleName";
+
+            string? connectionString = _configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException("DefaultConnection connection string is not configured.");
+
+            string modifiedBy = GetCurrentAdminName();
+
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                // Check for duplicate name (excluding current record)
+                var checkCmd = new SqlCommand($@"
+                    SELECT COUNT(*) FROM [{table}] WHERE {nameColumn} = @Name AND {idColumn} <> @Id", conn);
+                checkCmd.Parameters.AddWithValue("@Name", model.Name);
+                checkCmd.Parameters.AddWithValue("@Id", model.Id);
+                int count = (int)checkCmd.ExecuteScalar();
+                if (count > 0)
+                {
+                    ModelState.AddModelError("Name", $"{model.Context} name already exists.");
+                    model.EditMode = true;
+                    return View("~/Views/Admin/AdminRADModification.cshtml", model);
+                }
+
+                var cmd = new SqlCommand($@"
+                    UPDATE [{table}]
+                    SET {nameColumn} = @Name,
+                        ModifiedAt = @ModifiedAt,
+                        ModifiedBy = @ModifiedBy
+                    WHERE {idColumn} = @Id", conn);
+
+                cmd.Parameters.AddWithValue("@Name", model.Name);
+                cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@ModifiedBy", modifiedBy);
+                cmd.Parameters.AddWithValue("@Id", model.Id);
+
+                cmd.ExecuteNonQuery();
+            }
+
+            return RedirectToAction("Index", new { context = model.Context, id = model.Id, success = true });
         }
 
         [HttpPost]
@@ -87,21 +130,6 @@ namespace StrongHelpOfficial.Controllers.Admin
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-
-                // Prevent deactivating the Admin role
-                if (table == "Role")
-                {
-                    var checkCmd = new SqlCommand($@"SELECT RoleName FROM [Role] WHERE RoleId = @Id", conn);
-                    checkCmd.Parameters.AddWithValue("@Id", id);
-                    var roleNameObj = checkCmd.ExecuteScalar();
-                    var roleName = roleNameObj as string ?? string.Empty;
-                    if (string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase))
-                    {
-                        TempData["ActionError"] = "The Admin role cannot be deactivated.";
-                        return RedirectToAction("Index", new { context, id });
-                    }
-                }
-
                 var cmd = new SqlCommand($@"
                     UPDATE [{table}]
                     SET isActive = 0,
@@ -117,39 +145,6 @@ namespace StrongHelpOfficial.Controllers.Admin
             }
 
             TempData["DeactivationSuccess"] = $"{(table == "Department" ? "Department" : "Role")} deactivated successfully!";
-            return RedirectToAction("Index", new { context, id });
-        }
-
-        [HttpPost]
-        public IActionResult Reactivate(string context, int id)
-        {
-            string table = context?.ToLower() == "department" ? "Department" : "Role";
-            string idColumn = table == "Department" ? "DepartmentId" : "RoleId";
-
-            string? connectionString = _configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("DefaultConnection connection string is not configured.");
-
-            string modifiedBy = GetCurrentAdminName();
-
-            using (var conn = new SqlConnection(connectionString))
-            {
-                conn.Open();
-                var cmd = new SqlCommand($@"
-                    UPDATE [{table}]
-                    SET isActive = 1,
-                        ModifiedAt = @ModifiedAt,
-                        ModifiedBy = @ModifiedBy
-                    WHERE {idColumn} = @Id", conn);
-
-                cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.Now);
-                cmd.Parameters.AddWithValue("@ModifiedBy", modifiedBy);
-                cmd.Parameters.AddWithValue("@Id", id);
-
-                cmd.ExecuteNonQuery();
-            }
-
-            TempData["ReactivationSuccess"] = $"{(table == "Department" ? "Department" : "Role")} reactivated successfully!";
             return RedirectToAction("Index", new { context, id });
         }
 

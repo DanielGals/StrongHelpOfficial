@@ -18,7 +18,7 @@ namespace StrongHelpOfficial.Controllers.Loaner
         {
             var roleName = HttpContext.Session.GetString("RoleName");
             string[] allowedRoles = new[] {
-                "Employee", "Benefits Assistant", "Approver", "Admin",
+                "Employee", "Benefits Assistant", "Approver",
                 "Loans Division Approver", "Specialized Accounting Approver",
                 "Compensation Management Approver", "Benefits Services Officer",
                 "Benefit Management Department Head", "Approving Officer",
